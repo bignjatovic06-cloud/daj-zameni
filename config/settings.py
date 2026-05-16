@@ -9,9 +9,17 @@ DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
+# Auto-add Railway domain when deployed on Railway
+if os.environ.get("RAILWAY_ENVIRONMENT"):
+    ALLOWED_HOSTS.append(".railway.app")
+
 CSRF_TRUSTED_ORIGINS = [
     o for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o
 ]
+
+# Auto-add Railway CSRF origin
+if os.environ.get("RAILWAY_PUBLIC_DOMAIN"):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ['RAILWAY_PUBLIC_DOMAIN']}")
 
 INSTALLED_APPS = [
     'django.contrib.admin',
