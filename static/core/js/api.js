@@ -79,6 +79,10 @@ async function apiUploadImages(listingId, files) {
   return { ok: res.ok, ...data };
 }
 
+async function apiListingDetail(id) {
+  return apiFetch('/listings/' + id + '/');
+}
+
 async function apiCategories() {
   return apiFetch('/categories/');
 }

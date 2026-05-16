@@ -694,22 +694,38 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
   const [statsOpen, setStatsOpen]     = useS(false);
   const [saved, setSaved]             = useS(isSaved);
   const [savePending, setSavePending] = useS(false);
+  const [fullItem, setFullItem]       = useS(item);
+
+  useE(() => {
+    apiListingDetail(item.id).then(res => {
+      if (res.ok !== false) {
+        setFullItem({
+          ...item,
+          desc:   res.description || item.desc || '',
+          seek:   res.wants_in_exchange || item.seek || '',
+          images: res.images && res.images.length > 0
+            ? res.images.map(img => ({ url: img.url, is_cover: img.is_cover }))
+            : item.images,
+        });
+      }
+    }).catch(() => {});
+  }, [item.id]);
   const [offerSent, setOfferSent]     = useS(false);
   const [showOffer, setShowOffer]     = useS(false);
   const [showReport, setShowReport]   = useS(false);
   const [respondDone, setRespondDone] = useS(null);
   const [respondLoading, setRespondLoading] = useS(false);
 
-  const thumbs      = item.images && item.images.length > 0 ? item.images : [null, null, null, null];
-  const catName     = (categories.find(c => c.id === item.cat) || {}).name || item.catName || 'Kategorija';
-  const isBarter    = item.type === 'barter' || item.type === 'both';
-  const isNew       = item.condition === 'new' || item.condition === 'like_new';
-  const priceNum    = item.price ? parseFloat(item.price) : null;
-  const isOwner     = currentUser && currentUser.username === item.user;
+  const thumbs      = fullItem.images && fullItem.images.length > 0 ? fullItem.images : [null, null, null, null];
+  const catName     = (categories.find(c => c.id === fullItem.cat) || {}).name || fullItem.catName || 'Kategorija';
+  const isBarter    = fullItem.type === 'barter' || fullItem.type === 'both';
+  const isNew       = fullItem.condition === 'new' || fullItem.condition === 'like_new';
+  const priceNum    = fullItem.price ? parseFloat(fullItem.price) : null;
+  const isOwner     = currentUser && currentUser.username === fullItem.user;
   const conditionLabel = {
     new: 'Novo', like_new: 'Polovno — kao novo', good: 'Polovno — odlično',
     fair: 'Polovno — vrlo dobro', poor: 'Polovno — dobro', antique: 'Antikvitet',
-  }[item.condition] || item.condition;
+  }[fullItem.condition] || fullItem.condition;
 
   const handleMessage = () => {
     if (!currentUser) { onLogin?.(); return; }
@@ -832,17 +848,17 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
 
             <div className="desc">
               <h3>Opis</h3>
-              <p>{item.desc || 'Nema opisa.'}</p>
+              <p>{fullItem.desc || 'Nema opisa.'}</p>
             </div>
 
             <div className="specs">
               <div className="r"><span className="k">Stanje</span><span>{conditionLabel}</span></div>
               <div className="r"><span className="k">Kategorija</span><span>{catName}</span></div>
-              <div className="r"><span className="k">Lokacija</span><span>{item.city}</span></div>
-              <div className="r"><span className="k">Pregledan</span><span>{item.views} puta</span></div>
+              <div className="r"><span className="k">Lokacija</span><span>{fullItem.city}</span></div>
+              <div className="r"><span className="k">Pregledan</span><span>{fullItem.views} puta</span></div>
               <div className="r">
                 <span className="k">Šifra oglasa</span>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>DZ-{String(item.id).slice(-6).toUpperCase()}</span>
+                <span style={{ fontFamily: 'var(--font-mono)' }}>DZ-{String(fullItem.id).slice(-6).toUpperCase()}</span>
               </div>
             </div>
           </div>
@@ -852,9 +868,9 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
               {isBarter && <span className="b" style={{ background: 'var(--accent)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 11, padding: '4px 8px', borderRadius: 6, fontWeight: 700, letterSpacing: '.04em' }}>RAZMENA PRIORITET</span>}
               {isNew    && <span className="b" style={{ background: '#f4d35e', color: '#3b2e00', fontFamily: 'var(--font-mono)', fontSize: 11, padding: '4px 8px', borderRadius: 6, fontWeight: 700, letterSpacing: '.04em' }}>KAO NOVO</span>}
             </div>
-            <h1>{item.title}</h1>
+            <h1>{fullItem.title}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-3)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
-              <Icon name="pin" size={13}/> {item.city}
+              <Icon name="pin" size={13}/> {fullItem.city}
             </div>
             <div className="pricerow">
               <div className={'price-big' + (isBarter && !priceNum ? ' barter' : '')}>
@@ -863,10 +879,10 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
               {priceNum && <span style={{ color: 'var(--ink-3)', fontSize: 13 }}>· cena dogovorljiva</span>}
             </div>
 
-            {item.seek && (
+            {fullItem.seek && (
               <div style={{ padding: '12px 14px', background: 'var(--accent-soft)', borderRadius: 10, fontSize: 14, color: 'var(--ink)', marginTop: 4, marginBottom: 14 }}>
                 <b style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.04em' }}>U ZAMENU TRAŽIM</b><br/>
-                {item.seek}
+                {fullItem.seek}
               </div>
             )}
 
