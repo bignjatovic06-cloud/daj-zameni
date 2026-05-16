@@ -517,6 +517,9 @@ def offer_complete(request, offer_id):
         offer.status = 'completed'
         offer.listing.status = 'closed'
         offer.listing.save()
+        if offer.offered_listing:
+            offer.offered_listing.status = 'closed'
+            offer.offered_listing.save()
 
     offer.save()
 
