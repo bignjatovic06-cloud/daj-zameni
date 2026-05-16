@@ -337,7 +337,10 @@ def category_list(request):
             'slug':     c.slug,
             'icon':     c.icon,
             'tint':     c.tint,
-            'count':    c.listings.filter(status='active').count(),
+            'count':    Listing.objects.filter(
+                            Q(category=c) | Q(category__parent=c),
+                            status='active',
+                        ).count(),
             'children': [
                 {
                     'id':    s.id,
