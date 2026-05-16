@@ -467,20 +467,25 @@ def my_offers(request):
     )
     result = []
     for offer in offer_list:
-        is_sender  = offer.from_user_id == request.user.pk
-        i_reviewed = offer.pk in reviewed_ids
+        is_sender    = offer.from_user_id == request.user.pk
+        i_reviewed   = offer.pk in reviewed_ids
+        i_confirmed  = offer.completed_by_from if is_sender else offer.completed_by_to
+        can_complete = offer.status == 'accepted' and not i_confirmed
         result.append({
-            'id':              str(offer.pk),
-            'status':          offer.status,
-            'is_sender':       is_sender,
-            'other_user':      offer.to_user.username if is_sender else offer.from_user.username,
-            'listing':         _mini_listing(offer.listing),
-            'offered_listing': _mini_listing(offer.offered_listing),
-            'message':         offer.message,
-            'created_at':      offer.created_at.isoformat(),
-            'can_complete':    offer.status == 'accepted',
-            'can_review':      offer.status == 'completed' and not i_reviewed,
-            'i_reviewed':      i_reviewed,
+            'id':                str(offer.pk),
+            'status':            offer.status,
+            'is_sender':         is_sender,
+            'other_user':        offer.to_user.username if is_sender else offer.from_user.username,
+            'listing':           _mini_listing(offer.listing),
+            'offered_listing':   _mini_listing(offer.offered_listing),
+            'message':           offer.message,
+            'created_at':        offer.created_at.isoformat(),
+            'completed_by_from': offer.completed_by_from,
+            'completed_by_to':   offer.completed_by_to,
+            'i_confirmed':       i_confirmed,
+            'can_complete':      can_complete,
+            'can_review':        offer.status == 'completed' and not i_reviewed,
+            'i_reviewed':        i_reviewed,
         })
     return JsonResponse({'results': result})
 
@@ -494,18 +499,39 @@ def offer_complete(request, offer_id):
     if offer.status != 'accepted':
         return JsonResponse({'error': 'Ponuda mora biti prihvaćena da bi se završila.'}, status=400)
 
-    offer.status         = 'completed'
-    offer.listing.status = 'closed'
-    offer.listing.save()
+    is_from = request.user.pk == offer.from_user_id
+    if is_from:
+        if offer.completed_by_from:
+            return JsonResponse({'error': 'Već si potvrdio/la.'}, status=400)
+        offer.completed_by_from = True
+    else:
+        if offer.completed_by_to:
+            return JsonResponse({'error': 'Već si potvrdio/la.'}, status=400)
+        offer.completed_by_to = True
+
+    both_confirmed = offer.completed_by_from and offer.completed_by_to
+    if both_confirmed:
+        offer.status = 'completed'
+        offer.listing.status = 'closed'
+        offer.listing.save()
+
     offer.save()
 
-    other = offer.to_user if request.user == offer.from_user else offer.from_user
-    Notification.objects.create(
-        user = other,
-        type = 'offer_accepted',
-        text = f'{request.user.username} je potvrdio/la završetak razmene za „{offer.listing.title}"',
-    )
-    return JsonResponse({'ok': True})
+    other = offer.to_user if is_from else offer.from_user
+    if both_confirmed:
+        Notification.objects.create(
+            user = other,
+            type = 'offer_accepted',
+            text = f'Razmena za „{offer.listing.title}" je završena! Ostavi ocenu.',
+        )
+    else:
+        Notification.objects.create(
+            user = other,
+            type = 'offer_accepted',
+            text = f'{request.user.username} je potvrdio/la razmenu za „{offer.listing.title}" — čeka se tvoja potvrda.',
+        )
+
+    return JsonResponse({'ok': True, 'status': offer.status, 'both_confirmed': both_confirmed})
 
 
 @login_required
@@ -775,10 +801,14 @@ def _msg_data(msg, is_first=False):
     if msg.swap_offer_id:
         offer = msg.swap_offer
         offer_data = {
-            'id':              str(offer.pk),
-            'status':          offer.status,
-            'offered_listing': _mini_listing(offer.offered_listing),
-            'target_listing':  _mini_listing(offer.listing),
+            'id':                str(offer.pk),
+            'status':            offer.status,
+            'from_user_id':      offer.from_user_id,
+            'to_user_id':        offer.to_user_id,
+            'completed_by_from': offer.completed_by_from,
+            'completed_by_to':   offer.completed_by_to,
+            'offered_listing':   _mini_listing(offer.offered_listing),
+            'target_listing':    _mini_listing(offer.listing),
         }
     return {
         'id':         msg.pk,

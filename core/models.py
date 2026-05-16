@@ -117,10 +117,12 @@ class SwapOffer(models.Model):
     from_user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_offers')
     to_user         = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_offers')
     offered_listing = models.ForeignKey(Listing, on_delete=models.SET_NULL, null=True, blank=True, related_name='offered_in')
-    message         = models.TextField(blank=True)
-    status          = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
-    created_at      = models.DateTimeField(auto_now_add=True)
-    updated_at      = models.DateTimeField(auto_now=True)
+    message             = models.TextField(blank=True)
+    status              = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
+    completed_by_from   = models.BooleanField(default=False)
+    completed_by_to     = models.BooleanField(default=False)
+    created_at          = models.DateTimeField(auto_now_add=True)
+    updated_at          = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.from_user} → {self.listing}"
