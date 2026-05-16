@@ -1056,11 +1056,12 @@ function EditAdModal({ item, onClose, categories = [], onSaved }) {
 }
 
 /* --- POST AD MODAL --- */
-function PostAdModal({ onClose, categories = [], onCreated }) {
+function PostAdModal({ onClose, categories = [], onCreated, onView }) {
   var [step, setStep]                   = useS(1);
   var [title, setTitle]                 = useS('');
   var [imageFiles, setImageFiles]       = useS([]);
   var [imagePreviews, setImagePreviews] = useS([]);
+  var [createdListing, setCreatedListing] = useS(null);
   var [mainCat, setMainCat]             = useS(null);
   var [sub, setSub]                     = useS(null);
   var [suggestions, setSuggestions]     = useS([]);
@@ -1180,6 +1181,7 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
       if (imgRes.ok && imgRes.images) res.listing.images = imgRes.images;
     }
     setLoading(false);
+    setCreatedListing(res.listing);
     setDone(true);
     if (onCreated) onCreated(res.listing);
   };
@@ -1198,7 +1200,7 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
             </p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <button className="nav-btn" onClick={onClose}>Zatvori</button>
-              <button className="nav-btn primary" onClick={onClose}>Pogledaj oglas</button>
+              <button className="nav-btn primary" onClick={function() { onClose(); if (onView && createdListing) onView(createdListing); }}>Pogledaj oglas</button>
             </div>
           </div>
         </div>

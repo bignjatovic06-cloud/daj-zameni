@@ -748,7 +748,7 @@ function App() {
       )}
 
       {postOpen && (
-        <PostAdModal onClose={() => setPostOpen(false)} categories={categories} onCreated={onCreatedListing}/>
+        <PostAdModal onClose={() => setPostOpen(false)} categories={categories} onCreated={onCreatedListing} onView={(listing) => { const [n] = normalizeListings([listing]); setSelectedItem(n); setView('detail'); }}/>
       )}
 
       {editItem && (
