@@ -133,7 +133,7 @@ function App() {
       }
       setListings(normalizeListings(listData.results || []));
       setCategories([
-        { id: 'sve', name: 'Sve kategorije', icon: 'grid', count: listData.count || 0, children: [] },
+        { id: 'sve', slug: 'sve', name: 'Sve kategorije', icon: 'grid', count: listData.count || 0, children: [] },
         ...normalizeCategories(catData.results || []),
       ]);
       setLoading(false);
