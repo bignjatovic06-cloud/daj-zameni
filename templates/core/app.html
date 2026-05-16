@@ -235,12 +235,18 @@
   }
 
   /* ============ Categories ============ */
-  .cat-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:10px}
+  .cat-carousel{
+    display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;
+    scrollbar-width:none;-ms-overflow-style:none;
+    padding:4px 2px 14px;
+  }
+  .cat-carousel::-webkit-scrollbar{display:none}
   .cat-tile{
     background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 10px;
     display:flex;flex-direction:column;gap:10px;cursor:pointer;
     transition:transform .15s, border-color .15s, box-shadow .15s;
-    min-height:140px;
+    min-height:130px;min-width:120px;max-width:140px;flex:0 0 130px;
+    scroll-snap-align:start;
   }
   .cat-tile:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:var(--shadow)}
   .cat-tile .ic{
@@ -250,6 +256,18 @@
   }
   .cat-tile .nm{font-weight:600;font-size:13px;line-height:1.2;color:var(--ink)}
   .cat-tile .ct{font-size:11px;color:var(--ink-3);font-family:var(--font-mono)}
+  .cat-arr{
+    position:absolute;top:50%;transform:translateY(calc(-50% - 7px));
+    width:36px;height:36px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
+    display:grid;place-items:center;cursor:pointer;
+    z-index:10;transition:box-shadow .15s,border-color .15s,color .15s;
+    color:var(--ink-2);padding:0;
+  }
+  .cat-arr:hover{box-shadow:0 4px 16px rgba(0,0,0,.15);border-color:var(--accent);color:var(--accent)}
+  .cat-arr-l{left:-18px}
+  .cat-arr-r{right:-18px}
 
   /* ============ Listings ============ */
   .filter-row{
@@ -520,9 +538,9 @@
     .hero-search .field{min-height:44px}
     .hero-search .go{padding:14px 20px;justify-content:center;font-size:15px}
     .hero-tags{flex-wrap:wrap;gap:6px}
-    .cat-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-    .cat-tile{padding:12px 8px;gap:8px}
+    .cat-tile{padding:12px 8px;gap:8px;flex:0 0 110px;min-width:110px}
     .cat-tile .nm{font-size:12px}
+    .cat-arr{display:none}
     .list-grid{grid-template-columns:repeat(2,1fr);gap:10px}
     .how{grid-template-columns:1fr}
     .detail{grid-template-columns:1fr}
@@ -537,7 +555,7 @@
     .nav-btn.primary{padding:0 10px}
     .hero-inner{padding:28px 16px 36px}
     .hero h1{font-size:clamp(28px,9vw,40px)}
-    .cat-grid{grid-template-columns:repeat(2,1fr);gap:6px}
+    .cat-tile{flex:0 0 95px;min-width:95px;padding:10px 8px}
     .cat-tile .ct{display:none}
     .cat-tile .nm{font-size:11.5px}
     .list-grid{grid-template-columns:1fr;gap:8px}

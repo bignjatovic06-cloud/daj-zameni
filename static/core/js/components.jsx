@@ -427,6 +427,13 @@ function TrustStrip() {
 /* ─── CATEGORIES ─────────────────────────────────── */
 function Categories({ categories = [], onSelect }) {
   const displayCats = categories.filter(c => c.id !== 'sve');
+  const scrollRef = useRef(null);
+
+  const scroll = function(dir) {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: dir * 380, behavior: 'smooth' });
+  };
+
   return (
     <section className="section">
       <div className="section-inner">
@@ -441,20 +448,28 @@ function Categories({ categories = [], onSelect }) {
             Sve kategorije <Icon name="arrow-r" size={14} />
           </div>
         </div>
-        <div className="cat-grid">
-          {displayCats.length === 0 ? (
-            <div style={{ gridColumn: '1/-1', padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 13 }}>
-              Učitavanje kategorija...
-            </div>
-          ) : displayCats.map((c) =>
-            <div key={c.id} className="cat-tile" onClick={() => onSelect(c.id)}>
-              <div className="ic"><Icon name={c.icon || 'tag'} size={22} stroke={1.5} /></div>
-              <div>
-                <div className="nm">{c.name}</div>
-                <div className="ct">{c.count || 0} oglasa</div>
+        <div style={{ position: 'relative' }}>
+          <button className="cat-arr cat-arr-l" onClick={() => scroll(-1)} aria-label="Prethodno">
+            <Icon name="arrow-r" size={16} style={{ transform: 'rotate(180deg)', display: 'block' }} />
+          </button>
+          <div className="cat-carousel" ref={scrollRef}>
+            {displayCats.length === 0 ? (
+              <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 13, whiteSpace: 'nowrap' }}>
+                Učitavanje kategorija...
               </div>
-            </div>
-          )}
+            ) : displayCats.map((c) =>
+              <div key={c.id} className="cat-tile" onClick={() => onSelect(c.id)}>
+                <div className="ic"><Icon name={c.icon || 'tag'} size={22} stroke={1.5} /></div>
+                <div>
+                  <div className="nm">{c.name}</div>
+                  <div className="ct">{(c.count || 0).toLocaleString()} oglasa</div>
+                </div>
+              </div>
+            )}
+          </div>
+          <button className="cat-arr cat-arr-r" onClick={() => scroll(1)} aria-label="Sledeće">
+            <Icon name="arrow-r" size={16} style={{ display: 'block' }} />
+          </button>
         </div>
       </div>
     </section>
