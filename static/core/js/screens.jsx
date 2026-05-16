@@ -1183,7 +1183,7 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
       listing_type:      listingType,
       category:          catSlug,
       price:             price || null,
-      wants_in_exchange: wantsList.join(', '),
+      wants_in_exchange: (wantsInput.trim() ? [...wantsList, wantsInput.trim()] : wantsList).join(', '),
       city:              city.trim(),
       condition:         condition,
     });
@@ -1583,7 +1583,7 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
                     {wantsList.length > 0 ? (
                       <tr>
                         <td style={{ padding: '3px 0', color: 'var(--ink-3)' }}>Tražim</td>
-                        <td style={{ padding: '3px 0', fontWeight: 500 }}>{wantsList.join(', ')}</td>
+                        <td style={{ padding: '3px 0', fontWeight: 500 }}>{(wantsInput.trim() ? [...wantsList, wantsInput.trim()] : wantsList).join(', ')}</td>
                       </tr>
                     ) : null}
                   </tbody>
