@@ -380,6 +380,16 @@ def offer_create(request, pk):
             pk=data['offered_listing_id'], user=request.user, status='active'
         ).first()
 
+    cash_offer = None
+    try:
+        raw = data.get('cash_offer')
+        if raw not in (None, '', 0, '0'):
+            cash_offer = float(raw)
+            if cash_offer <= 0:
+                cash_offer = None
+    except (TypeError, ValueError):
+        pass
+
     offer = SwapOffer.objects.create(
         listing         = listing,
         from_user       = request.user,
@@ -387,6 +397,7 @@ def offer_create(request, pk):
         status          = 'pending',
         message         = message,
         offered_listing = offered_listing,
+        cash_offer      = cash_offer,
     )
 
     conv = (
@@ -485,6 +496,7 @@ def my_offers(request):
             'created_at':        offer.created_at.isoformat(),
             'completed_by_from': offer.completed_by_from,
             'completed_by_to':   offer.completed_by_to,
+            'cash_offer':        float(offer.cash_offer) if offer.cash_offer else None,
             'i_confirmed':       i_confirmed,
             'can_complete':      can_complete,
             'can_review':        offer.status == 'completed' and not i_reviewed,
@@ -813,6 +825,7 @@ def _msg_data(msg, is_first=False):
             'to_user_id':        offer.to_user_id,
             'completed_by_from': offer.completed_by_from,
             'completed_by_to':   offer.completed_by_to,
+            'cash_offer':        float(offer.cash_offer) if offer.cash_offer else None,
             'offered_listing':   _mini_listing(offer.offered_listing),
             'target_listing':    _mini_listing(offer.listing),
         }

@@ -118,6 +118,7 @@ class SwapOffer(models.Model):
     to_user         = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_offers')
     offered_listing = models.ForeignKey(Listing, on_delete=models.SET_NULL, null=True, blank=True, related_name='offered_in')
     message             = models.TextField(blank=True)
+    cash_offer          = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     status              = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
     completed_by_from   = models.BooleanField(default=False)
     completed_by_to     = models.BooleanField(default=False)

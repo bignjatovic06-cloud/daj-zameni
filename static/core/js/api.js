@@ -122,10 +122,10 @@ async function apiWishlistIds() {
   return apiFetch('/listings/wishlist/ids/');
 }
 
-async function apiCreateOffer(listingId, offeredListingId, message) {
+async function apiCreateOffer(listingId, offeredListingId, message, cashOffer) {
   return apiFetch('/listings/' + listingId + '/offer/', {
     method: 'POST',
-    body: JSON.stringify({ offered_listing_id: offeredListingId, message }),
+    body: JSON.stringify({ offered_listing_id: offeredListingId, message, cash_offer: cashOffer || null }),
   });
 }
 

@@ -337,6 +337,7 @@ function RegisterModal({ onClose, onSuccess, onSwitchToLogin }) {
 function OfferModal({ item, onClose, onSuccess }) {
   const [myListings, setMyListings] = useS(null);
   const [selected, setSelected]     = useS(null);
+  const [cash, setCash]             = useS('');
   const [msg, setMsg]               = useS('');
   const [loading, setLoading]       = useS(false);
   const [err, setErr]               = useS('');
@@ -348,11 +349,13 @@ function OfferModal({ item, onClose, onSuccess }) {
     });
   }, []);
 
+  const cashNum = parseFloat(cash.replace(/\./g, '').replace(',', '.')) || null;
+
   const submit = async () => {
     if (!selected) return;
     setLoading(true);
     setErr('');
-    const res = await apiCreateOffer(item.id, selected.id, msg);
+    const res = await apiCreateOffer(item.id, selected.id, msg, cashNum);
     setLoading(false);
     if (res.ok) { onSuccess(); }
     else setErr(res.error === 'already_offered' ? 'Već si poslao/la ponudu za ovaj oglas.' : 'Greška pri slanju ponude.');
@@ -429,14 +432,36 @@ function OfferModal({ item, onClose, onSuccess }) {
                 })}
               </div>
 
+              <div className="field-group" style={{ marginBottom: 12 }}>
+                <label>Novčana doplata uz oglas <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(opciono)</span></label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    step="100"
+                    value={cash}
+                    onChange={e => setCash(e.target.value)}
+                    placeholder="npr. 2000"
+                    style={{ paddingRight: 48 }}
+                  />
+                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', pointerEvents: 'none' }}>RSD</span>
+                </div>
+                {cashNum > 0 && (
+                  <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4 }}>
+                    Nudiš: <b style={{ color: 'var(--accent)' }}>{cashNum.toLocaleString('sr-RS')} RSD</b> + izabrani oglas
+                  </div>
+                )}
+              </div>
+
               <div className="field-group">
-                <label>Poruka (opciono)</label>
+                <label>Poruka <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(opciono)</span></label>
                 <textarea
                   className="textarea"
                   value={msg}
                   onChange={e => setMsg(e.target.value)}
                   placeholder="Dodaj kratku napomenu uz ponudu…"
-                  rows={3}
+                  rows={2}
                 />
               </div>
 
@@ -533,6 +558,14 @@ function OfferCard({ msg, who, currentUserId, onOfferAction, isReviewed }) {
           <div style={{ fontSize: 22, color: 'var(--ink-3)', flexShrink: 0 }}>⇄</div>
           <ListingMini listing={offer.target_listing}/>
         </div>
+        {offer.cash_offer > 0 && (
+          <div style={{ padding: '0 16px 8px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+            <span style={{ color: 'var(--ink-3)' }}>+ doplata:</span>
+            <span style={{ fontWeight: 700, color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
+              {offer.cash_offer.toLocaleString('sr-RS')} RSD
+            </span>
+          </div>
+        )}
         {body ? (
           <div style={{ padding: '0 16px 10px', fontSize: 13, color: 'var(--ink-2)', fontStyle: 'italic' }}>„{body}"</div>
         ) : null}
@@ -1906,6 +1939,11 @@ function RatingsScreen({ onOpenItem }) {
                       {offer.offered_listing && (
                         <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 3 }}>
                           Ponuđeno: <b>{offer.offered_listing.title}</b>
+                          {offer.cash_offer > 0 && (
+                            <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', marginLeft: 6 }}>
+                              + {offer.cash_offer.toLocaleString('sr-RS')} RSD
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
