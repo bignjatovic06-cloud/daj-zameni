@@ -536,8 +536,9 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
                     🔄 PREDLOG RAZMENE
                   </div>
                   <div style={{ fontSize: 14, color: 'var(--ink)' }}>
-                    <b>{pendingOffer.senderUsername}</b> želi da zameni ovaj oglas za tvoj{' '}
-                    <b>„{pendingOffer.offer.target_listing?.title}"</b>
+                    <b>{pendingOffer.senderUsername}</b> nudi{' '}
+                    <b>„{pendingOffer.offer.offered_listing ? pendingOffer.offer.offered_listing.title : 'oglas'}"</b>{' '}
+                    u zamenu za tvoj oglas
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -583,7 +584,7 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
                     key={i}
                     className={'th' + (i === active ? ' active' : '')}
                     onClick={() => setActive(i)}
-                    style={th?.url ? { backgroundImage: `url(${th.url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+                    style={th && th.url ? { backgroundImage: 'url(' + th.url + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
                   />
                 ))}
               </div>
@@ -1092,7 +1093,7 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
 }
 
 /* ─── RAZMENE DRAWER ──────────────────────────────── */
-function RazmeneDrawer({ onClose, currentUser }) {
+function RazmeneDrawer({ onClose, currentUser, targetListing }) {
   const [threads, setThreads]   = useS([]);
   const [active, setActive]     = useS(null);
   const [messages, setMessages] = useS([]);
@@ -1105,13 +1106,28 @@ function RazmeneDrawer({ onClose, currentUser }) {
   useE(() => { activeRef.current = active; }, [active]);
 
   useE(() => {
-    apiInbox().then(res => {
-      if (Array.isArray(res.results)) {
-        setThreads(res.results);
-        if (res.results.length > 0) setActive(res.results[0]);
-      }
-      setLoading(false);
-    });
+    var loadInbox = function(targetConvId) {
+      apiInbox().then(function(res) {
+        if (Array.isArray(res.results)) {
+          setThreads(res.results);
+          if (targetConvId) {
+            var match = res.results.find(function(t) { return t.id === targetConvId; });
+            setActive(match || (res.results.length > 0 ? res.results[0] : null));
+          } else if (res.results.length > 0) {
+            setActive(res.results[0]);
+          }
+        }
+        setLoading(false);
+      });
+    };
+
+    if (targetListing) {
+      apiStartThread(targetListing.id).then(function(res) {
+        loadInbox(res.ok ? res.conversation_id : null);
+      });
+    } else {
+      loadInbox(null);
+    }
   }, []);
 
   useE(() => {

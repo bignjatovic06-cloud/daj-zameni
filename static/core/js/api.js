@@ -54,14 +54,14 @@ async function apiCreateListing(data) {
 }
 
 async function apiUpdateListing(id, data) {
-  return apiFetch(`/listings/${id}/update/`, {
+  return apiFetch('/listings/' + id + '/update/', {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
 }
 
 async function apiDeleteListing(id) {
-  return apiFetch(`/listings/${id}/delete/`, {
+  return apiFetch('/listings/' + id + '/delete/', {
     method: 'DELETE',
   });
 }
@@ -69,7 +69,7 @@ async function apiDeleteListing(id) {
 async function apiUploadImages(listingId, files) {
   const formData = new FormData();
   files.forEach(f => formData.append('images', f));
-  const res = await fetch(`/listings/${listingId}/images/`, {
+  const res = await fetch('/listings/' + listingId + '/images/', {
     method: 'POST',
     headers: { 'X-CSRFToken': getCookie('csrftoken') },
     credentials: 'include',
@@ -88,11 +88,11 @@ async function apiInbox() {
 }
 
 async function apiChatMessages(conversationId) {
-  return apiFetch(`/inbox/${conversationId}/`);
+  return apiFetch('/inbox/' + conversationId + '/');
 }
 
 async function apiSendMessage(conversationId, body) {
-  return apiFetch(`/inbox/${conversationId}/`, {
+  return apiFetch('/inbox/' + conversationId + '/', {
     method: 'POST',
     body: JSON.stringify({ body }),
   });
@@ -107,25 +107,25 @@ async function apiMarkNotificationsRead() {
 }
 
 async function apiToggleWishlist(listingId) {
-  return apiFetch(`/listings/${listingId}/wishlist/`, { method: 'POST' });
+  return apiFetch('/listings/' + listingId + '/wishlist/', { method: 'POST' });
 }
 
 async function apiCreateOffer(listingId, offeredListingId, message) {
-  return apiFetch(`/listings/${listingId}/offer/`, {
+  return apiFetch('/listings/' + listingId + '/offer/', {
     method: 'POST',
     body: JSON.stringify({ offered_listing_id: offeredListingId, message }),
   });
 }
 
 async function apiReportListing(listingId, reason, details) {
-  return apiFetch(`/listings/${listingId}/report/`, {
+  return apiFetch('/listings/' + listingId + '/report/', {
     method: 'POST',
     body: JSON.stringify({ reason, details }),
   });
 }
 
 async function apiStartThread(listingId) {
-  return apiFetch(`/listings/${listingId}/thread/`, { method: 'POST' });
+  return apiFetch('/listings/' + listingId + '/thread/', { method: 'POST' });
 }
 
 async function apiMyListings() {
@@ -133,7 +133,7 @@ async function apiMyListings() {
 }
 
 async function apiRespondToOffer(offerId, action) {
-  return apiFetch(`/offers/${offerId}/respond/`, {
+  return apiFetch('/offers/' + offerId + '/respond/', {
     method: 'POST',
     body: JSON.stringify({ action }),
   });

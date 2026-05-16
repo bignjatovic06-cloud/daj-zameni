@@ -348,8 +348,16 @@ def offer_create(request, pk):
         offered_listing = offered_listing,
     )
 
-    conv = Conversation.objects.create(listing=listing)
-    conv.participants.add(request.user, listing.user)
+    conv = (
+        Conversation.objects
+        .filter(participants=request.user)
+        .filter(participants=listing.user)
+        .filter(listing=listing)
+        .first()
+    )
+    if not conv:
+        conv = Conversation.objects.create(listing=listing)
+        conv.participants.add(request.user, listing.user)
 
     Message.objects.create(
         conversation = conv,
@@ -607,7 +615,7 @@ def _listing_data(listing, full=False):
 
 def _msg_data(msg, is_first=False):
     offer_data = None
-    if is_first and msg.swap_offer:
+    if msg.swap_offer_id:
         offer = msg.swap_offer
         offer_data = {
             'id':              str(offer.pk),

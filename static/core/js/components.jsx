@@ -256,7 +256,7 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const cityLabel = city ? `${city} · ${radius} km` : 'Cela Srbija';
+  const cityLabel = city ? (city + ' · ' + radius + ' km') : 'Cela Srbija';
 
   const applyLocation = (c, r) => {
     onCityChange && onCityChange(c, r);
@@ -360,7 +360,7 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange }) {
                             style={{
                               flex: 1, padding: '7px 4px',
                               borderRadius: 8,
-                              border: `1.5px solid ${radius === r ? 'var(--accent)' : 'var(--line, #e5e7eb)'}`,
+                              border: '1.5px solid ' + (radius === r ? 'var(--accent)' : 'var(--line, #e5e7eb)'),
                               background: radius === r ? 'var(--accent)' : 'transparent',
                               color: radius === r ? '#fff' : 'var(--ink-1)',
                               fontSize: 12, fontWeight: 600, cursor: 'pointer',
