@@ -122,8 +122,8 @@ EMAIL_PORT         = 587
 EMAIL_USE_TLS      = True
 EMAIL_HOST_USER    = 'resend'
 EMAIL_HOST_PASSWORD = os.environ.get('RESEND_API_KEY', '')
-DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_FROM', 'Daj Zameni <noreply@dajzameni.rs>')
-SITE_URL           = os.environ.get('SITE_URL', 'https://dajzameni.rs')
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_FROM', 'Daj Zameni <noreply@dajzameni.online>')
+SITE_URL           = os.environ.get('SITE_URL', 'https://dajzameni.online')
 
 AUTHENTICATION_BACKENDS = [
     'social_core.backends.google.GoogleOAuth2',
