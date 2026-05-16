@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 import json
 
 from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review
+from . import emails as email_service
 
 User = get_user_model()
 
@@ -423,6 +424,14 @@ def offer_create(request, pk):
         type = 'offer',
         text = f'{request.user.username} je predložio/la razmenu za tvoj oglas „{listing.title}"',
     )
+    email_service.send_new_offer(
+        to_user       = listing.user,
+        from_username = request.user.username,
+        listing_title = listing.title,
+        offered_title = offered_listing.title if offered_listing else None,
+        cash_offer    = cash_offer,
+        message       = message,
+    )
 
     return JsonResponse({'ok': True, 'offer_id': str(offer.pk), 'conv_id': conv.pk}, status=201)
 
@@ -450,12 +459,22 @@ def offer_respond(request, offer_id):
             type = 'offer_accepted',
             text = f'{request.user.username} je prihvatio/la tvoju ponudu za „{offer.listing.title}"',
         )
+        email_service.send_offer_accepted(
+            to_user       = offer.from_user,
+            by_username   = request.user.username,
+            listing_title = offer.listing.title,
+        )
     elif action == 'decline':
         offer.status = 'declined'
         Notification.objects.create(
             user = offer.from_user,
             type = 'offer_declined',
             text = f'{request.user.username} je odbio/la tvoju ponudu za „{offer.listing.title}"',
+        )
+        email_service.send_offer_declined(
+            to_user       = offer.from_user,
+            by_username   = request.user.username,
+            listing_title = offer.listing.title,
         )
     else:
         return JsonResponse({'error': 'Nevažeća akcija.'}, status=400)
@@ -542,11 +561,27 @@ def offer_complete(request, offer_id):
             type = 'offer_accepted',
             text = f'Razmena za „{offer.listing.title}" je završena! Ostavi ocenu.',
         )
+        email_service.send_swap_completed(
+            to_user        = other,
+            other_username = request.user.username,
+            listing_title  = offer.listing.title,
+        )
+        # also notify the confirming user themselves
+        email_service.send_swap_completed(
+            to_user        = request.user,
+            other_username = other.username,
+            listing_title  = offer.listing.title,
+        )
     else:
         Notification.objects.create(
             user = other,
             type = 'offer_accepted',
             text = f'{request.user.username} je potvrdio/la razmenu za „{offer.listing.title}" — čeka se tvoja potvrda.',
+        )
+        email_service.send_swap_waiting_confirm(
+            to_user       = other,
+            from_username = request.user.username,
+            listing_title = offer.listing.title,
         )
 
     return JsonResponse({'ok': True, 'status': offer.status, 'both_confirmed': both_confirmed})
@@ -672,6 +707,15 @@ def chat(request, conversation_id):
                 type = 'message',
                 text = f'{request.user.username} ti je poslao/la poruku',
             )
+            # send email only if other has unread messages (i.e. they're not actively chatting)
+            unread_count = conv.messages.filter(is_read=False).exclude(sender=request.user).count()
+            if unread_count <= 1:
+                listing_title = conv.listing.title if conv.listing else None
+                email_service.send_new_message(
+                    to_user       = other,
+                    from_username = request.user.username,
+                    listing_title = listing_title,
+                )
         return JsonResponse({'ok': True, 'message': _msg_data(msg, is_first=False)}, status=201)
 
     msgs = list(
