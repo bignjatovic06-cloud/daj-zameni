@@ -490,9 +490,9 @@ function App() {
       )}
 
       {view === 'search' && (
-        <div className="search-layout" style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px 60px', display: 'grid', gridTemplateColumns: '268px 1fr', gap: 28, alignItems: 'start' }}>
+        <div className="search-layout">
 
-          <aside style={{ position: 'sticky', top: 80 }}>
+          <aside className="search-aside">
 
             <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 12, padding: '16px', marginBottom: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 10, textTransform: 'uppercase' }}>Kategorija</div>
@@ -623,7 +623,7 @@ function App() {
             )}
           </aside>
 
-          <main style={{ minWidth: 0 }}>
+          <main className="search-main">
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
               <span style={{ cursor: 'pointer', color: 'var(--accent)' }} onClick={() => setView('home')}>Početna</span>
               <span>›</span>

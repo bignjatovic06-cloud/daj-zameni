@@ -280,6 +280,20 @@
   .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
   .chip:hover:not(.active){border-color:var(--ink-3);color:var(--ink)}
 
+  /* ============ Search layout ============ */
+  .search-layout{
+    max-width:1280px;margin:0 auto;padding:24px 24px 60px;
+    display:grid;grid-template-columns:268px 1fr;gap:28px;align-items:start;
+  }
+  .search-aside{
+    grid-column:1;grid-row:1;
+    position:sticky;top:80px;width:268px;
+  }
+  .search-main{
+    grid-column:2;grid-row:1;
+    min-width:0;min-height:520px;
+  }
+
   .list-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
   .card{
     background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
@@ -546,8 +560,9 @@
     .detail{grid-template-columns:1fr}
     .section-inner{padding:0 16px}
     section.section{padding:32px 0}
-    .search-layout{grid-template-columns:1fr !important;padding:16px 16px 48px !important}
-    .search-layout aside{position:static !important}
+    .search-layout{grid-template-columns:1fr;padding:16px 16px 48px}
+    .search-aside{grid-column:1;grid-row:1;position:static;width:auto}
+    .search-main{grid-column:1;grid-row:2;min-height:300px}
   }
   @media (max-width: 480px){
     .nav-inner{padding:8px 12px}
