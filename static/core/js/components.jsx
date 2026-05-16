@@ -217,7 +217,7 @@ function NotificationsPopover({ notifications = [], onMarkRead, onNotifClick }) 
 }
 
 /* ─── HERO ─────────────────────────────────────── */
-function Hero({ layout, accent, onSearch, onPostAd, onCityChange }) {
+function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers = [], onOfferRespond }) {
   const [q, setQ] = useState('');
   const [city, setCity] = useState('');
   const [radius, setRadius] = useState(10);
@@ -265,7 +265,7 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange }) {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Šta tražite ili nudite?"
+                placeholder="Šta tražite?"
               />
             </div>
             <div className="divider" />
@@ -387,11 +387,24 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange }) {
             </button>
           </form>
 
-          <div className="hero-tags">
-            {['Knjige', 'Bicikl', 'Nameštaj', 'Slušalice', 'Dečija oprema', 'Biljke'].map((tag) =>
-              <span key={tag} className="hero-tag" onClick={() => onSearch(tag)}>{tag}</span>
-            )}
-          </div>
+          {pendingOffers.length > 0 && (
+            <div className="hero-pending-strip">
+              {pendingOffers.slice(0, 3).map(o => (
+                <div key={o.id} className="hero-pending-item">
+                  <Icon name="swap" size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                  <span className="hero-pending-text">
+                    <b>{o.other_user}</b> želi da zameni
+                    {o.listing ? <> tvoj oglas <b>„{o.listing.title}"</b></> : ''}
+                    {o.offered_listing ? <> za <b>„{o.offered_listing.title}"</b></> : ''}
+                  </span>
+                  <div className="hero-pending-actions">
+                    <button className="hero-pending-btn accept" onClick={() => onOfferRespond && onOfferRespond(o.id, 'accept')}>Prihvati</button>
+                    <button className="hero-pending-btn decline" onClick={() => onOfferRespond && onOfferRespond(o.id, 'decline')}>Odbij</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {layout === 'split' && <HeroArt accent={accent} />}

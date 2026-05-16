@@ -100,6 +100,7 @@ function App() {
   const [editItem, setEditItem]           = uS(null);
   const [deleteConfirm, setDeleteConfirm] = uS(false);
   const [pendingOffer, setPendingOffer]   = uS(null);
+  const [heroPendingOffers, setHeroPendingOffers] = uS([]);
 
   const [listings, setListings]           = uS([]);
   const [categories, setCategories]       = uS([]);
@@ -112,6 +113,14 @@ function App() {
   const unreadNotifs  = notifications.filter(n => !n.is_read).length;
   const unreadThreads = 0;
 
+  const loadHeroPending = () => {
+    apiMyOffers().then(res => {
+      if (res.ok && res.results) {
+        setHeroPendingOffers(res.results.filter(o => o.status === 'pending' && !o.is_sender));
+      }
+    });
+  };
+
   uE(() => {
     Promise.all([
       apiAuthStatus(),
@@ -123,6 +132,8 @@ function App() {
         apiNotifications().then(res => {
           if (res.ok && res.results) setNotifications(res.results);
         });
+        loadHeroPending();
+
         apiWishlistIds().then(res => {
           if (res.ids) {
             const map = {};
@@ -259,6 +270,11 @@ function App() {
   const handleOfferRespond = async (offerId, action) => {
     const res = await apiRespondToOffer(offerId, action);
     if (res.ok) setPendingOffer(null);
+  };
+
+  const handleHeroOfferRespond = async (offerId, action) => {
+    const res = await apiRespondToOffer(offerId, action);
+    if (res.ok) setHeroPendingOffers(prev => prev.filter(o => o.id !== offerId));
   };
 
   const filtered = useMemo(() => {
@@ -454,6 +470,8 @@ function App() {
               setFilterCity(city);
               setFilterRadius(radius);
             }}
+            pendingOffers={heroPendingOffers}
+            onOfferRespond={handleHeroOfferRespond}
           />
           <TrustStrip/>
           <Categories categories={categories} onSelect={onSelectCat}/>
