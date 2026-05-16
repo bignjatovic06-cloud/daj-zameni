@@ -278,7 +278,7 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange }) {
             <span className="amp">—</span> Uzmi što ti <em>treba</em>.
           </h1>
           <p className="lede">
-            Poveži se sa susedima i ljudima u svojoj okolini. Razmeni, kupi ili prodaj predmete direktno — bez agencija, bez naknada, bez komplikacija.
+            Poveži se sa ljudima na drugačiji način. Razmeni, kupi ili prodaj predmete — bez agencija, bez naknada, bez komplikacija.
           </p>
 
           <form className="hero-search" onSubmit={handleSubmit}>
