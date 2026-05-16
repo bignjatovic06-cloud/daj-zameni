@@ -110,6 +110,9 @@ def listing_list(request):
     elif ltype == 'both':
         qs = qs.filter(listing_type='both')
 
+    if request.GET.get('premium') == '1':
+        qs = qs.filter(is_premium=True)
+
     if sort in ('created_at', '-created_at', 'price', '-price'):
         qs = qs.order_by(sort)
 
@@ -743,6 +746,8 @@ def _listing_data(listing, full=False):
         'status':            listing.status,
         'city':              listing.city,
         'views':             listing.views,
+        'is_featured':       listing.is_featured,
+        'is_premium':        listing.is_premium,
         'created_at':        listing.created_at.isoformat(),
         'wants_in_exchange': listing.wants_in_exchange,
         'user': {

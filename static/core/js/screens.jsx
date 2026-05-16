@@ -1,5 +1,169 @@
 const { useState: useS, useEffect: useE, useRef: useR } = React;
 
+/* ─── CATEGORY PICKER MODAL ────────────────────── */
+function CategoryPickerModal({ categories, selected, onSelect, onClose }) {
+  var [q, setQ]               = useS('');
+  var [activeCat, setActiveCat] = useS(null);
+  var inputRef                = useR(null);
+
+  var displayCats = categories.filter(function(c) { return c.id !== 'sve'; });
+
+  useE(function() {
+    if (inputRef.current) inputRef.current.focus();
+    if (displayCats.length > 0) setActiveCat(displayCats[0]);
+  }, []);
+
+  var ql = q.toLowerCase();
+  var searchResults = [];
+  if (q) {
+    displayCats.forEach(function(cat) {
+      if (cat.name.toLowerCase().includes(ql)) {
+        searchResults.push({ type: 'cat', id: cat.id, name: cat.name, count: cat.count, parentName: null });
+      }
+      (cat.children || []).forEach(function(sub) {
+        if (sub.name.toLowerCase().includes(ql)) {
+          searchResults.push({ type: 'sub', id: sub.id, name: sub.name, count: sub.count, parentName: cat.name });
+        }
+      });
+    });
+  }
+
+  var handleKey = function(e) {
+    if (e.key === 'Escape') onClose();
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: 24 }}
+      onClick={onClose}
+      onKeyDown={handleKey}
+    >
+      <div
+        style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 900, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.2)', overflow: 'hidden' }}
+        onClick={function(e) { e.stopPropagation(); }}
+      >
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Icon name="search" size={18} style={{ color: 'var(--ink-3)', flexShrink: 0 }}/>
+          <input
+            ref={inputRef}
+            value={q}
+            onChange={function(e) { setQ(e.target.value); }}
+            placeholder="Pretraži kategorije i podkategorije..."
+            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, color: 'var(--ink)', background: 'transparent' }}
+          />
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', padding: 4 }}>
+            <Icon name="x" size={20}/>
+          </button>
+        </div>
+
+        {q ? (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+            {searchResults.length === 0 ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>
+                Nema rezultata za „{q}"
+              </div>
+            ) : searchResults.map(function(r) {
+              var isSel = selected === r.id;
+              return (
+                <div
+                  key={r.type + r.id}
+                  onClick={function() { onSelect(r.id); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8, cursor: 'pointer', background: isSel ? 'var(--accent-soft)' : 'transparent' }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: isSel ? 'var(--accent)' : 'var(--ink)' }}>{r.name}</div>
+                    {r.parentName && <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginTop: 1 }}>{r.parentName}</div>}
+                  </div>
+                  <span style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>{r.count || 0}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '220px 1fr', overflow: 'hidden' }}>
+            <div style={{ borderRight: '1px solid var(--line)', overflowY: 'auto' }}>
+              {displayCats.map(function(cat) {
+                var isAct = activeCat && activeCat.id === cat.id;
+                return (
+                  <div
+                    key={cat.id}
+                    onClick={function() { setActiveCat(cat); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '11px 16px', cursor: 'pointer',
+                      background: isAct ? 'var(--accent-soft)' : 'transparent',
+                      color: isAct ? 'var(--accent)' : 'var(--ink)',
+                      fontWeight: isAct ? 700 : 500, fontSize: 14,
+                      borderLeft: isAct ? '3px solid var(--accent)' : '3px solid transparent',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Icon name={cat.icon || 'tag'} size={16} stroke={1.5}/>
+                      <span>{cat.name}</span>
+                    </div>
+                    <Icon name="arrow-r" size={12} style={{ color: 'var(--ink-3)' }}/>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ overflowY: 'auto', padding: '18px 20px' }}>
+              {activeCat ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <h3 style={{ margin: 0, fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 700 }}>{activeCat.name}</h3>
+                    <button
+                      onClick={function() { onSelect(activeCat.id); }}
+                      style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                    >
+                      Vidi sve u kategoriji <Icon name="arrow-r" size={13}/>
+                    </button>
+                  </div>
+                  {(!activeCat.children || activeCat.children.length === 0) ? (
+                    <div style={{ fontSize: 13, color: 'var(--ink-3)', padding: '20px 0' }}>Nema podkategorija.</div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                      {activeCat.children.map(function(sub) {
+                        var isSel = selected === sub.id;
+                        return (
+                          <div
+                            key={sub.id}
+                            onClick={function() { onSelect(sub.id); }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, cursor: 'pointer', background: isSel ? 'var(--accent-soft)' : 'transparent' }}
+                          >
+                            <span style={{ fontSize: 14, color: isSel ? 'var(--accent)' : 'var(--ink)', fontWeight: isSel ? 600 : 400 }}>
+                              {sub.name}
+                            </span>
+                            <span style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginLeft: 8, flexShrink: 0 }}>
+                              {sub.count || 0}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Izaberi kategoriju</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: '10px 20px', borderTop: '1px solid var(--line)', background: '#faf8f1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+            ⚡ Brzi tip: kucaj naziv predmeta i predložićemo kategoriju
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ background: 'var(--line)', padding: '2px 7px', borderRadius: 4, marginRight: 4 }}>Esc</span>
+            za izlaz
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── LOGIN MODAL ──────────────────────────────── */
 function LoginModal({ onClose, onSuccess, onSwitchToRegister }) {
   const [username, setUsername] = useS('');
@@ -194,7 +358,7 @@ function OfferModal({ item, onClose, onSuccess }) {
     else setErr(res.error === 'already_offered' ? 'Već si poslao/la ponudu za ovaj oglas.' : 'Greška pri slanju ponude.');
   };
 
-  const condLabel = { new: 'Novo', like_new: 'Kao novo', good: 'Dobro', fair: 'Prihvatljivo', poor: 'Loše' };
+  const condLabel = { new: 'Novo', like_new: 'Polovno — kao novo', good: 'Polovno — odlično', fair: 'Polovno — vrlo dobro', poor: 'Polovno — dobro', antique: 'Antikvitet' };
 
   return (
     <div className="scrim" onClick={onClose}>
@@ -543,7 +707,8 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
   const priceNum    = item.price ? parseFloat(item.price) : null;
   const isOwner     = currentUser && currentUser.username === item.user;
   const conditionLabel = {
-    new: 'Novo', like_new: 'Kao novo', good: 'Dobro', fair: 'Prihvatljivo', poor: 'Loše',
+    new: 'Novo', like_new: 'Polovno — kao novo', good: 'Polovno — odlično',
+    fair: 'Polovno — vrlo dobro', poor: 'Polovno — dobro', antique: 'Antikvitet',
   }[item.condition] || item.condition;
 
   const handleMessage = () => {
@@ -1713,4 +1878,4 @@ function Bubble({ who, children }) {
   );
 }
 
-Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen, RatingsScreen });
+Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen, RatingsScreen, CategoryPickerModal });

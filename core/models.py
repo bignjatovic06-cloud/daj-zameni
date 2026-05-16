@@ -39,10 +39,11 @@ class Category(models.Model):
 class Listing(models.Model):
     CONDITION_CHOICES = [
         ('new',      'Novo'),
-        ('like_new', 'Kao novo'),
-        ('good',     'Dobro'),
-        ('fair',     'Prihvatljivo'),
-        ('poor',     'Loše'),
+        ('like_new', 'Polovno — kao novo'),
+        ('good',     'Polovno — odlično'),
+        ('fair',     'Polovno — vrlo dobro'),
+        ('poor',     'Polovno — dobro'),
+        ('antique',  'Antikvitet'),
     ]
     TYPE_CHOICES = [
         ('sell',   'Prodaja'),
@@ -72,6 +73,7 @@ class Listing(models.Model):
 
     views       = models.PositiveIntegerField(default=0)
     is_featured = models.BooleanField(default=False)
+    is_premium  = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

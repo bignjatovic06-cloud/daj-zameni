@@ -484,9 +484,18 @@ function Categories({ categories = [], onSelect }) {
 }
 
 /* ─── LISTING CARD ─────────────────────────────── */
+function relTime(iso) {
+  if (!iso) return '';
+  var diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 3600)       return Math.floor(diff / 60) + ' min';
+  if (diff < 86400)      return Math.floor(diff / 3600) + ' h';
+  if (diff < 86400 * 30) return 'prije ' + Math.floor(diff / 86400) + ' d';
+  return 'prije ' + Math.floor(diff / (86400 * 30)) + ' mj';
+}
+
 function ListingCard({ item, fav, onFav, onClick }) {
-  const isBarter = item.type === 'barter' || item.type === 'both';
-  const isNew    = item.condition === 'new' || item.condition === 'like_new';
+  const isBarter  = item.type === 'barter' || item.type === 'both';
+  const isPremium = item.is_premium || item.is_featured;
 
   return (
     <div className="card" onClick={onClick}>
@@ -499,14 +508,18 @@ function ListingCard({ item, fav, onFav, onClick }) {
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 loading="lazy"
               />
-            : <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+            : <span style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '0 8px' }}>
                 {item.catName || '📦'}
               </span>
           }
         </div>
         <div className="badges">
-          {isBarter && <span className="b barter">Razmena</span>}
-          {isNew     && <span className="b new">Kao novo</span>}
+          {isPremium && (
+            <span className="b" style={{ background: '#1a365d', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 10, padding: '3px 7px', borderRadius: 5, fontWeight: 700, letterSpacing: '.05em' }}>
+              ★ PREMIUM
+            </span>
+          )}
+          {isBarter && <span className="b barter"><Icon name="swap" size={10} stroke={2}/> Razmena</span>}
         </div>
         <button
           className={'fav' + (fav ? ' on' : '')}
@@ -519,18 +532,20 @@ function ListingCard({ item, fav, onFav, onClick }) {
       <div className="body">
         <div className="title">{item.title}</div>
         {item.seek && (
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontStyle: 'italic' }}>↳ {item.seek}</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontStyle: 'italic', marginBottom: 2 }}>↳ {item.seek}</div>
         )}
-        <div className="meta">
-          <span>{item.user}</span>
-        </div>
         <div className="price">
           <span className={'p' + (isBarter && !item.price ? ' barter' : '')}>
             {item.price
-              ? parseFloat(item.price).toLocaleString('sr-RS') + ' rsd'
+              ? parseFloat(item.price).toLocaleString('sr-RS') + ' RSD'
               : 'Razmena'}
           </span>
-          <span className="loc">{item.city}</span>
+        </div>
+        <div className="meta" style={{ marginTop: 4 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Icon name="pin" size={11}/> {item.city}
+          </span>
+          <span style={{ color: 'var(--ink-4)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>{relTime(item.created)}</span>
         </div>
       </div>
     </div>
