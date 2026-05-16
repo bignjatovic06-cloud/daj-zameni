@@ -142,25 +142,29 @@ def listing_detail(request, pk):
 @login_required
 @require_http_methods(['POST'])
 def listing_create(request):
-    data  = _parse(request)
-    ltype = data.get('listing_type', 'both')
+    try:
+        data  = _parse(request)
+        ltype = data.get('listing_type', 'both')
 
-    category = None
-    if data.get('category'):
-        category = Category.objects.filter(slug=data['category']).first()
+        category = None
+        if data.get('category'):
+            category = Category.objects.filter(slug=data['category']).first()
 
-    listing = Listing.objects.create(
-        user              = request.user,
-        category          = category,
-        title             = data.get('title', '').strip(),
-        description       = data.get('description', '').strip(),
-        price             = data.get('price') or None,
-        listing_type      = ltype,
-        condition         = data.get('condition', 'good'),
-        city              = data.get('city', '').strip(),
-        wants_in_exchange = data.get('wants_in_exchange', '').strip(),
-    )
-    return JsonResponse({'ok': True, 'listing': _listing_data(listing)}, status=201)
+        listing = Listing.objects.create(
+            user              = request.user,
+            category          = category,
+            title             = data.get('title', '').strip(),
+            description       = data.get('description', '').strip(),
+            price             = data.get('price') or None,
+            listing_type      = ltype,
+            condition         = data.get('condition', 'good'),
+            city              = data.get('city', '').strip(),
+            wants_in_exchange = data.get('wants_in_exchange', '').strip(),
+        )
+        return JsonResponse({'ok': True, 'listing': _listing_data(listing)}, status=201)
+    except Exception as e:
+        import traceback
+        return JsonResponse({'ok': False, 'error': str(e), 'detail': traceback.format_exc()}, status=500)
 
 
 @login_required

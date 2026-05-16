@@ -1172,7 +1172,7 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
       condition:         condition,
     });
     if (!res.ok) {
-      setError(res.error || 'Greška pri objavljivanju.');
+      setError(res.error || ('Greška pri objavljivanju. Status: ' + res.status));
       setLoading(false);
       return;
     }
