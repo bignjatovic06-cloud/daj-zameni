@@ -161,7 +161,7 @@ def listing_create(request):
             city              = data.get('city', '').strip(),
             wants_in_exchange = data.get('wants_in_exchange', '').strip(),
         )
-        return JsonResponse({'ok': True, 'listing': _listing_data(listing)}, status=201)
+        return JsonResponse({'ok': True, 'listing': _listing_data(listing, full=True)}, status=201)
     except Exception as e:
         import traceback
         return JsonResponse({'ok': False, 'error': str(e), 'detail': traceback.format_exc()}, status=500)
