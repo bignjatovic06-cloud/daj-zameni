@@ -490,7 +490,7 @@ function App() {
       )}
 
       {view === 'search' && (
-        <div className="search-layout">
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px 60px', display: 'grid', gridTemplateColumns: '268px 1fr', gap: 28, alignItems: 'start' }}>
 
           <aside style={{ position: 'sticky', top: 80 }}>
 
@@ -623,7 +623,7 @@ function App() {
             )}
           </aside>
 
-          <main>
+          <main style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
               <span style={{ cursor: 'pointer', color: 'var(--accent)' }} onClick={() => setView('home')}>Početna</span>
               <span>›</span>
