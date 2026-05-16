@@ -110,6 +110,14 @@ async function apiToggleWishlist(listingId) {
   return apiFetch('/listings/' + listingId + '/wishlist/', { method: 'POST' });
 }
 
+async function apiWishlist() {
+  return apiFetch('/listings/wishlist/');
+}
+
+async function apiWishlistIds() {
+  return apiFetch('/listings/wishlist/ids/');
+}
+
 async function apiCreateOffer(listingId, offeredListingId, message) {
   return apiFetch('/listings/' + listingId + '/offer/', {
     method: 'POST',

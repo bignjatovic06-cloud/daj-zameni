@@ -371,6 +371,80 @@ function OfferCard({ msg, who }) {
   );
 }
 
+/* ─── SAVED SCREEN ──────────────────────────────── */
+function SavedScreen({ onOpenItem, onPostAd }) {
+  const [listings, setListings] = useS(null);
+
+  useE(() => {
+    apiWishlist().then(function(res) {
+      setListings(Array.isArray(res.results) ? res.results : []);
+    });
+  }, []);
+
+  var normalized = listings ? listings.map(function(l) {
+    return {
+      id:        l.id,
+      title:     l.title,
+      price:     l.price,
+      type:      l.listing_type,
+      condition: l.condition,
+      status:    l.status,
+      city:      l.city,
+      views:     l.views,
+      cat:       l.category ? l.category.slug : '',
+      catName:   l.category ? l.category.name : '',
+      user:      l.user ? l.user.username : '',
+      rating:    l.user ? l.user.rating : 0,
+      seek:      l.wants_in_exchange || '',
+      created:   l.created_at,
+      images:    l.images || [],
+      desc:      l.description || '',
+    };
+  }) : [];
+
+  return (
+    <section className="section" style={{ paddingTop: 32 }}>
+      <div className="section-inner">
+        <div className="section-head">
+          <div>
+            <h2>Sačuvani oglasi</h2>
+            {listings !== null && (
+              <div className="sub">{normalized.length} {normalized.length === 1 ? 'oglas' : normalized.length < 5 ? 'oglasa' : 'oglasa'}</div>
+            )}
+          </div>
+        </div>
+
+        {listings === null ? (
+          <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>
+            Učitavam…
+          </div>
+        ) : normalized.length === 0 ? (
+          <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
+            <div style={{ fontSize: 36, marginBottom: 14 }}>🤍</div>
+            <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
+              Još nisi sačuvao/la nijedan oglas
+            </div>
+            <div style={{ fontSize: 13.5, marginBottom: 20 }}>
+              Klikni srce na oglasu da ga sačuvaš za kasnije.
+            </div>
+            <button className="nav-btn primary" onClick={onPostAd}>
+              <Icon name="plus" size={14}/> Postavi oglas
+            </button>
+          </div>
+        ) : (
+          <div className="list-grid">
+            {normalized.map(function(l) {
+              return (
+                <ListingCard key={l.id} item={l} fav={true} onFav={function() {}} onClick={function() { onOpenItem(l); }}/>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ─── REPORT MODAL ──────────────────────────────── */
 const REPORT_REASONS = [
   { value: 'spam',           label: 'Spam ili prevara' },
@@ -451,10 +525,10 @@ function ReportModal({ item, onClose }) {
 }
 
 /* ─── LISTING DETAIL ──────────────────────────────── */
-function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories = [], currentUser = null, onLogin = null, pendingOffer = null, onOfferRespond = null }) {
+function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories = [], currentUser = null, onLogin = null, pendingOffer = null, onOfferRespond = null, isSaved = false, onSaveToggle = null }) {
   const [active, setActive]           = useS(0);
   const [statsOpen, setStatsOpen]     = useS(false);
-  const [saved, setSaved]             = useS(false);
+  const [saved, setSaved]             = useS(isSaved);
   const [savePending, setSavePending] = useS(false);
   const [offerSent, setOfferSent]     = useS(false);
   const [showOffer, setShowOffer]     = useS(false);
@@ -483,12 +557,13 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
   };
 
   const handleSave = async () => {
-    if (!currentUser) { onLogin?.(); return; }
+    if (!currentUser) { onLogin && onLogin(); return; }
     if (savePending) return;
     setSavePending(true);
     try {
       const res = await apiToggleWishlist(item.id);
       setSaved(res.saved);
+      if (onSaveToggle) onSaveToggle(item.id, res.saved);
     } catch (e) {}
     setSavePending(false);
   };
@@ -1295,4 +1370,4 @@ function Bubble({ who, children }) {
   );
 }
 
-Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal });
+Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen });

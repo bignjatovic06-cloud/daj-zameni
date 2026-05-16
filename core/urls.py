@@ -7,6 +7,8 @@ urlpatterns = [
     # ─── Oglasi ───────────────────────────────────────
     path('listings/',                          views.listing_list,           name='listing_list'),
     path('listings/mine/',                     views.my_listings,            name='my_listings'),
+    path('listings/wishlist/',                 views.wishlist_list,          name='wishlist_list'),
+    path('listings/wishlist/ids/',             views.wishlist_ids,           name='wishlist_ids'),
     path('listings/create/',                   views.listing_create,         name='listing_create'),
     path('listings/<uuid:pk>/',                views.listing_detail,         name='listing_detail'),
     path('listings/<uuid:pk>/update/',         views.listing_update,         name='listing_update'),

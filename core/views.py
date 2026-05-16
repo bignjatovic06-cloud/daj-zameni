@@ -221,7 +221,38 @@ def listing_image_upload(request, pk):
 @login_required
 @require_POST
 def toggle_wishlist(request, pk):
-    return JsonResponse({'error': 'not_implemented'}, status=501)
+    listing = get_object_or_404(Listing, pk=pk)
+    if listing.user == request.user:
+        return JsonResponse({'error': 'cannot_save_own'}, status=400)
+    if request.user.wishlist.filter(pk=pk).exists():
+        request.user.wishlist.remove(listing)
+        saved = False
+    else:
+        request.user.wishlist.add(listing)
+        saved = True
+    return JsonResponse({'ok': True, 'saved': saved})
+
+
+@login_required
+def wishlist_list(request):
+    listings = (
+        request.user.wishlist
+        .filter(status='active')
+        .select_related('user', 'category', 'category__parent')
+        .prefetch_related('images')
+        .order_by('-created_at')
+    )
+    ids = set(str(pk) for pk in request.user.wishlist.values_list('pk', flat=True))
+    return JsonResponse({
+        'results': [_listing_data(l) for l in listings],
+        'ids':     list(ids),
+    })
+
+
+@login_required
+def wishlist_ids(request):
+    ids = list(str(pk) for pk in request.user.wishlist.values_list('pk', flat=True))
+    return JsonResponse({'ids': ids})
 
 
 @login_required

@@ -99,6 +99,7 @@ function App() {
   const [categories, setCategories]       = uS([]);
   const [currentUser, setCurrentUser]     = uS(null);
   const [notifications, setNotifications] = uS([]);
+  const [wishlistIds, setWishlistIds]     = uS({});
   const [loading, setLoading]             = uS(true);
   const [apiError, setApiError]           = uS(null);
 
@@ -115,6 +116,13 @@ function App() {
         setCurrentUser(auth.user);
         apiNotifications().then(res => {
           if (res.ok && res.results) setNotifications(res.results);
+        });
+        apiWishlistIds().then(res => {
+          if (res.ids) {
+            const map = {};
+            res.ids.forEach(id => { map[id] = true; });
+            setWishlistIds(map);
+          }
         });
       }
       setListings(normalizeListings(listData.results || []));
@@ -200,13 +208,30 @@ function App() {
     apiNotifications().then(res => {
       if (res.ok && res.results) setNotifications(res.results);
     });
+    apiWishlistIds().then(res => {
+      if (res.ids) {
+        const map = {};
+        res.ids.forEach(id => { map[id] = true; });
+        setWishlistIds(map);
+      }
+    });
   };
 
   const handleLogout = async () => {
     await apiLogout();
     setCurrentUser(null);
     setNotifications([]);
+    setWishlistIds({});
     setUserOpen(false);
+  };
+
+  const handleSaveToggle = (id, saved) => {
+    setWishlistIds(prev => {
+      const next = Object.assign({}, prev);
+      if (saved) next[id] = true;
+      else delete next[id];
+      return next;
+    });
   };
 
   const handleMarkRead = async () => {
@@ -616,6 +641,8 @@ function App() {
             onLogin={() => setLoginOpen(true)}
             pendingOffer={pendingOffer}
             onOfferRespond={handleOfferRespond}
+            isSaved={!!wishlistIds[selectedItem.id]}
+            onSaveToggle={handleSaveToggle}
           />
         </div>
       )}
@@ -653,7 +680,11 @@ function App() {
         </section>
       )}
 
-      {['saved', 'ratings', 'settings'].includes(view) && (
+      {view === 'saved' && (
+        <SavedScreen onOpenItem={onOpenItem} onPostAd={() => requireAuth(() => setPostOpen(true))}/>
+      )}
+
+      {['ratings', 'settings'].includes(view) && (
         <section className="section" style={{ paddingTop: 32 }}>
           <div className="section-inner">
             <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
