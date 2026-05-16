@@ -490,7 +490,7 @@ function App() {
       )}
 
       {view === 'search' && (
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px 60px', display: 'grid', gridTemplateColumns: '268px 1fr', gap: 28, alignItems: 'start' }}>
+        <div className="search-layout">
 
           <aside style={{ position: 'sticky', top: 80 }}>
 
@@ -651,7 +651,7 @@ function App() {
             </div>
 
             {filtered.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+              <div className="list-grid">
                 {filtered.map(l => (
                   <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
                 ))}

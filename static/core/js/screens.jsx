@@ -1208,7 +1208,7 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
 
   return (
     <div className="scrim" onClick={onClose}>
-      <div className="modal" onClick={function(e) { e.stopPropagation(); }} style={{ maxWidth: 560 }}>
+      <div className="modal" onClick={function(e) { e.stopPropagation(); }} style={{ maxWidth: 720 }}>
         <div className="mh">
           <h3>Postavi oglas</h3>
           <button className="x-btn" onClick={onClose}><Icon name="x" size={16}/></button>
@@ -1362,22 +1362,26 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
               {!mainCat ? (
                 <div>
                   <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-3)', letterSpacing: '.06em', marginBottom: 10 }}>SVE KATEGORIJE</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
                     {displayCats.map(function(c) {
                       return (
                         <button
                           key={c.id}
                           onClick={function() { setMainCat(c); setSub(null); }}
                           style={{
-                            padding: '12px 14px', borderRadius: 10, fontSize: 14,
+                            padding: '12px 10px', borderRadius: 10, fontSize: 13,
                             border: '1px solid var(--line)', background: '#fff',
-                            color: 'var(--ink)', cursor: 'pointer', textAlign: 'left', fontWeight: 500,
+                            color: 'var(--ink)', cursor: 'pointer', textAlign: 'center', fontWeight: 500,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                           }}
                         >
-                          {c.name}
+                          {c.icon
+                            ? React.createElement(Icon, { name: c.icon, size: 20, style: { color: 'var(--accent)', flexShrink: 0 } })
+                            : null}
+                          <span style={{ lineHeight: 1.2 }}>{c.name}</span>
                           {c.children && c.children.length > 0 && (
-                            <span style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', display: 'block', marginTop: 2 }}>
-                              {c.children.length + ' podkategorija'}
+                            <span style={{ fontSize: 10, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+                              {c.children.length + ' podkat.'}
                             </span>
                           )}
                         </button>
@@ -1394,7 +1398,7 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
                     <Icon name="arrow-l" size={14}/> {mainCat.name}
                   </button>
                   {mainCat.children && mainCat.children.length > 0 ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
                       {mainCat.children.map(function(s) {
                         var isSel = sub && sub.slug === s.slug;
                         return (
@@ -1402,17 +1406,18 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
                             key={s.id}
                             onClick={function() { setSub(s); }}
                             style={{
-                              padding: '10px 14px', borderRadius: 10, fontSize: 13,
+                              padding: '10px 12px', borderRadius: 10, fontSize: 13,
                               border: isSel ? '2px solid var(--accent)' : '1px solid var(--line)',
                               background: isSel ? 'var(--accent-soft)' : '#fff',
                               color: isSel ? 'var(--accent)' : 'var(--ink)',
                               cursor: 'pointer', textAlign: 'left', fontWeight: isSel ? 700 : 400,
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
                             }}
                           >
-                            {s.name}
+                            <span>{s.name}</span>
                             {s.count ? (
-                              <span style={{ fontSize: 11, color: isSel ? 'var(--accent)' : 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginLeft: 6 }}>
-                                {'(' + s.count + ')'}
+                              <span style={{ fontSize: 10, color: isSel ? 'var(--accent)' : 'var(--ink-3)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                                {s.count}
                               </span>
                             ) : null}
                           </button>
