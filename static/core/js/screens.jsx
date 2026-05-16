@@ -482,15 +482,34 @@ function ListingMini({ listing }) {
   );
 }
 
-function OfferCard({ msg, who }) {
+function OfferCard({ msg, who, currentUserId, onOfferAction, isReviewed }) {
   const { offer, body } = msg;
-  const statusColor = { accepted: 'var(--good)', declined: '#e53e3e', pending: 'var(--ink-3)', pending_owner_response: 'var(--ink-3)', rejected: '#e53e3e', completed: 'var(--good)' };
-  const statusLabel = { accepted: '✓ Prihvaćeno', declined: '✗ Odbijeno', pending: '⏳ Na čekanju', pending_owner_response: '⏳ Na čekanju', rejected: '✗ Odbijeno', completed: '✓ Završeno' };
+  const [acting, setActing] = useS(null);
+
+  const statusColor = { accepted: 'var(--good)', declined: '#e53e3e', pending: 'var(--ink-3)', completed: 'var(--good)' };
+  const statusLabel = { accepted: '✓ Prihvaćeno', declined: '✗ Odbijeno', pending: '⏳ Na čekanju', completed: '✓ Završeno' };
   const me = who === 'me';
 
+  const isRecipient = currentUserId && offer.to_user_id === currentUserId;
+  const isSender    = currentUserId && offer.from_user_id === currentUserId;
+  const myConfirmed    = isSender ? offer.completed_by_from : (isRecipient ? offer.completed_by_to : false);
+  const otherConfirmed = isSender ? offer.completed_by_to   : (isRecipient ? offer.completed_by_from : false);
+
+  const canRespond = offer.status === 'pending' && isRecipient;
+  const canComplete = offer.status === 'accepted' && (isSender || isRecipient) && !myConfirmed;
+  const canReview   = offer.status === 'completed' && (isSender || isRecipient) && !isReviewed;
+
+  const doAct = async function(action) {
+    setActing(action);
+    var res;
+    if (action === 'accept')   res = await apiRespondToOffer(offer.id, 'accept');
+    if (action === 'decline')  res = await apiRespondToOffer(offer.id, 'decline');
+    if (action === 'complete') res = await apiCompleteOffer(offer.id);
+    setActing(null);
+    if (res && res.ok && onOfferAction) onOfferAction(action, res);
+  };
+
   const openListing = () => {
-    // Pošiljalac otvara oglas za koji se interesuje (target)
-    // Primalac otvara oglas koji mu je ponuđen (offered) + banner
     const id = me ? offer.target_listing?.id : offer.offered_listing?.id;
     if (!id) return;
     const detail = { id };
@@ -530,6 +549,37 @@ function OfferCard({ msg, who }) {
             </button>
           )}
         </div>
+
+        {offer.status === 'accepted' && otherConfirmed && !myConfirmed && (
+          <div style={{ padding: '0 16px 6px', fontSize: 12, color: '#b7791f', fontStyle: 'italic' }}>
+            Druga strana je potvrdila — čeka se tvoja potvrda.
+          </div>
+        )}
+
+        {(canRespond || canComplete || canReview) && (
+          <div style={{ padding: '0 16px 14px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {canRespond && (
+              <>
+                <button className="nav-btn primary" onClick={() => doAct('accept')} disabled={!!acting} style={{ fontSize: 12 }}>
+                  {acting === 'accept' ? '…' : '✓ Prihvati'}
+                </button>
+                <button className="nav-btn" onClick={() => doAct('decline')} disabled={!!acting} style={{ fontSize: 12, color: 'var(--warn)', borderColor: 'var(--warn)' }}>
+                  {acting === 'decline' ? '…' : '✗ Odbij'}
+                </button>
+              </>
+            )}
+            {canComplete && (
+              <button className="nav-btn primary" onClick={() => doAct('complete')} disabled={!!acting} style={{ fontSize: 12 }}>
+                {acting === 'complete' ? '…' : '✓ Potvrdi razmenu'}
+              </button>
+            )}
+            {canReview && (
+              <button className="nav-btn" onClick={() => onOfferAction && onOfferAction('review', { offerId: offer.id })} style={{ fontSize: 12, color: '#b7791f', borderColor: '#b7791f' }}>
+                ★ Ostavi ocenu
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1853,8 +1903,13 @@ function RatingsScreen({ onOpenItem }) {
                           disabled={isCompleting}
                           style={{ fontSize: 12 }}
                         >
-                          {isCompleting ? '…' : '✓ Potvrdi završetak'}
+                          {isCompleting ? '…' : '✓ Potvrdi razmenu'}
                         </button>
+                      )}
+                      {offer.status === 'accepted' && offer.i_confirmed && !offer.can_complete && offer.status !== 'completed' && (
+                        <span style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+                          ⏳ Čeka se potvrda druge strane
+                        </span>
                       )}
 
                       {offer.can_review && (
@@ -1952,16 +2007,45 @@ function RatingsScreen({ onOpenItem }) {
 
 /* ─── RAZMENE DRAWER ──────────────────────────────── */
 function RazmeneDrawer({ onClose, currentUser, targetListing }) {
-  const [threads, setThreads]   = useS([]);
-  const [active, setActive]     = useS(null);
-  const [messages, setMessages] = useS([]);
-  const [text, setText]         = useS('');
-  const [loading, setLoading]   = useS(true);
-  const [sending, setSending]   = useS(false);
-  const bottomRef               = useR(null);
-  const activeRef               = useR(null);
+  const [threads, setThreads]         = useS([]);
+  const [active, setActive]           = useS(null);
+  const [messages, setMessages]       = useS([]);
+  const [text, setText]               = useS('');
+  const [loading, setLoading]         = useS(true);
+  const [sending, setSending]         = useS(false);
+  const [reviewTarget, setReviewTarget]       = useS(null);
+  const [reviewedOfferIds, setReviewedOfferIds] = useS([]);
+  const bottomRef = useR(null);
+  const activeRef = useR(null);
 
   useE(() => { activeRef.current = active; }, [active]);
+
+  const refreshMessages = function() {
+    if (!activeRef.current) return;
+    apiChatMessages(activeRef.current.id).then(function(res) {
+      if (Array.isArray(res.results)) setMessages(res.results);
+    });
+  };
+
+  const handleOfferAction = function(action, res) {
+    if (action === 'review') {
+      var a = activeRef.current;
+      setReviewTarget({
+        id:         res.offerId,
+        other_user: a ? a.other_user?.username : '',
+        listing:    a ? a.listing : null,
+      });
+    } else {
+      refreshMessages();
+    }
+  };
+
+  const handleReviewSuccess = function() {
+    if (reviewTarget) {
+      setReviewedOfferIds(function(prev) { return prev.concat(reviewTarget.id); });
+    }
+    setReviewTarget(null);
+  };
 
   useE(() => {
     var loadInbox = function(targetConvId) {
@@ -2109,7 +2193,14 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
             {messages.map(msg => {
               const who = msg.sender === currentUser?.username ? 'me' : 'them';
               return msg.offer
-                ? <OfferCard key={msg.id} msg={msg} who={who}/>
+                ? <OfferCard
+                    key={msg.id}
+                    msg={msg}
+                    who={who}
+                    currentUserId={currentUser?.id}
+                    onOfferAction={handleOfferAction}
+                    isReviewed={reviewedOfferIds.indexOf(msg.offer.id) !== -1}
+                  />
                 : <Bubble key={msg.id} who={who}>{msg.body}</Bubble>;
             })}
             <div ref={bottomRef}/>
@@ -2129,6 +2220,13 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
           </form>
         </div>
       </aside>
+      {reviewTarget && (
+        <ReviewModal
+          offer={reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          onSuccess={handleReviewSuccess}
+        />
+      )}
     </>
   );
 }
