@@ -520,13 +520,16 @@
     .hero-search .field{min-height:44px}
     .hero-search .go{padding:14px 20px;justify-content:center;font-size:15px}
     .hero-tags{flex-wrap:wrap;gap:6px}
-    .cat-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-    .cat-tile{padding:14px 10px}
+    .cat-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+    .cat-tile{padding:12px 8px;gap:8px}
+    .cat-tile .nm{font-size:12px}
     .list-grid{grid-template-columns:repeat(2,1fr);gap:10px}
     .how{grid-template-columns:1fr}
     .detail{grid-template-columns:1fr}
     .section-inner{padding:0 16px}
-    .section{padding:32px 0}
+    section.section{padding:32px 0}
+    .search-layout{grid-template-columns:1fr !important;padding:16px 16px 48px !important}
+    .search-layout aside{position:static !important}
   }
   @media (max-width: 480px){
     .nav-inner{padding:8px 12px}
@@ -536,6 +539,7 @@
     .hero h1{font-size:clamp(28px,9vw,40px)}
     .cat-grid{grid-template-columns:repeat(2,1fr);gap:6px}
     .cat-tile .ct{display:none}
+    .cat-tile .nm{font-size:11.5px}
     .list-grid{grid-template-columns:1fr;gap:8px}
     .card{flex-direction:row;height:auto;min-height:0}
     .card .img{width:110px;min-width:110px;flex-shrink:0;aspect-ratio:unset;height:auto;min-height:110px}

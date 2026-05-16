@@ -490,7 +490,7 @@ function App() {
       )}
 
       {view === 'search' && (
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px 60px', display: 'grid', gridTemplateColumns: '268px 1fr', gap: 28, alignItems: 'start' }}>
+        <div className="search-layout" style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px 60px', display: 'grid', gridTemplateColumns: '268px 1fr', gap: 28, alignItems: 'start' }}>
 
           <aside style={{ position: 'sticky', top: 80 }}>
 
