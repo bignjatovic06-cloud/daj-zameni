@@ -65,6 +65,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# Trust Railway's SSL termination proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
