@@ -24,12 +24,14 @@ function normalizeListings(apiListings) {
 function normalizeCategories(apiCats) {
   return apiCats.map(c => ({
     id:       c.slug,
+    slug:     c.slug,
     name:     c.name,
     icon:     c.icon,
     tint:     c.tint,
     count:    c.count,
     children: (c.children || []).map(s => ({
       id:    s.slug,
+      slug:  s.slug,
       name:  s.name,
       icon:  s.icon,
       count: s.count,
@@ -365,6 +367,14 @@ function App() {
     if (!newListing) return;
     const [normalized] = normalizeListings([newListing]);
     setListings(prev => [normalized, ...prev]);
+    apiCategories().then(catData => {
+      if (catData && catData.results) {
+        setCategories([
+          { id: 'sve', slug: 'sve', name: 'Sve kategorije', icon: 'grid', tint: '', count: 0, children: [] },
+          ...normalizeCategories(catData.results),
+        ]);
+      }
+    });
   };
 
   const handleDelete = async () => {
