@@ -1,12 +1,13 @@
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-oqg@0f%0hs_ef+4cb4m8umfkxuaik4-^*5d1e3x#z7-_$7+s=^'
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-oqg@0f%0hs_ef+4cb4m8umfkxuaik4-^*5d1e3x#z7-_$7+s=^")
 
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.4']
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost,192.168.1.4").split(",")
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -84,8 +85,6 @@ AUTHENTICATION_BACKENDS = [
     'social_core.backends.google.GoogleOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 ]
-
-import os
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
