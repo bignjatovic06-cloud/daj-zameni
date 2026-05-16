@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
@@ -46,4 +46,7 @@ urlpatterns = [
     path('auth/login/',                        views.login_view,             name='login'),
     path('auth/register/',                     views.register,               name='register'),
     path('auth/logout/',                       views.logout_view,            name='logout'),
+
+    # ─── SPA catch-all — mora biti poslednji ──────────────
+    re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja)(/.*)?$', views.app_view, name='spa_catchall'),
 ]

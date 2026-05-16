@@ -113,6 +113,36 @@ function App() {
   const unreadNotifs  = notifications.filter(n => !n.is_read).length;
   const unreadThreads = 0;
 
+  // ── URL helpers ──────────────────────────────────────────────
+  const viewToPath = (v, item) => {
+    if (v === 'detail' && item) return '/oglasi/' + item.id;
+    if (v === 'search')        return '/pretraga';
+    if (v === 'my-listings')   return '/moji-oglasi';
+    if (v === 'saved')         return '/sacuvano';
+    if (v === 'ratings')       return '/ocene';
+    if (v === 'settings')      return '/podesavanja';
+    return '/';
+  };
+
+  const pathToView = (path) => {
+    if (path.startsWith('/oglasi/')) return 'detail';
+    if (path === '/pretraga')        return 'search';
+    if (path === '/moji-oglasi')     return 'my-listings';
+    if (path === '/sacuvano')        return 'saved';
+    if (path === '/ocene')           return 'ratings';
+    if (path === '/podesavanja')     return 'settings';
+    return 'home';
+  };
+
+  const navigate = (v, item, replace) => {
+    const path = viewToPath(v, item);
+    const state = { view: v, itemId: item ? item.id : null };
+    if (replace) history.replaceState(state, '', path);
+    else         history.pushState(state, '', path);
+    setView(v);
+    if (item !== undefined) setSelectedItem(item);
+  };
+
   const loadHeroPending = () => {
     apiMyOffers().then(res => {
       if (res.ok && res.results) {
@@ -122,6 +152,15 @@ function App() {
   };
 
   uE(() => {
+    // read initial URL so direct links and refreshes work
+    const initView = pathToView(window.location.pathname);
+    const initItemId = window.location.pathname.startsWith('/oglasi/')
+      ? window.location.pathname.split('/oglasi/')[1]
+      : null;
+
+    // seed the current history entry with state so popstate works on first back
+    history.replaceState({ view: initView, itemId: initItemId }, '', window.location.pathname);
+
     Promise.all([
       apiAuthStatus(),
       apiListings(),
@@ -142,11 +181,34 @@ function App() {
           }
         });
       }
-      setListings(normalizeListings(listData.results || []));
+      const allListings = normalizeListings(listData.results || []);
+      setListings(allListings);
       setCategories([
         { id: 'sve', slug: 'sve', name: 'Sve kategorije', icon: 'grid', count: listData.count || 0, children: [] },
         ...normalizeCategories(catData.results || []),
       ]);
+
+      // if landing on /oglasi/<id> directly, load the listing
+      if (initView === 'detail' && initItemId) {
+        const found = allListings.find(l => String(l.id) === String(initItemId));
+        if (found) {
+          setSelectedItem(found);
+          setView('detail');
+        } else {
+          apiListingDetail(initItemId).then(res => {
+            if (res.id) {
+              const [norm] = normalizeListings([res]);
+              setSelectedItem(norm);
+              setView('detail');
+            } else {
+              setView('home');
+            }
+          });
+        }
+      } else {
+        setView(initView);
+      }
+
       setLoading(false);
     }).catch(err => {
       console.error('API greška:', err);
@@ -154,6 +216,37 @@ function App() {
       setLoading(false);
     });
   }, []);
+
+  // handle browser back/forward
+  uE(() => {
+    const onPop = (e) => {
+      const state = e.state || {};
+      const v = state.view || pathToView(window.location.pathname);
+      if (v === 'detail' && state.itemId) {
+        const found = listings.find(l => String(l.id) === String(state.itemId));
+        if (found) {
+          setSelectedItem(found);
+          setView('detail');
+        } else {
+          apiListingDetail(state.itemId).then(res => {
+            if (res.id) {
+              const [norm] = normalizeListings([res]);
+              setSelectedItem(norm);
+              setView('detail');
+            } else {
+              setView('home');
+            }
+          });
+        }
+      } else {
+        setSelectedItem(null);
+        setView(v);
+      }
+      window.scrollTo({ top: 0 });
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [listings]);
 
   uE(() => {
     const r = document.documentElement;
@@ -188,7 +281,7 @@ function App() {
       else if (razmeneOpen)       setRazmeneOpen(false);
       else if (notifsOpen)        setNotifsOpen(false);
       else if (userOpen)          setUserOpen(false);
-      else if (view === 'detail') { setView('home'); setPendingOffer(null); }
+      else if (view === 'detail') { navigate('home', null); setPendingOffer(null); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -209,8 +302,7 @@ function App() {
         setRazmeneOpen(false);
         setMessageTarget(null);
         setPendingOffer(offer ? { offer, senderUsername } : null);
-        setSelectedItem(item);
-        setView('detail');
+        navigate('detail', item);
         window.scrollTo({ top: 0 });
       }
     };
@@ -353,20 +445,19 @@ function App() {
   const onSearch = (q) => {
     setSearchQuery(q);
     setFilterChip('sve');
-    setView('search');
+    navigate('search', null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const onSelectCat = (id) => {
     setFilterCat(id);
     setFilterChip('sve');
-    setView('search');
+    navigate('search', null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const onOpenItem = (item) => {
-    setSelectedItem(item);
-    setView('detail');
+    navigate('detail', item);
     window.scrollTo({ top: 0 });
   };
 
@@ -397,7 +488,7 @@ function App() {
     await apiDeleteListing(selectedItem.id);
     setListings(prev => prev.filter(l => l.id !== selectedItem.id));
     setDeleteConfirm(false);
-    setView('home');
+    navigate('home', null);
   };
 
   if (loading) return (
@@ -450,7 +541,7 @@ function App() {
         openNotifs={notifsOpen}
         openUser={userOpen}
         onSearch={onSearch}
-        onNav={(v) => { setView(v); setSearchQuery(''); setFilterCat('sve'); setFilterChip('sve'); setUserOpen(false); }}
+        onNav={(v) => { navigate(v, null); setSearchQuery(''); setFilterCat('sve'); setFilterChip('sve'); setUserOpen(false); }}
         onLogin={() => setLoginOpen(true)}
         onLogout={handleLogout}
         onMarkRead={handleMarkRead}
@@ -643,7 +734,7 @@ function App() {
 
           <main className="search-main" style={{ gridColumn: 2, gridRow: 1, minWidth: 0, minHeight: 620 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
-              <span style={{ cursor: 'pointer', color: 'var(--accent)' }} onClick={() => setView('home')}>Početna</span>
+              <span style={{ cursor: 'pointer', color: 'var(--accent)' }} onClick={() => navigate('home', null)}>Početna</span>
               <span>›</span>
               <span style={{ color: 'var(--ink-2)' }}>
                 {filterCat !== 'sve' ? activeCat?.name || 'Oglasi' : 'Oglasi'}
@@ -695,7 +786,7 @@ function App() {
             item={selectedItem}
             categories={categories}
             currentUser={currentUser}
-            onBack={() => { setView('home'); setPendingOffer(null); }}
+            onBack={() => { navigate('home', null); setPendingOffer(null); }}
             onMessage={() => requireAuth(() => { setMessageTarget(selectedItem); setRazmeneOpen(true); })}
             onEdit={() => setEditItem(selectedItem)}
             onDelete={() => setDeleteConfirm(true)}
@@ -757,7 +848,7 @@ function App() {
                 Podešavanja
               </div>
               <div style={{ fontSize: 13.5 }}>Ova stranica je u izradi.</div>
-              <button className="nav-btn" style={{ marginTop: 18 }} onClick={() => setView('home')}>
+              <button className="nav-btn" style={{ marginTop: 18 }} onClick={() => navigate('home', null)}>
                 Nazad na početnu
               </button>
             </div>
@@ -766,7 +857,7 @@ function App() {
       )}
 
       {postOpen && (
-        <PostAdModal onClose={() => setPostOpen(false)} categories={categories} onCreated={onCreatedListing} onView={(listing) => { const [n] = normalizeListings([listing]); setSelectedItem(n); setView('detail'); }}/>
+        <PostAdModal onClose={() => setPostOpen(false)} categories={categories} onCreated={onCreatedListing} onView={(listing) => { const [n] = normalizeListings([listing]); navigate('detail', n); }}/>
       )}
 
       {editItem && (
@@ -827,7 +918,7 @@ function App() {
         <CategoryPickerModal
           categories={categories}
           selected={filterCat}
-          onSelect={(id) => { setFilterCat(id); setCatPickerOpen(false); setView('search'); window.scrollTo({ top: 0 }); }}
+          onSelect={(id) => { setFilterCat(id); setCatPickerOpen(false); navigate('search', null); window.scrollTo({ top: 0 }); }}
           onClose={() => setCatPickerOpen(false)}
         />
       )}
