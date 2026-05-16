@@ -965,14 +965,20 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
                         <button className="nav-btn primary" onClick={handleMessage}>
                           <Icon name="msg" size={15}/> Pošalji poruku
                         </button>
-                        <button
-                          className="nav-btn"
-                          onClick={offerSent ? undefined : handleOffer}
-                          disabled={offerSent}
-                          style={offerSent ? { opacity: .65, cursor: 'default' } : {}}
-                        >
-                          <Icon name="swap" size={15}/> {offerSent ? '✓ Ponuda poslata' : 'Predloži razmenu'}
-                        </button>
+                        {isBarter ? (
+                          <button
+                            className="nav-btn"
+                            onClick={offerSent ? undefined : handleOffer}
+                            disabled={offerSent}
+                            style={offerSent ? { opacity: .65, cursor: 'default' } : {}}
+                          >
+                            <Icon name="swap" size={15}/> {offerSent ? '✓ Ponuda poslata' : 'Predloži razmenu'}
+                          </button>
+                        ) : (
+                          <button className="nav-btn primary" onClick={handleMessage}>
+                            🛒 Kupi
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
