@@ -7,6 +7,8 @@ urlpatterns = [
     # ─── Oglasi ───────────────────────────────────────
     path('listings/',                          views.listing_list,           name='listing_list'),
     path('listings/mine/',                     views.my_listings,            name='my_listings'),
+    path('listings/wishlist/',                 views.wishlist_list,          name='wishlist_list'),
+    path('listings/wishlist/ids/',             views.wishlist_ids,           name='wishlist_ids'),
     path('listings/create/',                   views.listing_create,         name='listing_create'),
     path('listings/<uuid:pk>/',                views.listing_detail,         name='listing_detail'),
     path('listings/<uuid:pk>/update/',         views.listing_update,         name='listing_update'),
@@ -21,7 +23,11 @@ urlpatterns = [
     path('categories/',                        views.category_list,          name='category_list'),
 
     # ─── Ponude ───────────────────────────────────────
+    path('offers/mine/',                       views.my_offers,              name='my_offers'),
     path('offers/<uuid:offer_id>/respond/',    views.offer_respond,          name='offer_respond'),
+    path('offers/<uuid:offer_id>/complete/',   views.offer_complete,         name='offer_complete'),
+    path('offers/<uuid:offer_id>/review/',     views.offer_review,           name='offer_review'),
+    path('profile/reviews/',                   views.my_reviews,             name='my_reviews'),
 
     # ─── Inbox ────────────────────────────────────────
     path('inbox/',                             views.inbox,                  name='inbox'),

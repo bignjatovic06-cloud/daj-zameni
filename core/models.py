@@ -12,6 +12,7 @@ class User(AbstractUser):
     is_verified  = models.BooleanField(default=False)
     rating       = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     rating_count = models.PositiveIntegerField(default=0)
+    wishlist     = models.ManyToManyField('Listing', related_name='wishlisted_by', blank=True)
     created_at   = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -38,10 +39,11 @@ class Category(models.Model):
 class Listing(models.Model):
     CONDITION_CHOICES = [
         ('new',      'Novo'),
-        ('like_new', 'Kao novo'),
-        ('good',     'Dobro'),
-        ('fair',     'Prihvatljivo'),
-        ('poor',     'Loše'),
+        ('like_new', 'Polovno — kao novo'),
+        ('good',     'Polovno — odlično'),
+        ('fair',     'Polovno — vrlo dobro'),
+        ('poor',     'Polovno — dobro'),
+        ('antique',  'Antikvitet'),
     ]
     TYPE_CHOICES = [
         ('sell',   'Prodaja'),
@@ -71,6 +73,7 @@ class Listing(models.Model):
 
     views       = models.PositiveIntegerField(default=0)
     is_featured = models.BooleanField(default=False)
+    is_premium  = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -173,10 +176,13 @@ class Notification(models.Model):
 class Review(models.Model):
     from_user  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_reviews')
     to_user    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_reviews')
-    swap_offer = models.OneToOneField(SwapOffer, on_delete=models.CASCADE, related_name='review')
+    swap_offer = models.ForeignKey(SwapOffer, on_delete=models.CASCADE, related_name='reviews')
     rating     = models.PositiveSmallIntegerField()
     comment    = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [('from_user', 'swap_offer')]
 
     def __str__(self):
         return f"{self.from_user} → {self.to_user}: {self.rating}★"

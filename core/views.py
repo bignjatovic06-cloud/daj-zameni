@@ -110,6 +110,9 @@ def listing_list(request):
     elif ltype == 'both':
         qs = qs.filter(listing_type='both')
 
+    if request.GET.get('premium') == '1':
+        qs = qs.filter(is_premium=True)
+
     if sort in ('created_at', '-created_at', 'price', '-price'):
         qs = qs.order_by(sort)
 
@@ -221,7 +224,38 @@ def listing_image_upload(request, pk):
 @login_required
 @require_POST
 def toggle_wishlist(request, pk):
-    return JsonResponse({'error': 'not_implemented'}, status=501)
+    listing = get_object_or_404(Listing, pk=pk)
+    if listing.user == request.user:
+        return JsonResponse({'error': 'cannot_save_own'}, status=400)
+    if request.user.wishlist.filter(pk=pk).exists():
+        request.user.wishlist.remove(listing)
+        saved = False
+    else:
+        request.user.wishlist.add(listing)
+        saved = True
+    return JsonResponse({'ok': True, 'saved': saved})
+
+
+@login_required
+def wishlist_list(request):
+    listings = (
+        request.user.wishlist
+        .filter(status='active')
+        .select_related('user', 'category', 'category__parent')
+        .prefetch_related('images')
+        .order_by('-created_at')
+    )
+    ids = set(str(pk) for pk in request.user.wishlist.values_list('pk', flat=True))
+    return JsonResponse({
+        'results': [_listing_data(l) for l in listings],
+        'ids':     list(ids),
+    })
+
+
+@login_required
+def wishlist_ids(request):
+    ids = list(str(pk) for pk in request.user.wishlist.values_list('pk', flat=True))
+    return JsonResponse({'ids': ids})
 
 
 @login_required
@@ -348,8 +382,16 @@ def offer_create(request, pk):
         offered_listing = offered_listing,
     )
 
-    conv = Conversation.objects.create(listing=listing)
-    conv.participants.add(request.user, listing.user)
+    conv = (
+        Conversation.objects
+        .filter(participants=request.user)
+        .filter(participants=listing.user)
+        .filter(listing=listing)
+        .first()
+    )
+    if not conv:
+        conv = Conversation.objects.create(listing=listing)
+        conv.participants.add(request.user, listing.user)
 
     Message.objects.create(
         conversation = conv,
@@ -402,6 +444,123 @@ def offer_respond(request, offer_id):
 
     offer.save()
     return JsonResponse({'ok': True, 'status': offer.status})
+
+
+@login_required
+def my_offers(request):
+    qs = (
+        SwapOffer.objects
+        .filter(Q(from_user=request.user) | Q(to_user=request.user))
+        .select_related('listing', 'from_user', 'to_user', 'offered_listing')
+        .prefetch_related('listing__images', 'offered_listing__images')
+        .order_by('-created_at')
+    )
+    offer_list = list(qs)
+    reviewed_ids = set(
+        Review.objects
+        .filter(swap_offer_id__in=[o.pk for o in offer_list], from_user=request.user)
+        .values_list('swap_offer_id', flat=True)
+    )
+    result = []
+    for offer in offer_list:
+        is_sender  = offer.from_user_id == request.user.pk
+        i_reviewed = offer.pk in reviewed_ids
+        result.append({
+            'id':              str(offer.pk),
+            'status':          offer.status,
+            'is_sender':       is_sender,
+            'other_user':      offer.to_user.username if is_sender else offer.from_user.username,
+            'listing':         _mini_listing(offer.listing),
+            'offered_listing': _mini_listing(offer.offered_listing),
+            'message':         offer.message,
+            'created_at':      offer.created_at.isoformat(),
+            'can_complete':    offer.status == 'accepted',
+            'can_review':      offer.status == 'completed' and not i_reviewed,
+            'i_reviewed':      i_reviewed,
+        })
+    return JsonResponse({'results': result})
+
+
+@login_required
+@require_POST
+def offer_complete(request, offer_id):
+    offer = get_object_or_404(SwapOffer, pk=offer_id)
+    if request.user.pk not in (offer.from_user_id, offer.to_user_id):
+        return JsonResponse({'error': 'Zabranjen pristup.'}, status=403)
+    if offer.status != 'accepted':
+        return JsonResponse({'error': 'Ponuda mora biti prihvaćena da bi se završila.'}, status=400)
+
+    offer.status         = 'completed'
+    offer.listing.status = 'closed'
+    offer.listing.save()
+    offer.save()
+
+    other = offer.to_user if request.user == offer.from_user else offer.from_user
+    Notification.objects.create(
+        user = other,
+        type = 'offer_accepted',
+        text = f'{request.user.username} je potvrdio/la završetak razmene za „{offer.listing.title}"',
+    )
+    return JsonResponse({'ok': True})
+
+
+@login_required
+@require_POST
+def offer_review(request, offer_id):
+    offer = get_object_or_404(SwapOffer, pk=offer_id, status='completed')
+    if request.user.pk not in (offer.from_user_id, offer.to_user_id):
+        return JsonResponse({'error': 'Zabranjen pristup.'}, status=403)
+    if Review.objects.filter(swap_offer=offer, from_user=request.user).exists():
+        return JsonResponse({'error': 'Već si ostavio/la ocenu za ovu razmenu.'}, status=400)
+
+    data    = _parse(request)
+    rating  = int(data.get('rating', 0))
+    comment = data.get('comment', '').strip()
+
+    if not (1 <= rating <= 5):
+        return JsonResponse({'error': 'Ocena mora biti između 1 i 5.'}, status=400)
+
+    to_user = offer.to_user if request.user == offer.from_user else offer.from_user
+    Review.objects.create(
+        from_user  = request.user,
+        to_user    = to_user,
+        swap_offer = offer,
+        rating     = rating,
+        comment    = comment,
+    )
+
+    reviews = Review.objects.filter(to_user=to_user)
+    to_user.rating       = sum(r.rating for r in reviews) / reviews.count()
+    to_user.rating_count = reviews.count()
+    to_user.save()
+
+    Notification.objects.create(
+        user = to_user,
+        type = 'review',
+        text = f'{request.user.username} ti je ostavio/la ocenu {rating}★ za razmenu „{offer.listing.title}"',
+    )
+    return JsonResponse({'ok': True})
+
+
+@login_required
+def my_reviews(request):
+    reviews = (
+        Review.objects
+        .filter(to_user=request.user)
+        .select_related('from_user', 'swap_offer', 'swap_offer__listing')
+        .order_by('-created_at')
+    )
+    return JsonResponse({'results': [
+        {
+            'id':         r.pk,
+            'from_user':  r.from_user.username,
+            'rating':     r.rating,
+            'comment':    r.comment,
+            'listing':    r.swap_offer.listing.title if r.swap_offer and r.swap_offer.listing else '',
+            'created_at': r.created_at.isoformat(),
+        }
+        for r in reviews
+    ]})
 
 
 # ─────────────────────────────────────────
@@ -587,6 +746,8 @@ def _listing_data(listing, full=False):
         'status':            listing.status,
         'city':              listing.city,
         'views':             listing.views,
+        'is_featured':       listing.is_featured,
+        'is_premium':        listing.is_premium,
         'created_at':        listing.created_at.isoformat(),
         'wants_in_exchange': listing.wants_in_exchange,
         'user': {
@@ -607,7 +768,7 @@ def _listing_data(listing, full=False):
 
 def _msg_data(msg, is_first=False):
     offer_data = None
-    if is_first and msg.swap_offer:
+    if msg.swap_offer_id:
         offer = msg.swap_offer
         offer_data = {
             'id':              str(offer.pk),

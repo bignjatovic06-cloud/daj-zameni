@@ -1,33 +1,37 @@
 function normalizeListings(apiListings) {
   return apiListings.map(l => ({
-    id:        l.id,
-    title:     l.title,
-    price:     l.price,
-    type:      l.listing_type,
-    condition: l.condition,
-    status:    l.status,
-    city:      l.city,
-    views:     l.views,
-    cat:       l.category?.slug || '',
-    catName:   l.category?.name || '',
-    user:      l.user?.username || '',
-    rating:    l.user?.rating || 0,
-    seek:      l.wants_in_exchange || '',
-    created:   l.created_at,
-    images:    l.images || [],
-    desc:      l.description || '',
+    id:         l.id,
+    title:      l.title,
+    price:      l.price,
+    type:       l.listing_type,
+    condition:  l.condition,
+    status:     l.status,
+    city:       l.city,
+    views:      l.views,
+    is_featured: l.is_featured || false,
+    is_premium:  l.is_premium  || false,
+    cat:        l.category ? l.category.slug : '',
+    catName:    l.category ? l.category.name : '',
+    user:       l.user ? l.user.username : '',
+    rating:     l.user ? l.user.rating : 0,
+    seek:       l.wants_in_exchange || '',
+    created:    l.created_at,
+    images:     l.images || [],
+    desc:       l.description || '',
   }));
 }
 
 function normalizeCategories(apiCats) {
   return apiCats.map(c => ({
     id:       c.slug,
+    slug:     c.slug,
     name:     c.name,
     icon:     c.icon,
     tint:     c.tint,
     count:    c.count,
     children: (c.children || []).map(s => ({
       id:    s.slug,
+      slug:  s.slug,
       name:  s.name,
       icon:  s.icon,
       count: s.count,
@@ -81,9 +85,11 @@ function App() {
   const [filterConditions, setFilterConditions] = uS([]);
   const [filterMaxPrice, setFilterMaxPrice]     = uS(300000);
   const [filterBarter, setFilterBarter]         = uS(false);
+  const [filterPremium, setFilterPremium]       = uS(false);
   const [filterSort, setFilterSort]             = uS('newest');
+  const [catPickerOpen, setCatPickerOpen]       = uS(false);
 
-  const [favs, setFavs]                   = uS({});
+  const [favPending, setFavPending]       = uS({});
   const [postOpen, setPostOpen]           = uS(false);
   const [razmeneOpen, setRazmeneOpen]     = uS(false);
   const [messageTarget, setMessageTarget] = uS(null);
@@ -99,6 +105,7 @@ function App() {
   const [categories, setCategories]       = uS([]);
   const [currentUser, setCurrentUser]     = uS(null);
   const [notifications, setNotifications] = uS([]);
+  const [wishlistIds, setWishlistIds]     = uS({});
   const [loading, setLoading]             = uS(true);
   const [apiError, setApiError]           = uS(null);
 
@@ -115,6 +122,13 @@ function App() {
         setCurrentUser(auth.user);
         apiNotifications().then(res => {
           if (res.ok && res.results) setNotifications(res.results);
+        });
+        apiWishlistIds().then(res => {
+          if (res.ids) {
+            const map = {};
+            res.ids.forEach(id => { map[id] = true; });
+            setWishlistIds(map);
+          }
         });
       }
       setListings(normalizeListings(listData.results || []));
@@ -200,13 +214,30 @@ function App() {
     apiNotifications().then(res => {
       if (res.ok && res.results) setNotifications(res.results);
     });
+    apiWishlistIds().then(res => {
+      if (res.ids) {
+        const map = {};
+        res.ids.forEach(id => { map[id] = true; });
+        setWishlistIds(map);
+      }
+    });
   };
 
   const handleLogout = async () => {
     await apiLogout();
     setCurrentUser(null);
     setNotifications([]);
+    setWishlistIds({});
     setUserOpen(false);
+  };
+
+  const handleSaveToggle = (id, saved) => {
+    setWishlistIds(prev => {
+      const next = Object.assign({}, prev);
+      if (saved) next[id] = true;
+      else delete next[id];
+      return next;
+    });
   };
 
   const handleMarkRead = async () => {
@@ -268,6 +299,10 @@ function App() {
       out = out.filter(l => l.type === 'barter' || l.type === 'both');
     }
 
+    if (filterPremium) {
+      out = out.filter(l => l.is_premium || l.is_featured);
+    }
+
     if (filterConditions.length > 0) {
       out = out.filter(l => filterConditions.includes(l.condition));
     }
@@ -285,10 +320,11 @@ function App() {
     }
 
     return out;
-  }, [listings, filterCat, searchQuery, filterChip, filterCity, filterBarter, filterConditions, filterMaxPrice, filterSort, categories]);
+  }, [listings, filterCat, searchQuery, filterChip, filterCity, filterBarter, filterPremium, filterConditions, filterMaxPrice, filterSort, categories]);
 
   const resetFilters = () => {
     setFilterBarter(false);
+    setFilterPremium(false);
     setFilterCity('');
     setFilterConditions([]);
     setFilterMaxPrice(300000);
@@ -296,7 +332,7 @@ function App() {
     setFilterSort('newest');
   };
 
-  const hasActiveFilters = filterBarter || filterCity || filterConditions.length > 0 || filterMaxPrice < 300000 || filterCat !== 'sve';
+  const hasActiveFilters = filterBarter || filterPremium || filterCity || filterConditions.length > 0 || filterMaxPrice < 300000 || filterCat !== 'sve';
 
   const onSearch = (q) => {
     setSearchQuery(q);
@@ -318,12 +354,27 @@ function App() {
     window.scrollTo({ top: 0 });
   };
 
-  const toggleFav = (id) => setFavs(f => ({ ...f, [id]: !f[id] }));
+  const toggleFav = async (id) => {
+    if (!currentUser) { setLoginOpen(true); return; }
+    if (favPending[id]) return;
+    setFavPending(p => Object.assign({}, p, { [id]: true }));
+    const res = await apiToggleWishlist(id);
+    if (res.ok) handleSaveToggle(id, res.saved);
+    setFavPending(p => { const n = Object.assign({}, p); delete n[id]; return n; });
+  };
 
   const onCreatedListing = (newListing) => {
     if (!newListing) return;
     const [normalized] = normalizeListings([newListing]);
     setListings(prev => [normalized, ...prev]);
+    apiCategories().then(catData => {
+      if (catData && catData.results) {
+        setCategories([
+          { id: 'sve', slug: 'sve', name: 'Sve kategorije', icon: 'grid', tint: '', count: 0, children: [] },
+          ...normalizeCategories(catData.results),
+        ]);
+      }
+    });
   };
 
   const handleDelete = async () => {
@@ -427,7 +478,7 @@ function App() {
               ) : (
                 <div className="list-grid">
                   {listings.slice(0, 8).map(l => (
-                    <ListingCard key={l.id} item={l} fav={!!favs[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                    <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
                   ))}
                 </div>
               )}
@@ -442,26 +493,39 @@ function App() {
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 24px 60px', display: 'grid', gridTemplateColumns: '268px 1fr', gap: 28, alignItems: 'start' }}>
 
           <aside style={{ position: 'sticky', top: 80 }}>
+
             <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 12, padding: '16px', marginBottom: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 10, textTransform: 'uppercase' }}>Kategorija</div>
-              <select
-                value={filterCat}
-                onChange={e => setFilterCat(e.target.value)}
-                style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', background: '#faf8f1', outline: 'none', cursor: 'pointer' }}
+              <button
+                onClick={() => setCatPickerOpen(true)}
+                style={{
+                  width: '100%', padding: '9px 12px', borderRadius: 8,
+                  border: '1px solid ' + (filterCat !== 'sve' ? 'var(--accent)' : 'var(--line)'),
+                  background: filterCat !== 'sve' ? 'var(--accent-soft)' : '#faf8f1',
+                  fontSize: 13, color: filterCat !== 'sve' ? 'var(--accent)' : 'var(--ink-2)',
+                  cursor: 'pointer', fontWeight: filterCat !== 'sve' ? 600 : 400,
+                  display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
+                }}
               >
-                <option value="sve">Sve kategorije</option>
-                {categories.filter(c => c.id !== 'sve').map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                <Icon name="grid" size={14}/>
+                <span style={{ flex: 1 }}>
+                  {filterCat !== 'sve' ? (activeCat ? activeCat.name : filterCat) : 'Izaberi kategoriju'}
+                </span>
+                {filterCat !== 'sve' && (
+                  <span
+                    onClick={e => { e.stopPropagation(); setFilterCat('sve'); }}
+                    style={{ color: 'var(--accent)', fontSize: 16, lineHeight: 1, fontWeight: 700 }}
+                  >×</span>
+                )}
+              </button>
               {activeCat && activeCat.children && activeCat.children.length > 0 && (
-                <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                   {activeCat.children.map(s => (
                     <span
                       key={s.id}
                       onClick={() => setFilterCat(s.id)}
                       style={{
-                        fontSize: 11, padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
+                        fontSize: 11, padding: '3px 8px', borderRadius: 6, cursor: 'pointer',
                         border: '1px solid ' + (filterCat === s.id ? 'var(--accent)' : 'var(--line)'),
                         background: filterCat === s.id ? 'var(--accent-soft)' : '#fff',
                         color: filterCat === s.id ? 'var(--accent)' : 'var(--ink-2)',
@@ -477,22 +541,25 @@ function App() {
 
             <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 12, padding: '16px', marginBottom: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 12, textTransform: 'uppercase' }}>Tip oglasa</div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', fontSize: 13, color: 'var(--ink)' }}>
-                <input
-                  type="checkbox"
-                  checked={filterBarter}
-                  onChange={e => setFilterBarter(e.target.checked)}
-                  style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
-                />
-                <span style={{ flex: 1 }}>Spreman za razmenu</span>
-                <span style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
-                  {listings.filter(l => l.type === 'barter' || l.type === 'both').length}
-                </span>
-              </label>
+              {[
+                { state: filterBarter,  set: setFilterBarter,  label: 'Spreman za razmenu', count: listings.filter(l => l.type === 'barter' || l.type === 'both').length },
+                { state: filterPremium, set: setFilterPremium, label: 'Premium oglasi',      count: listings.filter(l => l.is_premium || l.is_featured).length },
+              ].map(opt => (
+                <label key={opt.label} style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', marginBottom: 10, fontSize: 13, color: 'var(--ink)' }}>
+                  <input
+                    type="checkbox"
+                    checked={opt.state}
+                    onChange={e => opt.set(e.target.checked)}
+                    style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
+                  />
+                  <span style={{ flex: 1 }}>{opt.label}</span>
+                  <span style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>{opt.count}</span>
+                </label>
+              ))}
             </div>
 
             <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 12, padding: '16px', marginBottom: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 10, textTransform: 'uppercase' }}>Grad</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 10, textTransform: 'uppercase' }}>Grad <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 10, color: 'var(--ink-4)' }}>(obavezno)</span></div>
               <select
                 value={filterCity}
                 onChange={e => setFilterCity(e.target.value)}
@@ -526,12 +593,13 @@ function App() {
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 12, textTransform: 'uppercase' }}>Stanje</div>
               {[
                 { id: 'new',      label: 'Novo' },
-                { id: 'like_new', label: 'Kao novo' },
-                { id: 'good',     label: 'Dobro' },
-                { id: 'fair',     label: 'Prihvatljivo' },
-                { id: 'poor',     label: 'Loše' },
+                { id: 'like_new', label: 'Polovno — kao novo' },
+                { id: 'good',     label: 'Polovno — odlično' },
+                { id: 'fair',     label: 'Polovno — vrlo dobro' },
+                { id: 'poor',     label: 'Polovno — dobro' },
+                { id: 'antique',  label: 'Antikvitet' },
               ].map(opt => (
-                <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', marginBottom: 10, fontSize: 13, color: 'var(--ink)' }}>
+                <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', marginBottom: 9, fontSize: 13, color: 'var(--ink)' }}>
                   <input
                     type="checkbox"
                     checked={filterConditions.includes(opt.id)}
@@ -555,7 +623,7 @@ function App() {
             )}
           </aside>
 
-          <main>
+          <main style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
               <span style={{ cursor: 'pointer', color: 'var(--accent)' }} onClick={() => setView('home')}>Početna</span>
               <span>›</span>
@@ -583,9 +651,9 @@ function App() {
             </div>
 
             {filtered.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+              <div className="list-grid">
                 {filtered.map(l => (
-                  <ListingCard key={l.id} item={l} fav={!!favs[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
                 ))}
               </div>
             ) : (
@@ -616,6 +684,8 @@ function App() {
             onLogin={() => setLoginOpen(true)}
             pendingOffer={pendingOffer}
             onOfferRespond={handleOfferRespond}
+            isSaved={!!wishlistIds[selectedItem.id]}
+            onSaveToggle={handleSaveToggle}
           />
         </div>
       )}
@@ -635,7 +705,7 @@ function App() {
             {myListings.length > 0 ? (
               <div className="list-grid">
                 {myListings.map(l => (
-                  <ListingCard key={l.id} item={l} fav={!!favs[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
                 ))}
               </div>
             ) : (
@@ -653,12 +723,20 @@ function App() {
         </section>
       )}
 
-      {['saved', 'ratings', 'settings'].includes(view) && (
+      {view === 'saved' && (
+        <SavedScreen onOpenItem={onOpenItem} onPostAd={() => requireAuth(() => setPostOpen(true))}/>
+      )}
+
+      {view === 'ratings' && (
+        <RatingsScreen onOpenItem={onOpenItem}/>
+      )}
+
+      {view === 'settings' && (
         <section className="section" style={{ paddingTop: 32 }}>
           <div className="section-inner">
             <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
               <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
-                {VIEW_LABELS[view]}
+                Podešavanja
               </div>
               <div style={{ fontSize: 13.5 }}>Ova stranica je u izradi.</div>
               <button className="nav-btn" style={{ marginTop: 18 }} onClick={() => setView('home')}>
@@ -725,6 +803,15 @@ function App() {
 
       {registerOpen && (
         <RegisterModal onClose={() => setRegisterOpen(false)} onSuccess={handleLoginSuccess} onSwitchToLogin={() => { setRegisterOpen(false); setLoginOpen(true); }}/>
+      )}
+
+      {catPickerOpen && (
+        <CategoryPickerModal
+          categories={categories}
+          selected={filterCat}
+          onSelect={(id) => { setFilterCat(id); setCatPickerOpen(false); setView('search'); window.scrollTo({ top: 0 }); }}
+          onClose={() => setCatPickerOpen(false)}
+        />
       )}
 
       <TweaksPanel title="Tweaks">

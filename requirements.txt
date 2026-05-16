@@ -1,4 +1,6 @@
 asgiref==3.8.1
+gunicorn==26.0.0
+whitenoise==6.12.0
 backports.zoneinfo==0.2.1
 certifi==2026.4.22
 cffi==1.17.1

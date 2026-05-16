@@ -1,5 +1,169 @@
 const { useState: useS, useEffect: useE, useRef: useR } = React;
 
+/* ─── CATEGORY PICKER MODAL ────────────────────── */
+function CategoryPickerModal({ categories, selected, onSelect, onClose }) {
+  var [q, setQ]               = useS('');
+  var [activeCat, setActiveCat] = useS(null);
+  var inputRef                = useR(null);
+
+  var displayCats = categories.filter(function(c) { return c.id !== 'sve'; });
+
+  useE(function() {
+    if (inputRef.current) inputRef.current.focus();
+    if (displayCats.length > 0) setActiveCat(displayCats[0]);
+  }, []);
+
+  var ql = q.toLowerCase();
+  var searchResults = [];
+  if (q) {
+    displayCats.forEach(function(cat) {
+      if (cat.name.toLowerCase().includes(ql)) {
+        searchResults.push({ type: 'cat', id: cat.id, name: cat.name, count: cat.count, parentName: null });
+      }
+      (cat.children || []).forEach(function(sub) {
+        if (sub.name.toLowerCase().includes(ql)) {
+          searchResults.push({ type: 'sub', id: sub.id, name: sub.name, count: sub.count, parentName: cat.name });
+        }
+      });
+    });
+  }
+
+  var handleKey = function(e) {
+    if (e.key === 'Escape') onClose();
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: 24 }}
+      onClick={onClose}
+      onKeyDown={handleKey}
+    >
+      <div
+        style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 900, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.2)', overflow: 'hidden' }}
+        onClick={function(e) { e.stopPropagation(); }}
+      >
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Icon name="search" size={18} style={{ color: 'var(--ink-3)', flexShrink: 0 }}/>
+          <input
+            ref={inputRef}
+            value={q}
+            onChange={function(e) { setQ(e.target.value); }}
+            placeholder="Pretraži kategorije i podkategorije..."
+            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, color: 'var(--ink)', background: 'transparent' }}
+          />
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', padding: 4 }}>
+            <Icon name="x" size={20}/>
+          </button>
+        </div>
+
+        {q ? (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+            {searchResults.length === 0 ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>
+                Nema rezultata za „{q}"
+              </div>
+            ) : searchResults.map(function(r) {
+              var isSel = selected === r.id;
+              return (
+                <div
+                  key={r.type + r.id}
+                  onClick={function() { onSelect(r.id); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8, cursor: 'pointer', background: isSel ? 'var(--accent-soft)' : 'transparent' }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: isSel ? 'var(--accent)' : 'var(--ink)' }}>{r.name}</div>
+                    {r.parentName && <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginTop: 1 }}>{r.parentName}</div>}
+                  </div>
+                  <span style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>{r.count || 0}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '220px 1fr', overflow: 'hidden' }}>
+            <div style={{ borderRight: '1px solid var(--line)', overflowY: 'auto' }}>
+              {displayCats.map(function(cat) {
+                var isAct = activeCat && activeCat.id === cat.id;
+                return (
+                  <div
+                    key={cat.id}
+                    onClick={function() { setActiveCat(cat); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '11px 16px', cursor: 'pointer',
+                      background: isAct ? 'var(--accent-soft)' : 'transparent',
+                      color: isAct ? 'var(--accent)' : 'var(--ink)',
+                      fontWeight: isAct ? 700 : 500, fontSize: 14,
+                      borderLeft: isAct ? '3px solid var(--accent)' : '3px solid transparent',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Icon name={cat.icon || 'tag'} size={16} stroke={1.5}/>
+                      <span>{cat.name}</span>
+                    </div>
+                    <Icon name="arrow-r" size={12} style={{ color: 'var(--ink-3)' }}/>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ overflowY: 'auto', padding: '18px 20px' }}>
+              {activeCat ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <h3 style={{ margin: 0, fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 700 }}>{activeCat.name}</h3>
+                    <button
+                      onClick={function() { onSelect(activeCat.id); }}
+                      style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                    >
+                      Vidi sve u kategoriji <Icon name="arrow-r" size={13}/>
+                    </button>
+                  </div>
+                  {(!activeCat.children || activeCat.children.length === 0) ? (
+                    <div style={{ fontSize: 13, color: 'var(--ink-3)', padding: '20px 0' }}>Nema podkategorija.</div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                      {activeCat.children.map(function(sub) {
+                        var isSel = selected === sub.id;
+                        return (
+                          <div
+                            key={sub.id}
+                            onClick={function() { onSelect(sub.id); }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, cursor: 'pointer', background: isSel ? 'var(--accent-soft)' : 'transparent' }}
+                          >
+                            <span style={{ fontSize: 14, color: isSel ? 'var(--accent)' : 'var(--ink)', fontWeight: isSel ? 600 : 400 }}>
+                              {sub.name}
+                            </span>
+                            <span style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginLeft: 8, flexShrink: 0 }}>
+                              {sub.count || 0}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Izaberi kategoriju</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: '10px 20px', borderTop: '1px solid var(--line)', background: '#faf8f1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+            ⚡ Brzi tip: kucaj naziv predmeta i predložićemo kategoriju
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ background: 'var(--line)', padding: '2px 7px', borderRadius: 4, marginRight: 4 }}>Esc</span>
+            za izlaz
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── LOGIN MODAL ──────────────────────────────── */
 function LoginModal({ onClose, onSuccess, onSwitchToRegister }) {
   const [username, setUsername] = useS('');
@@ -194,7 +358,7 @@ function OfferModal({ item, onClose, onSuccess }) {
     else setErr(res.error === 'already_offered' ? 'Već si poslao/la ponudu za ovaj oglas.' : 'Greška pri slanju ponude.');
   };
 
-  const condLabel = { new: 'Novo', like_new: 'Kao novo', good: 'Dobro', fair: 'Prihvatljivo', poor: 'Loše' };
+  const condLabel = { new: 'Novo', like_new: 'Polovno — kao novo', good: 'Polovno — odlično', fair: 'Polovno — vrlo dobro', poor: 'Polovno — dobro', antique: 'Antikvitet' };
 
   return (
     <div className="scrim" onClick={onClose}>
@@ -371,6 +535,80 @@ function OfferCard({ msg, who }) {
   );
 }
 
+/* ─── SAVED SCREEN ──────────────────────────────── */
+function SavedScreen({ onOpenItem, onPostAd }) {
+  const [listings, setListings] = useS(null);
+
+  useE(() => {
+    apiWishlist().then(function(res) {
+      setListings(Array.isArray(res.results) ? res.results : []);
+    });
+  }, []);
+
+  var normalized = listings ? listings.map(function(l) {
+    return {
+      id:        l.id,
+      title:     l.title,
+      price:     l.price,
+      type:      l.listing_type,
+      condition: l.condition,
+      status:    l.status,
+      city:      l.city,
+      views:     l.views,
+      cat:       l.category ? l.category.slug : '',
+      catName:   l.category ? l.category.name : '',
+      user:      l.user ? l.user.username : '',
+      rating:    l.user ? l.user.rating : 0,
+      seek:      l.wants_in_exchange || '',
+      created:   l.created_at,
+      images:    l.images || [],
+      desc:      l.description || '',
+    };
+  }) : [];
+
+  return (
+    <section className="section" style={{ paddingTop: 32 }}>
+      <div className="section-inner">
+        <div className="section-head">
+          <div>
+            <h2>Sačuvani oglasi</h2>
+            {listings !== null && (
+              <div className="sub">{normalized.length} {normalized.length === 1 ? 'oglas' : normalized.length < 5 ? 'oglasa' : 'oglasa'}</div>
+            )}
+          </div>
+        </div>
+
+        {listings === null ? (
+          <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>
+            Učitavam…
+          </div>
+        ) : normalized.length === 0 ? (
+          <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
+            <div style={{ fontSize: 36, marginBottom: 14 }}>🤍</div>
+            <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
+              Još nisi sačuvao/la nijedan oglas
+            </div>
+            <div style={{ fontSize: 13.5, marginBottom: 20 }}>
+              Klikni srce na oglasu da ga sačuvaš za kasnije.
+            </div>
+            <button className="nav-btn primary" onClick={onPostAd}>
+              <Icon name="plus" size={14}/> Postavi oglas
+            </button>
+          </div>
+        ) : (
+          <div className="list-grid">
+            {normalized.map(function(l) {
+              return (
+                <ListingCard key={l.id} item={l} fav={true} onFav={function() {}} onClick={function() { onOpenItem(l); }}/>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ─── REPORT MODAL ──────────────────────────────── */
 const REPORT_REASONS = [
   { value: 'spam',           label: 'Spam ili prevara' },
@@ -451,10 +689,10 @@ function ReportModal({ item, onClose }) {
 }
 
 /* ─── LISTING DETAIL ──────────────────────────────── */
-function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories = [], currentUser = null, onLogin = null, pendingOffer = null, onOfferRespond = null }) {
+function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories = [], currentUser = null, onLogin = null, pendingOffer = null, onOfferRespond = null, isSaved = false, onSaveToggle = null }) {
   const [active, setActive]           = useS(0);
   const [statsOpen, setStatsOpen]     = useS(false);
-  const [saved, setSaved]             = useS(false);
+  const [saved, setSaved]             = useS(isSaved);
   const [savePending, setSavePending] = useS(false);
   const [offerSent, setOfferSent]     = useS(false);
   const [showOffer, setShowOffer]     = useS(false);
@@ -469,7 +707,8 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
   const priceNum    = item.price ? parseFloat(item.price) : null;
   const isOwner     = currentUser && currentUser.username === item.user;
   const conditionLabel = {
-    new: 'Novo', like_new: 'Kao novo', good: 'Dobro', fair: 'Prihvatljivo', poor: 'Loše',
+    new: 'Novo', like_new: 'Polovno — kao novo', good: 'Polovno — odlično',
+    fair: 'Polovno — vrlo dobro', poor: 'Polovno — dobro', antique: 'Antikvitet',
   }[item.condition] || item.condition;
 
   const handleMessage = () => {
@@ -483,12 +722,13 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
   };
 
   const handleSave = async () => {
-    if (!currentUser) { onLogin?.(); return; }
+    if (!currentUser) { onLogin && onLogin(); return; }
     if (savePending) return;
     setSavePending(true);
     try {
       const res = await apiToggleWishlist(item.id);
       setSaved(res.saved);
+      if (onSaveToggle) onSaveToggle(item.id, res.saved);
     } catch (e) {}
     setSavePending(false);
   };
@@ -536,8 +776,9 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
                     🔄 PREDLOG RAZMENE
                   </div>
                   <div style={{ fontSize: 14, color: 'var(--ink)' }}>
-                    <b>{pendingOffer.senderUsername}</b> želi da zameni ovaj oglas za tvoj{' '}
-                    <b>„{pendingOffer.offer.target_listing?.title}"</b>
+                    <b>{pendingOffer.senderUsername}</b> nudi{' '}
+                    <b>„{pendingOffer.offer.offered_listing ? pendingOffer.offer.offered_listing.title : 'oglas'}"</b>{' '}
+                    u zamenu za tvoj oglas
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -583,7 +824,7 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
                     key={i}
                     className={'th' + (i === active ? ' active' : '')}
                     onClick={() => setActive(i)}
-                    style={th?.url ? { backgroundImage: `url(${th.url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+                    style={th && th.url ? { backgroundImage: 'url(' + th.url + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
                   />
                 ))}
               </div>
@@ -814,81 +1055,146 @@ function EditAdModal({ item, onClose, categories = [], onSaved }) {
   );
 }
 
-/* ─── POST AD MODAL ──────────────────────────────── */
+/* --- POST AD MODAL --- */
 function PostAdModal({ onClose, categories = [], onCreated }) {
-  const [step, setStep]             = useS(1);
-  const [type, setType]             = useS('both');
-  const [title, setTitle]           = useS('');
-  const [cat, setCat]               = useS('');
-  const [desc, setDesc]             = useS('');
-  const [price, setPrice]           = useS('');
-  const [seek, setSeek]             = useS('');
-  const [city, setCity]             = useS('Beograd');
-  const [imageFiles, setImageFiles] = useS([]);
-  const [done, setDone]             = useS(false);
-  const [loading, setLoading]       = useS(false);
-  const [error, setError]           = useS('');
-  const fileInputRef                = useR(null);
+  var [step, setStep]                   = useS(1);
+  var [title, setTitle]                 = useS('');
+  var [imageFiles, setImageFiles]       = useS([]);
+  var [imagePreviews, setImagePreviews] = useS([]);
+  var [mainCat, setMainCat]             = useS(null);
+  var [sub, setSub]                     = useS(null);
+  var [suggestions, setSuggestions]     = useS([]);
+  var [condition, setCondition]         = useS('');
+  var [city, setCity]                   = useS('Beograd');
+  var [price, setPrice]                 = useS('');
+  var [currency, setCurrency]           = useS('RSD');
+  var [desc, setDesc]                   = useS('');
+  var [swappable, setSwappable]         = useS(true);
+  var [allowMoney, setAllowMoney]       = useS(false);
+  var [wantsList, setWantsList]         = useS([]);
+  var [wantsInput, setWantsInput]       = useS('');
+  var [loading, setLoading]             = useS(false);
+  var [error, setError]                 = useS('');
+  var [done, setDone]                   = useS(false);
+  var fileInputRef                      = useR(null);
 
-  const next = () => setStep(s => Math.min(3, s + 1));
-  const prev = () => setStep(s => Math.max(1, s - 1));
+  var conditionOpts = [
+    { v: 'new',      l: 'Novo' },
+    { v: 'like_new', l: 'Kao novo' },
+    { v: 'good',     l: 'Odlicno' },
+    { v: 'fair',     l: 'Vrlo dobro' },
+    { v: 'poor',     l: 'Dobro' },
+    { v: 'antique',  l: 'Antikvitet' },
+  ];
 
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files).slice(0, 4);
-    setImageFiles(files);
+  var stepLabels = ['Naziv i slike', 'Kategorija', 'Detalji', 'Zamena', 'Pregled'];
+
+  var displayCats = categories.filter(function(c) { return c.slug !== 'sve'; });
+
+  useE(function() {
+    if (!title || title.length < 3) { setSuggestions([]); return; }
+    var words = title.toLowerCase().split(/\s+/);
+    var matched = [];
+    displayCats.forEach(function(c) {
+      var cWords = (c.name + ' ' + (c.slug || '')).toLowerCase();
+      var cScore = 0;
+      words.forEach(function(w) { if (w.length > 2 && cWords.indexOf(w) !== -1) cScore++; });
+      if (c.children && c.children.length > 0) {
+        c.children.forEach(function(s) {
+          var sWords = (s.name + ' ' + (s.slug || '')).toLowerCase();
+          var sScore = 0;
+          words.forEach(function(w) { if (w.length > 2 && sWords.indexOf(w) !== -1) sScore++; });
+          if (sScore > 0 || cScore > 0) {
+            matched.push({ main: c, s: s, score: sScore * 2 + cScore });
+          }
+        });
+      } else if (cScore > 0) {
+        matched.push({ main: c, s: null, score: cScore });
+      }
+    });
+    matched.sort(function(a, b) { return b.score - a.score; });
+    setSuggestions(matched.slice(0, 3));
+  }, [title]);
+
+  useE(function() {
+    var previews = imageFiles.map(function(f) { return URL.createObjectURL(f); });
+    setImagePreviews(previews);
+  }, [imageFiles]);
+
+  var handleFileSelect = function(e) {
+    var incoming = Array.from(e.target.files);
+    setImageFiles(function(prev) { return prev.concat(incoming).slice(0, 10); });
   };
 
-  const removeImage = (i) => {
-    setImageFiles(prev => prev.filter((_, idx) => idx !== i));
+  var removeImage = function(i) {
+    setImageFiles(function(prev) { return prev.filter(function(_, idx) { return idx !== i; }); });
   };
 
-  const submit = async () => {
+  var handleWantsKey = function(e) {
+    if (e.key === 'Enter' && wantsInput.trim()) {
+      e.preventDefault();
+      var val = wantsInput.trim();
+      setWantsList(function(prev) { return prev.concat([val]); });
+      setWantsInput('');
+    }
+  };
+
+  var removeWant = function(i) {
+    setWantsList(function(prev) { return prev.filter(function(_, idx) { return idx !== i; }); });
+  };
+
+  var canProceed = (function() {
+    if (step === 1) return title.trim().length >= 3;
+    if (step === 2) return !!(sub || mainCat);
+    if (step === 3) return !!(condition && city.trim() && desc.trim());
+    return true;
+  })();
+
+  var next = function() { if (canProceed) setStep(function(s) { return Math.min(5, s + 1); }); };
+  var prev = function() { setStep(function(s) { return Math.max(1, s - 1); }); };
+
+  var submit = async function() {
     setError('');
     setLoading(true);
-
-    const res = await apiCreateListing({
-      title,
-      description:       desc,
-      listing_type:      type,
-      category:          cat,
+    var listingType = 'barter';
+    if (swappable && allowMoney) listingType = 'both';
+    else if (allowMoney) listingType = 'sell';
+    var catSlug = sub ? sub.slug : (mainCat ? mainCat.slug : '');
+    var res = await apiCreateListing({
+      title:             title.trim(),
+      description:       desc.trim(),
+      listing_type:      listingType,
+      category:          catSlug,
       price:             price || null,
-      wants_in_exchange: seek,
-      city,
-      condition:         'good',
+      wants_in_exchange: wantsList.join(', '),
+      city:              city.trim(),
+      condition:         condition,
     });
-
     if (!res.ok) {
       setError(res.error || 'Greška pri objavljivanju.');
       setLoading(false);
       return;
     }
-
     if (imageFiles.length > 0) {
-      const imgRes = await apiUploadImages(res.listing.id, imageFiles);
-      if (imgRes.ok && imgRes.images) {
-        res.listing.images = imgRes.images;
-      }
+      var imgRes = await apiUploadImages(res.listing.id, imageFiles);
+      if (imgRes.ok && imgRes.images) res.listing.images = imgRes.images;
     }
-
     setLoading(false);
     setDone(true);
     if (onCreated) onCreated(res.listing);
   };
 
-  const catName     = (categories.find(c => c.id === cat) || {}).name || 'opšte';
-  const displayCats = categories.filter(c => c.id !== 'sve');
-
   if (done) {
     return (
       <div className="scrim" onClick={onClose}>
-        <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+        <div className="modal" onClick={function(e) { e.stopPropagation(); }} style={{ maxWidth: 480 }}>
           <div className="mb" style={{ textAlign: 'center', padding: '40px 32px' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--accent-soft)', color: 'var(--accent)', display: 'grid', placeItems: 'center', margin: '0 auto 18px' }}>
               <Icon name="check" size={30} stroke={2.4}/>
             </div>
-            <h3 style={{ fontFamily: 'var(--font-display)', margin: '0 0 8px', fontSize: 24, letterSpacing: '-0.01em' }}>Oglas je objavljen!</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', margin: '0 0 8px', fontSize: 24 }}>Oglas je objavljen!</h3>
             <p style={{ color: 'var(--ink-3)', margin: '0 0 22px', fontSize: 14.5 }}>
-              Tvoj oglas <b style={{ color: 'var(--ink)' }}>"{title}"</b> je sada vidljiv u kategoriji <b style={{ color: 'var(--ink)' }}>{catName}</b>.
+              Tvoj oglas <b style={{ color: 'var(--ink)' }}>"{title}"</b> je sada vidljiv.
             </p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <button className="nav-btn" onClick={onClose}>Zatvori</button>
@@ -902,14 +1208,51 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
 
   return (
     <div className="scrim" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal" onClick={function(e) { e.stopPropagation(); }} style={{ maxWidth: 720 }}>
         <div className="mh">
-          <div>
-            <h3>Postavi oglas</h3>
-            <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>Korak {step} od 3</div>
-          </div>
+          <h3>Postavi oglas</h3>
           <button className="x-btn" onClick={onClose}><Icon name="x" size={16}/></button>
         </div>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', padding: '0 24px 16px', gap: 0 }}>
+          {stepLabels.map(function(label, idx) {
+            var n = idx + 1;
+            var isDone = step > n;
+            var isActive = step === n;
+            return (
+              React.createElement(React.Fragment, { key: n },
+                React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '0 0 auto' } },
+                  React.createElement('div', {
+                    style: {
+                      width: 28, height: 28, borderRadius: '50%',
+                      background: isDone ? '#22c55e' : isActive ? 'var(--accent)' : 'var(--line)',
+                      color: (isDone || isActive) ? '#fff' : 'var(--ink-3)',
+                      display: 'grid', placeItems: 'center',
+                      fontSize: 12, fontWeight: 700, transition: 'background .2s',
+                    }
+                  }, isDone ? '✓' : n),
+                  React.createElement('div', {
+                    style: {
+                      fontSize: 9, marginTop: 4, fontFamily: 'var(--font-mono)',
+                      whiteSpace: 'nowrap', textAlign: 'center',
+                      color: isActive ? 'var(--accent)' : 'var(--ink-3)',
+                    }
+                  }, label)
+                ),
+                idx < stepLabels.length - 1
+                  ? React.createElement('div', {
+                      style: {
+                        flex: 1, height: 2, margin: '14px 4px 0',
+                        background: step > n ? '#22c55e' : 'var(--line)',
+                        transition: 'background .2s',
+                      }
+                    })
+                  : null
+              )
+            );
+          })}
+        </div>
+
         <div className="mb">
           {error && (
             <div style={{ padding: '10px 14px', background: '#fff0ee', border: '1px solid #fdc5bc', borderRadius: 8, fontSize: 13, color: 'var(--warn)', marginBottom: 14 }}>
@@ -920,108 +1263,58 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
           {step === 1 && (
             <div>
               <div className="field-group">
-                <label>Tip oglasa</label>
-                <div className="seg">
-                  <button className={type === 'barter' ? 'on' : ''} onClick={() => setType('barter')}>Razmena</button>
-                  <button className={type === 'sell'   ? 'on' : ''} onClick={() => setType('sell')}>Prodaja</button>
-                  <button className={type === 'both'   ? 'on' : ''} onClick={() => setType('both')}>Oboje</button>
-                </div>
-              </div>
-              <div className="field-group">
                 <label>Naziv oglasa</label>
-                <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder='npr. Bicikl Capriolo MTB 27.5, malo korišćen' autoFocus/>
-                <div className="hint">Budi konkretan. Dobar naziv = više pregleda.</div>
+                <input className="input" value={title} onChange={function(e) { setTitle(e.target.value); }} placeholder="npr. Bicikl Capriolo MTB 27.5, malo korisćen" autoFocus/>
+                <div className="hint">Budi konkretan — dobar naziv donosi više pregleda.</div>
               </div>
               <div className="field-group">
-                <label>Kategorija</label>
-                <select className="select" value={cat} onChange={(e) => setCat(e.target.value)}>
-                  <option value="">Izaberi kategoriju…</option>
-                  {displayCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div className="field-group">
-                <label>Opis</label>
-                <textarea className="textarea" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Opiši stanje, dimenzije, šta je uključeno…"/>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div>
-              {(type === 'sell' || type === 'both') && (
-                <div className="field-group">
-                  <label>Cena (rsd)</label>
-                  <input className="input" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0"/>
-                  <div className="hint">Ostavi prazno ako želiš samo razmenu.</div>
-                </div>
-              )}
-              {(type === 'barter' || type === 'both') && (
-                <div className="field-group">
-                  <label>Šta tražiš u zamenu?</label>
-                  <textarea className="textarea" value={seek} onChange={(e) => setSeek(e.target.value)} placeholder="npr. knjige savremene proze, biljke, kućni alat…"/>
-                  <div className="hint">Što jasniji opis, to bolja podudarnost.</div>
-                </div>
-              )}
-              <div className="field-group">
-                <label>Grad</label>
-                <input className="input" value={city} onChange={(e) => setCity(e.target.value)} placeholder="npr. Beograd"/>
-              </div>
-              <div className="field-group">
-                <label>Fotografije</label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={handleFileSelect}
-                />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
-                  {[0,1,2,3].map(i => {
-                    const file = imageFiles[i];
-                    const url  = file ? URL.createObjectURL(file) : null;
+                <label>
+                  Fotografije
+                  <span style={{ color: 'var(--ink-3)', fontWeight: 400, fontSize: 12, marginLeft: 6 }}>· do 10, prva je naslovna</span>
+                </label>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFileSelect}/>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8 }}>
+                  {[0,1,2,3,4].map(function(i) {
+                    var url = imagePreviews[i] || null;
                     return (
                       <div
                         key={i}
-                        onClick={() => fileInputRef.current.click()}
+                        onClick={function() { fileInputRef.current.click(); }}
                         style={{
-                          aspectRatio: '1/1',
+                          aspectRatio: '1/1', borderRadius: 10,
                           border: url ? '2px solid var(--accent)' : '1px dashed var(--ink-4)',
-                          borderRadius: 10,
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: 'var(--ink-3)',
-                          cursor: 'pointer',
+                          display: 'grid', placeItems: 'center',
+                          color: 'var(--ink-3)', cursor: 'pointer',
                           background: url ? 'transparent' : '#faf8f1',
-                          overflow: 'hidden',
-                          position: 'relative',
+                          overflow: 'hidden', position: 'relative',
                         }}
                       >
                         {url ? (
-                          <>
-                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
-                            {i === 0 && (
-                              <span style={{
-                                position: 'absolute', bottom: 4, left: 4,
-                                background: 'var(--accent)', color: '#fff',
-                                fontSize: 9, fontWeight: 700, padding: '2px 5px',
-                                borderRadius: 4, fontFamily: 'var(--font-mono)',
-                                letterSpacing: '.04em',
-                              }}>NASLOVNA</span>
-                            )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                              style={{
-                                position: 'absolute', top: 4, right: 4,
-                                width: 20, height: 20, borderRadius: '50%',
+                          React.createElement(React.Fragment, null,
+                            React.createElement('img', { src: url, style: { width: '100%', height: '100%', objectFit: 'cover' } }),
+                            i === 0
+                              ? React.createElement('span', {
+                                  style: {
+                                    position: 'absolute', bottom: 3, left: 3,
+                                    background: 'var(--accent)', color: '#fff',
+                                    fontSize: 7, fontWeight: 700, padding: '2px 4px',
+                                    borderRadius: 3, fontFamily: 'var(--font-mono)', letterSpacing: '.04em',
+                                  }
+                                }, 'NASLOVNA')
+                              : null,
+                            React.createElement('button', {
+                              onClick: function(e) { e.stopPropagation(); removeImage(i); },
+                              style: {
+                                position: 'absolute', top: 3, right: 3,
+                                width: 18, height: 18, borderRadius: '50%',
                                 background: 'rgba(0,0,0,.5)', border: 0,
                                 color: '#fff', cursor: 'pointer',
-                                display: 'grid', placeItems: 'center', fontSize: 12,
-                              }}
-                            >×</button>
-                          </>
+                                display: 'grid', placeItems: 'center', fontSize: 11, lineHeight: 1,
+                              }
+                            }, '×')
+                          )
                         ) : (
-                          <Icon name={i === 0 ? 'camera' : 'plus'} size={18}/>
+                          React.createElement(Icon, { name: i === 0 ? 'camera' : 'plus', size: 16 })
                         )}
                       </div>
                     );
@@ -1029,41 +1322,265 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
                 </div>
                 <div className="hint">
                   {imageFiles.length > 0
-                    ? `${imageFiles.length} ${imageFiles.length === 1 ? 'slika izabrana' : 'slike izabrane'} · klikni za promenu`
-                    : 'Klikni da dodaš do 4 fotografije · prva postaje naslovna'
-                  }
+                    ? (imageFiles.length + (imageFiles.length === 1 ? ' slika izabrana' : ' slike izabrane') + ' · klikni za dodavanje')
+                    : 'Klikni na kvadrat da dodas fotografije'}
                 </div>
               </div>
             </div>
           )}
 
+          {step === 2 && (
+            <div>
+              {suggestions.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-3)', letterSpacing: '.06em', marginBottom: 8 }}>PRIJEDLOZI</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {suggestions.map(function(sg, idx) {
+                      var lbl = sg.s ? (sg.main.name + ' › ' + sg.s.name) : sg.main.name;
+                      var isSel = sg.s
+                        ? (sub && sub.slug === sg.s.slug)
+                        : (mainCat && mainCat.slug === sg.main.slug && !sub);
+                      return (
+                        <button
+                          key={idx}
+                          onClick={function() { setMainCat(sg.main); setSub(sg.s || null); }}
+                          style={{
+                            padding: '6px 12px', borderRadius: 20, fontSize: 13,
+                            border: isSel ? '2px solid var(--accent)' : '1px solid var(--line)',
+                            background: isSel ? 'var(--accent-soft)' : '#fff',
+                            color: isSel ? 'var(--accent)' : 'var(--ink-2)',
+                            cursor: 'pointer', fontWeight: isSel ? 700 : 400,
+                          }}
+                        >
+                          {lbl}{sg.s && sg.s.count ? ' (' + sg.s.count + ')' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {!mainCat ? (
+                <div>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-3)', letterSpacing: '.06em', marginBottom: 10 }}>SVE KATEGORIJE</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                    {displayCats.map(function(c) {
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={function() { setMainCat(c); setSub(null); }}
+                          style={{
+                            padding: '12px 10px', borderRadius: 10, fontSize: 13,
+                            border: '1px solid var(--line)', background: '#fff',
+                            color: 'var(--ink)', cursor: 'pointer', textAlign: 'center', fontWeight: 500,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                          }}
+                        >
+                          {c.icon
+                            ? React.createElement(Icon, { name: c.icon, size: 20, style: { color: 'var(--accent)', flexShrink: 0 } })
+                            : null}
+                          <span style={{ lineHeight: 1.2 }}>{c.name}</span>
+                          {c.children && c.children.length > 0 && (
+                            <span style={{ fontSize: 10, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+                              {c.children.length + ' podkat.'}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <button
+                    onClick={function() { setMainCat(null); setSub(null); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 0, cursor: 'pointer', color: 'var(--accent)', fontSize: 13, fontWeight: 600, marginBottom: 12, padding: 0 }}
+                  >
+                    <Icon name="arrow-l" size={14}/> {mainCat.name}
+                  </button>
+                  {mainCat.children && mainCat.children.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                      {mainCat.children.map(function(s) {
+                        var isSel = sub && sub.slug === s.slug;
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={function() { setSub(s); }}
+                            style={{
+                              padding: '10px 12px', borderRadius: 10, fontSize: 13,
+                              border: isSel ? '2px solid var(--accent)' : '1px solid var(--line)',
+                              background: isSel ? 'var(--accent-soft)' : '#fff',
+                              color: isSel ? 'var(--accent)' : 'var(--ink)',
+                              cursor: 'pointer', textAlign: 'left', fontWeight: isSel ? 700 : 400,
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
+                            }}
+                          >
+                            <span>{s.name}</span>
+                            {s.count ? (
+                              <span style={{ fontSize: 10, color: isSel ? 'var(--accent)' : 'var(--ink-3)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                                {s.count}
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 13 }}>
+                      Nema podkategorija. Nastavi s ovom kategorijom.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {step === 3 && (
             <div>
-              <div style={{ padding: 16, background: '#faf8f1', borderRadius: 12, fontSize: 14, marginBottom: 14 }}>
-                <b style={{ display: 'block', marginBottom: 6, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.06em' }}>PREGLED</b>
-                {imageFiles.length > 0 && (
-                  <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-                    {imageFiles.map((f, i) => (
-                      <img
-                        key={i}
-                        src={URL.createObjectURL(f)}
-                        style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', border: i === 0 ? '2px solid var(--accent)' : '1px solid var(--line)' }}
-                      />
-                    ))}
-                  </div>
-                )}
-                <div style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: 4 }}>{title || 'Bez naziva'}</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-2)' }}>{desc || 'Bez opisa.'}</div>
-                <div style={{ marginTop: 10, display: 'flex', gap: 14, fontSize: 12.5, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
-                  <span>{catName}</span>
-                  <span>{city}</span>
-                  <span>{price ? price + ' rsd' : 'Razmena'}</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div className="field-group" style={{ margin: 0 }}>
+                  <label>Cena</label>
+                  <input className="input" value={price} onChange={function(e) { setPrice(e.target.value); }} placeholder="0" type="number" min="0"/>
                 </div>
-                {seek && (
-                  <div style={{ marginTop: 8, padding: 8, background: '#fff', borderRadius: 6, fontSize: 13 }}>
-                    <b style={{ color: 'var(--accent)' }}>Tražim:</b> {seek}
+                <div className="field-group" style={{ margin: 0 }}>
+                  <label>Valuta</label>
+                  <div className="seg" style={{ width: '100%' }}>
+                    <button className={currency === 'RSD' ? 'on' : ''} onClick={function() { setCurrency('RSD'); }}>RSD</button>
+                    <button className={currency === 'EUR' ? 'on' : ''} onClick={function() { setCurrency('EUR'); }}>EUR</button>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div className="field-group" style={{ margin: 0 }}>
+                  <label>Grad</label>
+                  <input className="input" value={city} onChange={function(e) { setCity(e.target.value); }} placeholder="npr. Beograd"/>
+                </div>
+                <div className="field-group" style={{ margin: 0 }}>
+                  <label>Stanje</label>
+                  <select className="select" value={condition} onChange={function(e) { setCondition(e.target.value); }}>
+                    <option value="">Izaberi...</option>
+                    {conditionOpts.map(function(o) { return React.createElement('option', { key: o.v, value: o.v }, o.l); })}
+                  </select>
+                </div>
+              </div>
+              <div className="field-group">
+                <label>Opis</label>
+                <textarea className="textarea" value={desc} onChange={function(e) { setDesc(e.target.value); }} placeholder="Opiši stanje, dimenzije, šta je uključeno..." rows={4}/>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div>
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 14 }}>Kako možeš primiti ovaj predmet?</div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 14 }}>
+                  <input type="checkbox" checked={swappable} onChange={function(e) { setSwappable(e.target.checked); }} style={{ width: 18, height: 18 }}/>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>Razmena</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>Primam predmete u zamenu</div>
+                  </div>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={allowMoney} onChange={function(e) { setAllowMoney(e.target.checked); }} style={{ width: 18, height: 18 }}/>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>Prodaja</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>Primam novac</div>
+                  </div>
+                </label>
+              </div>
+              {swappable && (
+                <div className="field-group">
+                  <label>Šta tražiš u zamenu?</label>
+                  {wantsList.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                      {wantsList.map(function(w, i) {
+                        return (
+                          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'var(--accent-soft)', color: 'var(--accent)', borderRadius: 20, fontSize: 13, fontWeight: 500 }}>
+                            {w}
+                            <button onClick={function() { removeWant(i); }} style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--accent)', fontSize: 15, lineHeight: 1, padding: 0, display: 'grid', placeItems: 'center' }}>×</button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <input
+                    className="input"
+                    value={wantsInput}
+                    onChange={function(e) { setWantsInput(e.target.value); }}
+                    onKeyDown={handleWantsKey}
+                    placeholder="npr. knjige, biljke... (Enter za dodavanje)"
+                  />
+                  <div className="hint">Pritisni Enter da dodas stavku.</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === 5 && (
+            <div>
+              <div style={{ padding: 16, background: '#faf8f1', borderRadius: 12, marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-3)', letterSpacing: '.06em', marginBottom: 10 }}>PREGLED OGLASA</div>
+                {imagePreviews.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' }}>
+                    {imagePreviews.map(function(url, i) {
+                      return (
+                        <img key={i} src={url} style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: i === 0 ? '2px solid var(--accent)' : '1px solid var(--line)' }}/>
+                      );
+                    })}
                   </div>
                 )}
+                <div style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: 8 }}>{title || 'Bez naziva'}</div>
+                <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '3px 0', color: 'var(--ink-3)', width: 110 }}>Kategorija</td>
+                      <td style={{ padding: '3px 0', fontWeight: 500 }}>
+                        {sub
+                          ? (mainCat ? mainCat.name + ' › ' + sub.name : sub.name)
+                          : (mainCat ? mainCat.name : '—')}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '3px 0', color: 'var(--ink-3)' }}>Stanje</td>
+                      <td style={{ padding: '3px 0', fontWeight: 500 }}>
+                        {(conditionOpts.find(function(o) { return o.v === condition; }) || {}).l || '—'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '3px 0', color: 'var(--ink-3)' }}>Grad</td>
+                      <td style={{ padding: '3px 0', fontWeight: 500 }}>{city || '—'}</td>
+                    </tr>
+                    {price ? (
+                      <tr>
+                        <td style={{ padding: '3px 0', color: 'var(--ink-3)' }}>Cena</td>
+                        <td style={{ padding: '3px 0', fontWeight: 500 }}>{price + ' ' + currency}</td>
+                      </tr>
+                    ) : null}
+                    <tr>
+                      <td style={{ padding: '3px 0', color: 'var(--ink-3)' }}>Tip</td>
+                      <td style={{ padding: '3px 0', fontWeight: 500 }}>
+                        {swappable && allowMoney ? 'Razmena i prodaja' : swappable ? 'Razmena' : 'Prodaja'}
+                      </td>
+                    </tr>
+                    {wantsList.length > 0 ? (
+                      <tr>
+                        <td style={{ padding: '3px 0', color: 'var(--ink-3)' }}>Tražim</td>
+                        <td style={{ padding: '3px 0', fontWeight: 500 }}>{wantsList.join(', ')}</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+                {desc ? (
+                  <div style={{ marginTop: 10, fontSize: 13, color: 'var(--ink-2)', borderTop: '1px solid var(--line)', paddingTop: 10 }}>{desc}</div>
+                ) : null}
+              </div>
+              <div style={{ padding: 16, background: 'linear-gradient(135deg,#1e3a5f 0%,#2d5a8e 100%)', borderRadius: 12, color: '#fff', marginBottom: 16 }}>
+                <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '.08em', opacity: .7, marginBottom: 4 }}>★ PREMIUM OGLAS</div>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Istakni oglas i dobij 3x više pregleda</div>
+                <div style={{ fontSize: 12, opacity: .8, marginBottom: 12 }}>Premium oglasi se prikazuju prvi u pretrazi i imaju oznaku prioriteta.</div>
+                <button style={{ background: '#fff', color: '#1e3a5f', border: 0, borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  Saznaj više →
+                </button>
               </div>
               <label style={{ display: 'flex', gap: 10, fontSize: 13.5, color: 'var(--ink-2)', cursor: 'pointer' }}>
                 <input type="checkbox" defaultChecked/>
@@ -1072,18 +1589,17 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
             </div>
           )}
         </div>
+
         <div className="mf">
           <button className="nav-btn" onClick={step === 1 ? onClose : prev}>
             {step === 1 ? 'Otkaži' : 'Nazad'}
           </button>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
-            {step === 1 && 'Osnovne info'}
-            {step === 2 && 'Detalji'}
-            {step === 3 && 'Potvrda'}
+          <div style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+            {stepLabels[step - 1]}
           </div>
-          <button className="nav-btn primary" onClick={step === 3 ? submit : next} disabled={loading}>
-            {loading ? 'Objavljujem…' : step === 3 ? 'Objavi oglas' : 'Dalje'}
-            {step !== 3 && !loading && <Icon name="arrow-r" size={14} stroke={2}/>}
+          <button className="nav-btn primary" onClick={step === 5 ? submit : next} disabled={!canProceed || loading}>
+            {loading ? 'Objavljujem...' : step === 5 ? 'Objavi oglas' : 'Dalje'}
+            {step !== 5 && !loading && React.createElement(Icon, { name: 'arrow-r', size: 14, stroke: 2 })}
           </button>
         </div>
       </div>
@@ -1091,8 +1607,351 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
   );
 }
 
+/* ─── STAR RATING ──────────────────────────────── */
+function StarRating({ value, onChange, size }) {
+  var s = size || 28;
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {[1,2,3,4,5].map(function(n) {
+        return (
+          <span
+            key={n}
+            onClick={function() { if (onChange) onChange(n); }}
+            style={{
+              fontSize: s, cursor: onChange ? 'pointer' : 'default',
+              color: n <= value ? '#f6ad55' : 'var(--line)',
+              lineHeight: 1, userSelect: 'none',
+              transition: 'color .1s',
+            }}
+          >★</span>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── REVIEW MODAL ──────────────────────────────── */
+function ReviewModal({ offer, onClose, onSuccess }) {
+  var [rating, setRating]   = useS(0);
+  var [comment, setComment] = useS('');
+  var [loading, setLoading] = useS(false);
+  var [error, setError]     = useS('');
+
+  var submit = async function() {
+    if (!rating) { setError('Izaberi ocenu od 1 do 5 zvezdica.'); return; }
+    setLoading(true);
+    setError('');
+    var res = await apiReviewOffer(offer.id, rating, comment);
+    setLoading(false);
+    if (res.ok) onSuccess();
+    else setError(res.error || 'Greška pri slanju ocene.');
+  };
+
+  return (
+    <div className="scrim" onClick={onClose}>
+      <div className="modal" onClick={function(e) { e.stopPropagation(); }} style={{ maxWidth: 440 }}>
+        <div className="mh">
+          <h3>Ostavi ocenu</h3>
+          <button className="x-btn" onClick={onClose}><Icon name="x" size={16}/></button>
+        </div>
+        <div className="mb">
+          <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 6 }}>
+            Razmena za oglas:
+          </p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 20 }}>
+            {offer.listing ? offer.listing.title : '—'}
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 8 }}>
+            Oceni korisnika <b style={{ color: 'var(--ink)' }}>{offer.other_user}</b>:
+          </p>
+          <div style={{ marginBottom: 20 }}>
+            <StarRating value={rating} onChange={setRating} size={36}/>
+            {rating > 0 && (
+              <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 6, fontFamily: 'var(--font-mono)' }}>
+                {['', 'Loše', 'Prihvatljivo', 'Dobro', 'Vrlo dobro', 'Odlično'][rating]}
+              </div>
+            )}
+          </div>
+          <div className="field-group">
+            <label>Komentar (opciono)</label>
+            <textarea
+              className="textarea"
+              value={comment}
+              onChange={function(e) { setComment(e.target.value); }}
+              placeholder="Opiši iskustvo razmene…"
+              rows={3}
+            />
+          </div>
+          {error && (
+            <div style={{ padding: '10px 14px', background: '#fff0ee', border: '1px solid #fdc5bc', borderRadius: 8, fontSize: 13, color: 'var(--warn)', marginTop: 8 }}>
+              {error}
+            </div>
+          )}
+        </div>
+        <div className="mf">
+          <button className="nav-btn" onClick={onClose} disabled={loading}>Odustani</button>
+          <button className="nav-btn primary" onClick={submit} disabled={loading || !rating}>
+            {loading ? 'Šalje se…' : '★ Pošalji ocenu'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── RATINGS SCREEN ──────────────────────────────── */
+function RatingsScreen({ onOpenItem }) {
+  var [tab, setTab]               = useS('swaps');
+  var [offers, setOffers]         = useS(null);
+  var [reviews, setReviews]       = useS(null);
+  var [reviewTarget, setReviewTarget] = useS(null);
+  var [completing, setCompleting] = useS(null);
+
+  useE(function() {
+    apiMyOffers().then(function(res) {
+      setOffers(Array.isArray(res.results) ? res.results : []);
+    });
+    apiMyReviews().then(function(res) {
+      setReviews(Array.isArray(res.results) ? res.results : []);
+    });
+  }, []);
+
+  var handleComplete = async function(offerId) {
+    setCompleting(offerId);
+    var res = await apiCompleteOffer(offerId);
+    if (res.ok) {
+      setOffers(function(prev) {
+        return prev.map(function(o) {
+          return o.id === offerId
+            ? Object.assign({}, o, { status: 'completed', can_complete: false, can_review: true })
+            : o;
+        });
+      });
+    }
+    setCompleting(null);
+  };
+
+  var handleReviewSuccess = function(offerId) {
+    setReviewTarget(null);
+    setOffers(function(prev) {
+      return prev.map(function(o) {
+        return o.id === offerId
+          ? Object.assign({}, o, { can_review: false, i_reviewed: true })
+          : o;
+      });
+    });
+  };
+
+  var STATUS_LABEL = { pending: 'Na čekanju', accepted: 'Prihvaćena', declined: 'Odbijena', completed: 'Završena', cancelled: 'Otkazana' };
+  var STATUS_COLOR = { pending: '#b7791f', accepted: '#276749', declined: '#e53e3e', completed: '#276749', cancelled: 'var(--ink-3)' };
+  var STATUS_BG    = { pending: '#fefcbf', accepted: '#f0fff4', declined: '#fff5f5', completed: '#f0fff4', cancelled: '#f5f5f5' };
+
+  return (
+    <section className="section" style={{ paddingTop: 32 }}>
+      <div className="section-inner">
+        <div className="section-head">
+          <div>
+            <h2>Ocene i istorija</h2>
+            <div className="sub">Tvoje razmene i primljene ocene</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid var(--line)', paddingBottom: 0 }}>
+          {[
+            { id: 'swaps',   label: 'Razmene', count: offers ? offers.length : null },
+            { id: 'reviews', label: 'Ocene',   count: reviews ? reviews.length : null },
+          ].map(function(t) {
+            return (
+              <button
+                key={t.id}
+                onClick={function() { setTab(t.id); }}
+                style={{
+                  padding: '10px 18px', border: 'none', background: 'none',
+                  borderBottom: tab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
+                  color: tab === t.id ? 'var(--accent)' : 'var(--ink-2)',
+                  fontWeight: tab === t.id ? 700 : 500, fontSize: 14,
+                  cursor: 'pointer', marginBottom: -1, transition: 'all .15s',
+                }}
+              >
+                {t.label}
+                {t.count !== null && (
+                  <span style={{
+                    marginLeft: 6, fontSize: 11, fontFamily: 'var(--font-mono)',
+                    background: tab === t.id ? 'var(--accent-soft)' : 'var(--line)',
+                    color: tab === t.id ? 'var(--accent)' : 'var(--ink-3)',
+                    padding: '1px 6px', borderRadius: 8,
+                  }}>{t.count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {tab === 'swaps' && (
+          offers === null ? (
+            <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Učitavam…</div>
+          ) : offers.length === 0 ? (
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
+              <div style={{ fontSize: 36, marginBottom: 14 }}>🔄</div>
+              <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
+                Još nemaš razmena
+              </div>
+              <div style={{ fontSize: 13.5 }}>Kad pošalješ ili primiš ponudu za razmenu, pojaviće se ovde.</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {offers.map(function(offer) {
+                var isCompleting = completing === offer.id;
+                return (
+                  <div
+                    key={offer.id}
+                    style={{
+                      background: '#fff', border: '1px solid var(--line)',
+                      borderRadius: 12, padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+                    }}
+                  >
+                    <div style={{
+                      width: 56, height: 56, borderRadius: 8, flexShrink: 0,
+                      background: '#f0ede4', overflow: 'hidden', display: 'grid', placeItems: 'center',
+                    }}>
+                      {offer.listing && offer.listing.image
+                        ? <img src={offer.listing.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                        : <span style={{ fontSize: 22 }}>📦</span>
+                      }
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {offer.listing ? offer.listing.title : '—'}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginTop: 3 }}>
+                        {offer.is_sender ? 'Ti → ' : '← Ti · od '}{offer.other_user}
+                        {' · '}{new Date(offer.created_at).toLocaleDateString('sr-RS')}
+                      </div>
+                      {offer.offered_listing && (
+                        <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 3 }}>
+                          Ponuđeno: <b>{offer.offered_listing.title}</b>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
+                        fontFamily: 'var(--font-mono)', letterSpacing: '.04em',
+                        color: STATUS_COLOR[offer.status] || 'var(--ink-3)',
+                        background: STATUS_BG[offer.status] || '#f5f5f5',
+                      }}>
+                        {STATUS_LABEL[offer.status] || offer.status}
+                      </span>
+
+                      {offer.can_complete && (
+                        <button
+                          className="nav-btn primary"
+                          onClick={function() { handleComplete(offer.id); }}
+                          disabled={isCompleting}
+                          style={{ fontSize: 12 }}
+                        >
+                          {isCompleting ? '…' : '✓ Potvrdi završetak'}
+                        </button>
+                      )}
+
+                      {offer.can_review && (
+                        <button
+                          className="nav-btn"
+                          onClick={function() { setReviewTarget(offer); }}
+                          style={{ fontSize: 12, color: '#b7791f', borderColor: '#b7791f' }}
+                        >
+                          ★ Ostavi ocenu
+                        </button>
+                      )}
+
+                      {offer.i_reviewed && offer.status === 'completed' && (
+                        <span style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+                          ✓ Ocenjeno
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
+
+        {tab === 'reviews' && (
+          reviews === null ? (
+            <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Učitavam…</div>
+          ) : reviews.length === 0 ? (
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
+              <div style={{ fontSize: 36, marginBottom: 14 }}>★</div>
+              <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
+                Još nemaš ocena
+              </div>
+              <div style={{ fontSize: 13.5 }}>Završi razmenu i drugi korisnici će moći da te ocenjuju.</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {reviews.map(function(r) {
+                return (
+                  <div
+                    key={r.id}
+                    style={{
+                      background: '#fff', border: '1px solid var(--line)',
+                      borderRadius: 12, padding: '14px 16px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        background: 'var(--accent-soft)', color: 'var(--accent)',
+                        display: 'grid', placeItems: 'center',
+                        fontWeight: 700, fontSize: 13,
+                      }}>
+                        {r.from_user.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{r.from_user}</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+                          {new Date(r.created_at).toLocaleDateString('sr-RS')}
+                          {r.listing ? ' · ' + r.listing : ''}
+                        </div>
+                      </div>
+                      <div style={{ marginLeft: 'auto' }}>
+                        <StarRating value={r.rating} size={18}/>
+                      </div>
+                    </div>
+                    {r.comment && (
+                      <div style={{
+                        fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.6,
+                        padding: '8px 12px', background: '#faf8f1', borderRadius: 8,
+                        fontStyle: 'italic',
+                      }}>
+                        „{r.comment}"
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
+      </div>
+
+      {reviewTarget && (
+        <ReviewModal
+          offer={reviewTarget}
+          onClose={function() { setReviewTarget(null); }}
+          onSuccess={function() { handleReviewSuccess(reviewTarget.id); }}
+        />
+      )}
+    </section>
+  );
+}
+
 /* ─── RAZMENE DRAWER ──────────────────────────────── */
-function RazmeneDrawer({ onClose, currentUser }) {
+function RazmeneDrawer({ onClose, currentUser, targetListing }) {
   const [threads, setThreads]   = useS([]);
   const [active, setActive]     = useS(null);
   const [messages, setMessages] = useS([]);
@@ -1105,13 +1964,28 @@ function RazmeneDrawer({ onClose, currentUser }) {
   useE(() => { activeRef.current = active; }, [active]);
 
   useE(() => {
-    apiInbox().then(res => {
-      if (Array.isArray(res.results)) {
-        setThreads(res.results);
-        if (res.results.length > 0) setActive(res.results[0]);
-      }
-      setLoading(false);
-    });
+    var loadInbox = function(targetConvId) {
+      apiInbox().then(function(res) {
+        if (Array.isArray(res.results)) {
+          setThreads(res.results);
+          if (targetConvId) {
+            var match = res.results.find(function(t) { return t.id === targetConvId; });
+            setActive(match || (res.results.length > 0 ? res.results[0] : null));
+          } else if (res.results.length > 0) {
+            setActive(res.results[0]);
+          }
+        }
+        setLoading(false);
+      });
+    };
+
+    if (targetListing) {
+      apiStartThread(targetListing.id).then(function(res) {
+        loadInbox(res.ok ? res.conversation_id : null);
+      });
+    } else {
+      loadInbox(null);
+    }
   }, []);
 
   useE(() => {
@@ -1279,4 +2153,4 @@ function Bubble({ who, children }) {
   );
 }
 
-Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal });
+Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen, RatingsScreen, CategoryPickerModal });
