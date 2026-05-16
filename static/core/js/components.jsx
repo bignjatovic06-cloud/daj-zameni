@@ -82,30 +82,8 @@ function Nav({
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Šta tražite ili nudite?"
+            placeholder="Šta tražite?"
           />
-          <select
-            className="s-cat"
-            value={cat}
-            onChange={handleCatChange}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-              color: 'var(--ink-2)',
-              outline: 'none',
-              padding: '0 6px',
-              flexShrink: 0,
-              maxWidth: 140,
-            }}
-          >
-            <option value="">Sve kategorije</option>
-            {(categories || []).filter(c => c.id !== 'sve').map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
           <button type="submit" className="s-btn">Pretraži</button>
         </form>
 
