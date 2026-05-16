@@ -146,3 +146,22 @@ async function apiRespondToOffer(offerId, action) {
     body: JSON.stringify({ action }),
   });
 }
+
+async function apiMyOffers() {
+  return apiFetch('/offers/mine/');
+}
+
+async function apiCompleteOffer(offerId) {
+  return apiFetch('/offers/' + offerId + '/complete/', { method: 'POST' });
+}
+
+async function apiReviewOffer(offerId, rating, comment) {
+  return apiFetch('/offers/' + offerId + '/review/', {
+    method: 'POST',
+    body: JSON.stringify({ rating, comment }),
+  });
+}
+
+async function apiMyReviews() {
+  return apiFetch('/profile/reviews/');
+}

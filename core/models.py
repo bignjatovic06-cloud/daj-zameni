@@ -174,10 +174,13 @@ class Notification(models.Model):
 class Review(models.Model):
     from_user  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_reviews')
     to_user    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_reviews')
-    swap_offer = models.OneToOneField(SwapOffer, on_delete=models.CASCADE, related_name='review')
+    swap_offer = models.ForeignKey(SwapOffer, on_delete=models.CASCADE, related_name='reviews')
     rating     = models.PositiveSmallIntegerField()
     comment    = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [('from_user', 'swap_offer')]
 
     def __str__(self):
         return f"{self.from_user} → {self.to_user}: {self.rating}★"

@@ -23,7 +23,11 @@ urlpatterns = [
     path('categories/',                        views.category_list,          name='category_list'),
 
     # ─── Ponude ───────────────────────────────────────
+    path('offers/mine/',                       views.my_offers,              name='my_offers'),
     path('offers/<uuid:offer_id>/respond/',    views.offer_respond,          name='offer_respond'),
+    path('offers/<uuid:offer_id>/complete/',   views.offer_complete,         name='offer_complete'),
+    path('offers/<uuid:offer_id>/review/',     views.offer_review,           name='offer_review'),
+    path('profile/reviews/',                   views.my_reviews,             name='my_reviews'),
 
     # ─── Inbox ────────────────────────────────────────
     path('inbox/',                             views.inbox,                  name='inbox'),

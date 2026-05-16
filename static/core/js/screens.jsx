@@ -1167,6 +1167,349 @@ function PostAdModal({ onClose, categories = [], onCreated }) {
   );
 }
 
+/* ─── STAR RATING ──────────────────────────────── */
+function StarRating({ value, onChange, size }) {
+  var s = size || 28;
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {[1,2,3,4,5].map(function(n) {
+        return (
+          <span
+            key={n}
+            onClick={function() { if (onChange) onChange(n); }}
+            style={{
+              fontSize: s, cursor: onChange ? 'pointer' : 'default',
+              color: n <= value ? '#f6ad55' : 'var(--line)',
+              lineHeight: 1, userSelect: 'none',
+              transition: 'color .1s',
+            }}
+          >★</span>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── REVIEW MODAL ──────────────────────────────── */
+function ReviewModal({ offer, onClose, onSuccess }) {
+  var [rating, setRating]   = useS(0);
+  var [comment, setComment] = useS('');
+  var [loading, setLoading] = useS(false);
+  var [error, setError]     = useS('');
+
+  var submit = async function() {
+    if (!rating) { setError('Izaberi ocenu od 1 do 5 zvezdica.'); return; }
+    setLoading(true);
+    setError('');
+    var res = await apiReviewOffer(offer.id, rating, comment);
+    setLoading(false);
+    if (res.ok) onSuccess();
+    else setError(res.error || 'Greška pri slanju ocene.');
+  };
+
+  return (
+    <div className="scrim" onClick={onClose}>
+      <div className="modal" onClick={function(e) { e.stopPropagation(); }} style={{ maxWidth: 440 }}>
+        <div className="mh">
+          <h3>Ostavi ocenu</h3>
+          <button className="x-btn" onClick={onClose}><Icon name="x" size={16}/></button>
+        </div>
+        <div className="mb">
+          <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 6 }}>
+            Razmena za oglas:
+          </p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 20 }}>
+            {offer.listing ? offer.listing.title : '—'}
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 8 }}>
+            Oceni korisnika <b style={{ color: 'var(--ink)' }}>{offer.other_user}</b>:
+          </p>
+          <div style={{ marginBottom: 20 }}>
+            <StarRating value={rating} onChange={setRating} size={36}/>
+            {rating > 0 && (
+              <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 6, fontFamily: 'var(--font-mono)' }}>
+                {['', 'Loše', 'Prihvatljivo', 'Dobro', 'Vrlo dobro', 'Odlično'][rating]}
+              </div>
+            )}
+          </div>
+          <div className="field-group">
+            <label>Komentar (opciono)</label>
+            <textarea
+              className="textarea"
+              value={comment}
+              onChange={function(e) { setComment(e.target.value); }}
+              placeholder="Opiši iskustvo razmene…"
+              rows={3}
+            />
+          </div>
+          {error && (
+            <div style={{ padding: '10px 14px', background: '#fff0ee', border: '1px solid #fdc5bc', borderRadius: 8, fontSize: 13, color: 'var(--warn)', marginTop: 8 }}>
+              {error}
+            </div>
+          )}
+        </div>
+        <div className="mf">
+          <button className="nav-btn" onClick={onClose} disabled={loading}>Odustani</button>
+          <button className="nav-btn primary" onClick={submit} disabled={loading || !rating}>
+            {loading ? 'Šalje se…' : '★ Pošalji ocenu'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── RATINGS SCREEN ──────────────────────────────── */
+function RatingsScreen({ onOpenItem }) {
+  var [tab, setTab]               = useS('swaps');
+  var [offers, setOffers]         = useS(null);
+  var [reviews, setReviews]       = useS(null);
+  var [reviewTarget, setReviewTarget] = useS(null);
+  var [completing, setCompleting] = useS(null);
+
+  useE(function() {
+    apiMyOffers().then(function(res) {
+      setOffers(Array.isArray(res.results) ? res.results : []);
+    });
+    apiMyReviews().then(function(res) {
+      setReviews(Array.isArray(res.results) ? res.results : []);
+    });
+  }, []);
+
+  var handleComplete = async function(offerId) {
+    setCompleting(offerId);
+    var res = await apiCompleteOffer(offerId);
+    if (res.ok) {
+      setOffers(function(prev) {
+        return prev.map(function(o) {
+          return o.id === offerId
+            ? Object.assign({}, o, { status: 'completed', can_complete: false, can_review: true })
+            : o;
+        });
+      });
+    }
+    setCompleting(null);
+  };
+
+  var handleReviewSuccess = function(offerId) {
+    setReviewTarget(null);
+    setOffers(function(prev) {
+      return prev.map(function(o) {
+        return o.id === offerId
+          ? Object.assign({}, o, { can_review: false, i_reviewed: true })
+          : o;
+      });
+    });
+  };
+
+  var STATUS_LABEL = { pending: 'Na čekanju', accepted: 'Prihvaćena', declined: 'Odbijena', completed: 'Završena', cancelled: 'Otkazana' };
+  var STATUS_COLOR = { pending: '#b7791f', accepted: '#276749', declined: '#e53e3e', completed: '#276749', cancelled: 'var(--ink-3)' };
+  var STATUS_BG    = { pending: '#fefcbf', accepted: '#f0fff4', declined: '#fff5f5', completed: '#f0fff4', cancelled: '#f5f5f5' };
+
+  return (
+    <section className="section" style={{ paddingTop: 32 }}>
+      <div className="section-inner">
+        <div className="section-head">
+          <div>
+            <h2>Ocene i istorija</h2>
+            <div className="sub">Tvoje razmene i primljene ocene</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid var(--line)', paddingBottom: 0 }}>
+          {[
+            { id: 'swaps',   label: 'Razmene', count: offers ? offers.length : null },
+            { id: 'reviews', label: 'Ocene',   count: reviews ? reviews.length : null },
+          ].map(function(t) {
+            return (
+              <button
+                key={t.id}
+                onClick={function() { setTab(t.id); }}
+                style={{
+                  padding: '10px 18px', border: 'none', background: 'none',
+                  borderBottom: tab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
+                  color: tab === t.id ? 'var(--accent)' : 'var(--ink-2)',
+                  fontWeight: tab === t.id ? 700 : 500, fontSize: 14,
+                  cursor: 'pointer', marginBottom: -1, transition: 'all .15s',
+                }}
+              >
+                {t.label}
+                {t.count !== null && (
+                  <span style={{
+                    marginLeft: 6, fontSize: 11, fontFamily: 'var(--font-mono)',
+                    background: tab === t.id ? 'var(--accent-soft)' : 'var(--line)',
+                    color: tab === t.id ? 'var(--accent)' : 'var(--ink-3)',
+                    padding: '1px 6px', borderRadius: 8,
+                  }}>{t.count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {tab === 'swaps' && (
+          offers === null ? (
+            <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Učitavam…</div>
+          ) : offers.length === 0 ? (
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
+              <div style={{ fontSize: 36, marginBottom: 14 }}>🔄</div>
+              <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
+                Još nemaš razmena
+              </div>
+              <div style={{ fontSize: 13.5 }}>Kad pošalješ ili primiš ponudu za razmenu, pojaviće se ovde.</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {offers.map(function(offer) {
+                var isCompleting = completing === offer.id;
+                return (
+                  <div
+                    key={offer.id}
+                    style={{
+                      background: '#fff', border: '1px solid var(--line)',
+                      borderRadius: 12, padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+                    }}
+                  >
+                    <div style={{
+                      width: 56, height: 56, borderRadius: 8, flexShrink: 0,
+                      background: '#f0ede4', overflow: 'hidden', display: 'grid', placeItems: 'center',
+                    }}>
+                      {offer.listing && offer.listing.image
+                        ? <img src={offer.listing.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                        : <span style={{ fontSize: 22 }}>📦</span>
+                      }
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {offer.listing ? offer.listing.title : '—'}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginTop: 3 }}>
+                        {offer.is_sender ? 'Ti → ' : '← Ti · od '}{offer.other_user}
+                        {' · '}{new Date(offer.created_at).toLocaleDateString('sr-RS')}
+                      </div>
+                      {offer.offered_listing && (
+                        <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 3 }}>
+                          Ponuđeno: <b>{offer.offered_listing.title}</b>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
+                        fontFamily: 'var(--font-mono)', letterSpacing: '.04em',
+                        color: STATUS_COLOR[offer.status] || 'var(--ink-3)',
+                        background: STATUS_BG[offer.status] || '#f5f5f5',
+                      }}>
+                        {STATUS_LABEL[offer.status] || offer.status}
+                      </span>
+
+                      {offer.can_complete && (
+                        <button
+                          className="nav-btn primary"
+                          onClick={function() { handleComplete(offer.id); }}
+                          disabled={isCompleting}
+                          style={{ fontSize: 12 }}
+                        >
+                          {isCompleting ? '…' : '✓ Potvrdi završetak'}
+                        </button>
+                      )}
+
+                      {offer.can_review && (
+                        <button
+                          className="nav-btn"
+                          onClick={function() { setReviewTarget(offer); }}
+                          style={{ fontSize: 12, color: '#b7791f', borderColor: '#b7791f' }}
+                        >
+                          ★ Ostavi ocenu
+                        </button>
+                      )}
+
+                      {offer.i_reviewed && offer.status === 'completed' && (
+                        <span style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+                          ✓ Ocenjeno
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
+
+        {tab === 'reviews' && (
+          reviews === null ? (
+            <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Učitavam…</div>
+          ) : reviews.length === 0 ? (
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
+              <div style={{ fontSize: 36, marginBottom: 14 }}>★</div>
+              <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
+                Još nemaš ocena
+              </div>
+              <div style={{ fontSize: 13.5 }}>Završi razmenu i drugi korisnici će moći da te ocenjuju.</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {reviews.map(function(r) {
+                return (
+                  <div
+                    key={r.id}
+                    style={{
+                      background: '#fff', border: '1px solid var(--line)',
+                      borderRadius: 12, padding: '14px 16px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        background: 'var(--accent-soft)', color: 'var(--accent)',
+                        display: 'grid', placeItems: 'center',
+                        fontWeight: 700, fontSize: 13,
+                      }}>
+                        {r.from_user.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{r.from_user}</div>
+                        <div style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+                          {new Date(r.created_at).toLocaleDateString('sr-RS')}
+                          {r.listing ? ' · ' + r.listing : ''}
+                        </div>
+                      </div>
+                      <div style={{ marginLeft: 'auto' }}>
+                        <StarRating value={r.rating} size={18}/>
+                      </div>
+                    </div>
+                    {r.comment && (
+                      <div style={{
+                        fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.6,
+                        padding: '8px 12px', background: '#faf8f1', borderRadius: 8,
+                        fontStyle: 'italic',
+                      }}>
+                        „{r.comment}"
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
+      </div>
+
+      {reviewTarget && (
+        <ReviewModal
+          offer={reviewTarget}
+          onClose={function() { setReviewTarget(null); }}
+          onSuccess={function() { handleReviewSuccess(reviewTarget.id); }}
+        />
+      )}
+    </section>
+  );
+}
+
 /* ─── RAZMENE DRAWER ──────────────────────────────── */
 function RazmeneDrawer({ onClose, currentUser, targetListing }) {
   const [threads, setThreads]   = useS([]);
@@ -1370,4 +1713,4 @@ function Bubble({ who, children }) {
   );
 }
 
-Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen });
+Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen, RatingsScreen });
