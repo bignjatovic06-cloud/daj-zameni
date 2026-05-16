@@ -72,18 +72,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 
 if os.environ.get('DATABASE_URL'):
-    import urllib.parse
-    _db = urllib.parse.urlparse(os.environ['DATABASE_URL'])
-    DATABASES = {
-        'default': {
-            'ENGINE':   'django.db.backends.postgresql',
-            'NAME':     _db.path.lstrip('/'),
-            'USER':     _db.username,
-            'PASSWORD': _db.password,
-            'HOST':     _db.hostname,
-            'PORT':     _db.port or 5432,
-        }
-    }
+    import dj_database_url
+    DATABASES = {'default': dj_database_url.config(conn_max_age=600, ssl_require=True)}
 else:
     DATABASES = {
         'default': {

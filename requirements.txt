@@ -8,5 +8,6 @@ defusedxml==0.8.0rc2
 PyJWT==2.9.0
 cryptography
 psycopg2-binary==2.9.10
+dj-database-url==2.3.0
 cloudinary==1.41.0
 django-cloudinary-storage==0.3.0
