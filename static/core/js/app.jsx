@@ -83,7 +83,7 @@ function App() {
   const [filterBarter, setFilterBarter]         = uS(false);
   const [filterSort, setFilterSort]             = uS('newest');
 
-  const [favs, setFavs]                   = uS({});
+  const [favPending, setFavPending]       = uS({});
   const [postOpen, setPostOpen]           = uS(false);
   const [razmeneOpen, setRazmeneOpen]     = uS(false);
   const [messageTarget, setMessageTarget] = uS(null);
@@ -343,7 +343,14 @@ function App() {
     window.scrollTo({ top: 0 });
   };
 
-  const toggleFav = (id) => setFavs(f => ({ ...f, [id]: !f[id] }));
+  const toggleFav = async (id) => {
+    if (!currentUser) { setLoginOpen(true); return; }
+    if (favPending[id]) return;
+    setFavPending(p => Object.assign({}, p, { [id]: true }));
+    const res = await apiToggleWishlist(id);
+    if (res.ok) handleSaveToggle(id, res.saved);
+    setFavPending(p => { const n = Object.assign({}, p); delete n[id]; return n; });
+  };
 
   const onCreatedListing = (newListing) => {
     if (!newListing) return;
@@ -452,7 +459,7 @@ function App() {
               ) : (
                 <div className="list-grid">
                   {listings.slice(0, 8).map(l => (
-                    <ListingCard key={l.id} item={l} fav={!!favs[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                    <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
                   ))}
                 </div>
               )}
@@ -610,7 +617,7 @@ function App() {
             {filtered.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
                 {filtered.map(l => (
-                  <ListingCard key={l.id} item={l} fav={!!favs[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
                 ))}
               </div>
             ) : (
@@ -662,7 +669,7 @@ function App() {
             {myListings.length > 0 ? (
               <div className="list-grid">
                 {myListings.map(l => (
-                  <ListingCard key={l.id} item={l} fav={!!favs[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
                 ))}
               </div>
             ) : (
