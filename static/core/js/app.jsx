@@ -836,6 +836,20 @@ function App() {
                   ))}
                 </div>
 
+                <div style={{ padding: '12px 16px 8px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 10, textTransform: 'uppercase' }}>Sortiranje</div>
+                  {[
+                    { id: 'newest',     label: 'Najnovije' },
+                    { id: 'price_asc',  label: 'Cena: rastuće' },
+                    { id: 'price_desc', label: 'Cena: opadajuće' },
+                  ].map(opt => (
+                    <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 10, fontSize: 14, color: 'var(--ink)' }}>
+                      <input type="radio" name="sort" checked={filterSort === opt.id} onChange={() => setFilterSort(opt.id)} style={{ width: 18, height: 18, accentColor: 'var(--accent)', cursor: 'pointer' }}/>
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+
                 <div style={{ padding: '16px', position: 'sticky', bottom: 0, background: '#fff', borderTop: '1px solid var(--line)' }}>
                   <button className="nav-btn primary" style={{ width: '100%', justifyContent: 'center', fontSize: 15 }} onClick={() => setMobileFiltersOpen(false)}>
                     Prikaži {totalCount} {totalCount === 1 ? 'oglas' : 'oglasa'}
@@ -882,6 +896,7 @@ function App() {
               <select
                 value={filterSort}
                 onChange={e => setFilterSort(e.target.value)}
+                className="sort-select-desktop"
                 style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', background: '#fff', outline: 'none', cursor: 'pointer' }}
               >
                 <option value="newest">Najnovije</option>
