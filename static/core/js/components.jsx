@@ -187,10 +187,10 @@ function Nav({
         </div>
       </div>
 
-      {/* Burger drawer overlay */}
-      {burgerOpen && (
+      {/* Burger drawer — portaled to body so header stacking context can't clip it */}
+      {burgerOpen && ReactDOM.createPortal(
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.45)' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.5)' }}
           onClick={closeBurger}
         >
           <div
@@ -288,7 +288,8 @@ function Nav({
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
