@@ -521,7 +521,7 @@ function relTime(iso) {
   return 'prije ' + Math.floor(diff / (86400 * 30)) + ' mj';
 }
 
-function ListingCard({ item, fav, onFav, onClick }) {
+function ListingCard({ item, fav, onFav, onClick, onOpenProfile }) {
   const isBarter  = item.type === 'barter' || item.type === 'both';
   const isPremium = item.is_premium || item.is_featured;
 
@@ -575,6 +575,14 @@ function ListingCard({ item, fav, onFav, onClick }) {
           </span>
           <span style={{ color: 'var(--ink-4)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>{relTime(item.created)}</span>
         </div>
+        {item.user && (
+          <div
+            onClick={e => { e.stopPropagation(); onOpenProfile && onOpenProfile(item.user); }}
+            style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4, cursor: onOpenProfile ? 'pointer' : 'default' }}
+          >
+            {item.user}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -169,3 +169,14 @@ async function apiReviewOffer(offerId, rating, comment) {
 async function apiMyReviews() {
   return apiFetch('/profile/reviews/');
 }
+
+async function apiUserProfile(username) {
+  return apiFetch('/profile/' + username + '/');
+}
+
+async function apiSavePhone(phone) {
+  return apiFetch('/profile/', {
+    method: 'PUT',
+    body: JSON.stringify({ phone }),
+  });
+}

@@ -48,5 +48,5 @@ urlpatterns = [
     path('auth/logout/',                       views.logout_view,            name='logout'),
 
     # ─── SPA catch-all — mora biti poslednji ──────────────
-    re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja)(?:/.*)?$', views.app_view, name='spa_catchall'),
+    re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja|profil)(?:/.*)?$', views.app_view, name='spa_catchall'),
 ]

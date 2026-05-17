@@ -754,7 +754,7 @@ def notifications_mark_read(request):
 def profile(request):
     if request.method == 'PUT':
         data = _parse(request)
-        for field in ('bio', 'city'):
+        for field in ('bio', 'city', 'phone'):
             if field in data:
                 setattr(request.user, field, data[field])
         request.user.save()
@@ -781,8 +781,11 @@ def profile_user(request, username):
         .select_related('from_user')
         .order_by('-created_at')[:20]
     )
+    data = _user_data(user)
+    if not request.user.is_authenticated:
+        data['phone'] = None
     return JsonResponse({
-        'user':     _user_data(user),
+        'user':     data,
         'listings': [_listing_data(l) for l in listings],
         'reviews':  [_review_data(r) for r in reviews],
     })
@@ -806,12 +809,13 @@ def _user_data(user):
         'email':        user.email,
         'first_name':   user.first_name,
         'last_name':    user.last_name,
-        'bio':          user.bio,
         'city':         user.city,
+        'phone':        user.phone,
         'is_verified':  user.is_verified,
         'rating':       float(user.rating),
         'rating_count': user.rating_count,
         'joined':       user.date_joined.isoformat(),
+        'has_phone':    bool(user.phone),
     }
 
 

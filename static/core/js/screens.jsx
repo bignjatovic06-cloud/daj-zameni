@@ -772,7 +772,7 @@ function ReportModal({ item, onClose }) {
 }
 
 /* ─── LISTING DETAIL ──────────────────────────────── */
-function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories = [], currentUser = null, onLogin = null, pendingOffer = null, onOfferRespond = null, isSaved = false, onSaveToggle = null }) {
+function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories = [], currentUser = null, onLogin = null, pendingOffer = null, onOfferRespond = null, isSaved = false, onSaveToggle = null, onOpenProfile = null }) {
   const [active, setActive]           = useS(0);
   const [statsOpen, setStatsOpen]     = useS(false);
   const [saved, setSaved]             = useS(isSaved);
@@ -973,7 +973,11 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
               <div className="row">
                 <div className="av">{(item.user || 'K').slice(0, 2).toUpperCase()}</div>
                 <div style={{ flex: 1 }}>
-                  <div className="nm">{item.user}</div>
+                  <div
+                    className="nm"
+                    onClick={() => onOpenProfile && onOpenProfile(item.user)}
+                    style={{ cursor: onOpenProfile ? 'pointer' : 'default' }}
+                  >{item.user}</div>
                   <div className="stat">
                     <span><Icon name="star" size={11} style={{ verticalAlign: '-2px' }}/> {item.rating}</span>
                     <span style={{ color: 'var(--good)' }}>● aktivan</span>
@@ -2307,4 +2311,168 @@ function Bubble({ who, children }) {
   );
 }
 
-Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen, RatingsScreen, CategoryPickerModal });
+/* ─── PHONE GATE MODAL ────────────────────────────── */
+function PhoneGateModal({ onClose, onSaved }) {
+  const [phone, setPhone] = useS('');
+  const [saving, setSaving] = useS(false);
+  const [error, setError] = useS('');
+
+  const handleSave = async () => {
+    const clean = phone.trim();
+    if (!clean) { setError('Broj telefona je obavezan.'); return; }
+    setSaving(true);
+    const res = await apiSavePhone(clean);
+    setSaving(false);
+    if (res.ok) onSaved(clean);
+    else setError('Greška pri čuvanju. Pokušaj ponovo.');
+  };
+
+  return (
+    <div className="scrim" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+        <div className="mh">
+          <div className="mt">Ostavi broj telefona</div>
+          <button className="mx" onClick={onClose}>✕</button>
+        </div>
+        <div style={{ padding: '20px 24px 24px' }}>
+          <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6 }}>
+            Broj telefona je neophodan kako bi ostali korisnici mogli da te kontaktiraju. Vidljiv je samo ulogovanim korisnicima.
+          </p>
+          <input
+            className="finput"
+            type="tel"
+            placeholder="+381 60 123 4567"
+            value={phone}
+            onChange={e => { setPhone(e.target.value); setError(''); }}
+            autoFocus
+            style={{ width: '100%', boxSizing: 'border-box' }}
+          />
+          {error && <div style={{ color: '#dc2626', fontSize: 13, marginTop: 6 }}>{error}</div>}
+          <button
+            className="nav-btn primary"
+            style={{ width: '100%', marginTop: 16, justifyContent: 'center' }}
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? 'Čuvanje...' : 'Sačuvaj i nastavi'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── PROFILE SCREEN ──────────────────────────────── */
+function ProfileScreen({ user: profileData, currentUser, onBack, onOpenItem, onOpenProfile }) {
+  const u        = profileData.user || {};
+  const listings = profileData.listings || [];
+  const reviews  = profileData.reviews  || [];
+
+  const joined = u.joined
+    ? new Date(u.joined).toLocaleDateString('sr-Latn-RS', { year: 'numeric', month: 'long' })
+    : '';
+
+  const initials = u.username ? u.username.slice(0, 2).toUpperCase() : '??';
+  const displayName = u.first_name ? (u.first_name + ' ' + (u.last_name || '')).trim() : u.username;
+
+  return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 24px 60px' }}>
+      <button
+        onClick={onBack}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 24, padding: 0 }}
+      >
+        <Icon name="arrow-l" size={14}/> Nazad
+      </button>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32, flexWrap: 'wrap' }}>
+        <div style={{
+          width: 72, height: 72, borderRadius: '50%',
+          background: 'var(--accent-soft)', color: 'var(--accent)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 26, fontWeight: 700, flexShrink: 0,
+        }}>
+          {initials}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>
+            {displayName}
+          </div>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 6, fontSize: 13, color: 'var(--ink-3)' }}>
+            {u.city && <span><Icon name="pin" size={13} style={{ verticalAlign: -2, marginRight: 2 }}/>{u.city}</span>}
+            {joined && <span>Član od {joined}</span>}
+            {u.rating_count > 0 && (
+              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                ★ {parseFloat(u.rating).toFixed(1)} · {u.rating_count} {u.rating_count === 1 ? 'ocena' : 'ocene'}
+              </span>
+            )}
+          </div>
+          {currentUser && u.phone && (
+            <div style={{ marginTop: 8, fontSize: 14, fontWeight: 500, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="phone" size={14} style={{ color: 'var(--accent)' }}/>
+              <a href={'tel:' + u.phone} style={{ color: 'inherit', textDecoration: 'none' }}>{u.phone}</a>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Oglasi */}
+      {listings.length > 0 && (
+        <div style={{ marginBottom: 36 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', marginBottom: 16, fontFamily: 'var(--font-display)' }}>
+            Aktivni oglasi ({listings.length})
+          </div>
+          <div className="list-grid">
+            {listings.map(l => {
+              const norm = {
+                id: l.id, title: l.title, price: l.price, type: l.listing_type,
+                condition: l.condition, city: l.city, images: l.images || [],
+                user: u.username, rating: u.rating, seek: l.wants_in_exchange || '',
+                cat: l.category ? l.category.slug : '', desc: l.description || '',
+                status: l.status,
+              };
+              return (
+                <ListingCard
+                  key={l.id}
+                  item={norm}
+                  onOpen={onOpenItem}
+                  onOpenProfile={onOpenProfile}
+                  isSaved={false}
+                  onSaveToggle={() => {}}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Recenzije */}
+      {reviews.length > 0 && (
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', marginBottom: 16, fontFamily: 'var(--font-display)' }}>
+            Recenzije ({reviews.length})
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {reviews.map((r, i) => (
+              <div key={i} style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 12, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>{r.from_user}</span>
+                  <span style={{ color: '#f59e0b', letterSpacing: 1 }}>{'★'.repeat(r.rating)}</span>
+                </div>
+                {r.comment && <div style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.5 }}>{r.comment}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {listings.length === 0 && reviews.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--ink-3)', fontSize: 14 }}>
+          Ovaj korisnik još nema aktivnih oglasa.
+        </div>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen, RatingsScreen, CategoryPickerModal, ProfileScreen, PhoneGateModal });

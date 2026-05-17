@@ -77,6 +77,8 @@ function App() {
 
   const [view, setView]                   = uS('home');
   const [selectedItem, setSelectedItem]   = uS(null);
+  const [profileUser, setProfileUser]     = uS(null);
+  const [phoneGate, setPhoneGate]         = uS(null); // callback to run after phone saved
   const [filterCat, setFilterCat]         = uS('sve');
   const [filterChip, setFilterChip]       = uS('sve');
   const [searchQuery, setSearchQuery]     = uS('');
@@ -116,32 +118,44 @@ function App() {
 
   // ── URL helpers ──────────────────────────────────────────────
   const viewToPath = (v, item) => {
-    if (v === 'detail' && item) return '/oglasi/' + item.id;
-    if (v === 'search')        return '/pretraga';
-    if (v === 'my-listings')   return '/moji-oglasi';
-    if (v === 'saved')         return '/sacuvano';
-    if (v === 'ratings')       return '/ocene';
-    if (v === 'settings')      return '/podesavanja';
+    if (v === 'detail' && item)  return '/oglasi/' + item.id;
+    if (v === 'profile' && item) return '/profil/' + item.username;
+    if (v === 'search')          return '/pretraga';
+    if (v === 'my-listings')     return '/moji-oglasi';
+    if (v === 'saved')           return '/sacuvano';
+    if (v === 'ratings')         return '/ocene';
+    if (v === 'settings')        return '/podesavanja';
     return '/';
   };
 
   const pathToView = (path) => {
-    if (path.startsWith('/oglasi/')) return 'detail';
-    if (path === '/pretraga')        return 'search';
-    if (path === '/moji-oglasi')     return 'my-listings';
-    if (path === '/sacuvano')        return 'saved';
-    if (path === '/ocene')           return 'ratings';
-    if (path === '/podesavanja')     return 'settings';
+    if (path.startsWith('/oglasi/'))  return 'detail';
+    if (path.startsWith('/profil/'))  return 'profile';
+    if (path === '/pretraga')         return 'search';
+    if (path === '/moji-oglasi')      return 'my-listings';
+    if (path === '/sacuvano')         return 'saved';
+    if (path === '/ocene')            return 'ratings';
+    if (path === '/podesavanja')      return 'settings';
     return 'home';
   };
 
   const navigate = (v, item, replace) => {
     const path = viewToPath(v, item);
-    const state = { view: v, itemId: item ? item.id : null };
+    const state = { view: v, itemId: item ? (item.id || item.username) : null };
     if (replace) history.replaceState(state, '', path);
     else         history.pushState(state, '', path);
     setView(v);
-    if (item !== undefined) setSelectedItem(item);
+    if (v === 'profile' && item) {
+      apiUserProfile(item.username).then(res => {
+        if (res.user) setProfileUser(res);
+      });
+    } else {
+      if (item !== undefined) setSelectedItem(item);
+    }
+  };
+
+  const onOpenProfile = (username) => {
+    navigate('profile', { username });
   };
 
   const loadHeroPending = () => {
@@ -355,6 +369,12 @@ function App() {
     setRazmeneOpen(true);
   };
 
+  const requirePhone = (action) => {
+    if (!currentUser) { setLoginOpen(true); return; }
+    if (currentUser.has_phone) { action(); return; }
+    setPhoneGate(() => action);
+  };
+
   const requireAuth = (action) => {
     if (currentUser) action();
     else setLoginOpen(true);
@@ -540,7 +560,7 @@ function App() {
         unreadNotifs={unreadNotifs}
         unreadThreads={unreadThreads}
         currentUser={currentUser}
-        onPostAd={() => requireAuth(() => setPostOpen(true))}
+        onPostAd={() => requirePhone(() => setPostOpen(true))}
         onOpenNotifs={(e) => { e.stopPropagation(); setUserOpen(false); setNotifsOpen(v => !v); }}
         onOpenRazmene={() => requireAuth(() => { setMessageTarget(null); setRazmeneOpen(true); })}
         onOpenUser={(e) => { e.stopPropagation(); setNotifsOpen(false); setUserOpen(v => !v); }}
@@ -562,7 +582,7 @@ function App() {
             layout={t.heroLayout}
             accent={t.accent}
             onSearch={onSearch}
-            onPostAd={() => requireAuth(() => setPostOpen(true))}
+            onPostAd={() => requirePhone(() => setPostOpen(true))}
             onCityChange={(city, radius) => {
               setFilterCity(city);
               setFilterRadius(radius);
@@ -586,14 +606,14 @@ function App() {
               {listings.length === 0 ? (
                 <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>
                   Još nema oglasa. Budi prvi!<br/>
-                  <button className="nav-btn primary" style={{ marginTop: 14 }} onClick={() => requireAuth(() => setPostOpen(true))}>
+                  <button className="nav-btn primary" style={{ marginTop: 14 }} onClick={() => requirePhone(() => setPostOpen(true))}>
                     <Icon name="plus" size={14}/> Postavi oglas
                   </button>
                 </div>
               ) : (
                 <div className="list-grid">
                   {listings.slice(0, 8).map(l => (
-                    <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                    <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)} onOpenProfile={onOpenProfile}/>
                   ))}
                 </div>
               )}
@@ -768,7 +788,7 @@ function App() {
             {filtered.length > 0 ? (
               <div className="list-grid">
                 {filtered.map(l => (
-                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)} onOpenProfile={onOpenProfile}/>
                 ))}
               </div>
             ) : (
@@ -777,7 +797,7 @@ function App() {
                   {searchQuery ? ('Nema rezultata za \u201e' + searchQuery + '\u201c') : 'Nema rezultata'}
                 </div>
                 <div style={{ fontSize: 13.5, marginBottom: 20 }}>Probaj drugu reč ili promeni filtere.</div>
-                <button className="nav-btn primary" onClick={() => requireAuth(() => setPostOpen(true))}>
+                <button className="nav-btn primary" onClick={() => requirePhone(() => setPostOpen(true))}>
                   <Icon name="plus" size={14} stroke={2.2}/> Postavi oglas
                 </button>
               </div>
@@ -801,6 +821,7 @@ function App() {
             onOfferRespond={handleOfferRespond}
             isSaved={!!wishlistIds[selectedItem.id]}
             onSaveToggle={handleSaveToggle}
+            onOpenProfile={onOpenProfile}
           />
         </div>
       )}
@@ -813,14 +834,14 @@ function App() {
                 <h2>Moji oglasi</h2>
                 <div className="sub">{myListings.length} oglasa</div>
               </div>
-              <button className="nav-btn primary" onClick={() => requireAuth(() => setPostOpen(true))}>
+              <button className="nav-btn primary" onClick={() => requirePhone(() => setPostOpen(true))}>
                 <Icon name="plus" size={14}/> Novi oglas
               </button>
             </div>
             {myListings.length > 0 ? (
               <div className="list-grid">
                 {myListings.map(l => (
-                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)}/>
+                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)} onOpenProfile={onOpenProfile}/>
                 ))}
               </div>
             ) : (
@@ -829,7 +850,7 @@ function App() {
                   Još nemaš oglasa
                 </div>
                 <div style={{ fontSize: 13.5, marginBottom: 18 }}>Postavi prvi oglas i poveži se sa zajednicom.</div>
-                <button className="nav-btn primary" onClick={() => requireAuth(() => setPostOpen(true))}>
+                <button className="nav-btn primary" onClick={() => requirePhone(() => setPostOpen(true))}>
                   <Icon name="plus" size={14}/> Postavi oglas
                 </button>
               </div>
@@ -839,7 +860,7 @@ function App() {
       )}
 
       {view === 'saved' && (
-        <SavedScreen onOpenItem={onOpenItem} onPostAd={() => requireAuth(() => setPostOpen(true))}/>
+        <SavedScreen onOpenItem={onOpenItem} onPostAd={() => requirePhone(() => setPostOpen(true))}/>
       )}
 
       {view === 'ratings' && (
@@ -860,6 +881,27 @@ function App() {
             </div>
           </div>
         </section>
+      )}
+
+      {view === 'profile' && profileUser && (
+        <ProfileScreen
+          user={profileUser}
+          currentUser={currentUser}
+          onBack={() => navigate('home', null)}
+          onOpenItem={onOpenItem}
+          onOpenProfile={onOpenProfile}
+        />
+      )}
+
+      {phoneGate && (
+        <PhoneGateModal
+          onClose={() => setPhoneGate(null)}
+          onSaved={(phone) => {
+            setCurrentUser(u => ({ ...u, phone, has_phone: true }));
+            setPhoneGate(null);
+            phoneGate();
+          }}
+        />
       )}
 
       {postOpen && (
