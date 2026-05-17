@@ -10,6 +10,8 @@ from django.shortcuts import redirect
 from django_ratelimit.decorators import ratelimit
 import json
 import uuid
+import re
+import dns.resolver
 
 from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review, Report
 from . import emails as email_service
@@ -18,6 +20,22 @@ User = get_user_model()
 
 VALID_LISTING_TYPES = {'sell', 'barter', 'both'}
 VALID_CONDITIONS    = {'new', 'like_new', 'good', 'fair', 'poor', 'antique'}
+
+_EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+
+def _email_domain_valid(email):
+    if not _EMAIL_RE.match(email):
+        return False
+    domain = email.rsplit('@', 1)[1]
+    try:
+        dns.resolver.resolve(domain, 'MX', lifetime=5)
+        return True
+    except Exception:
+        try:
+            dns.resolver.resolve(domain, 'A', lifetime=5)
+            return True
+        except Exception:
+            return False
 
 
 # ─────────────────────────────────────────
@@ -54,6 +72,8 @@ def register(request):
         errors['username'] = ['Korisničko ime je zauzeto.']
     if not email:
         errors['email'] = ['Email je obavezan.']
+    elif not _email_domain_valid(email):
+        errors['email'] = ['Email adresa nije validna ili domen ne postoji.']
     elif User.objects.filter(email=email).exists():
         errors['email'] = ['Email je već registrovan.']
     if len(password) < 8:
