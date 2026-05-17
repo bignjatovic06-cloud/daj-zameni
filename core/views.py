@@ -14,6 +14,9 @@ from . import emails as email_service
 
 User = get_user_model()
 
+VALID_LISTING_TYPES = {'sell', 'barter', 'both'}
+VALID_CONDITIONS    = {'new', 'like_new', 'good', 'fair', 'poor', 'antique'}
+
 
 # ─────────────────────────────────────────
 #  MAIN APP VIEW
@@ -163,8 +166,14 @@ def listing_detail(request, pk):
 @require_http_methods(['POST'])
 def listing_create(request):
     try:
-        data  = _parse(request)
-        ltype = data.get('listing_type', 'both')
+        data      = _parse(request)
+        ltype     = data.get('listing_type', 'both')
+        condition = data.get('condition', 'good')
+
+        if ltype not in VALID_LISTING_TYPES:
+            return JsonResponse({'error': 'Nevažeći tip oglasa.'}, status=400)
+        if condition not in VALID_CONDITIONS:
+            return JsonResponse({'error': 'Nevažeće stanje predmeta.'}, status=400)
 
         category = None
         if data.get('category'):
@@ -177,7 +186,7 @@ def listing_create(request):
             description       = data.get('description', '').strip(),
             price             = data.get('price') or None,
             listing_type      = ltype,
-            condition         = data.get('condition', 'good'),
+            condition         = condition,
             city              = data.get('city', '').strip(),
             wants_in_exchange = data.get('wants_in_exchange', '').strip(),
         )
@@ -207,7 +216,12 @@ def listing_update(request, pk):
             setattr(listing, model_f, data[api_f])
 
     if 'listing_type' in data:
+        if data['listing_type'] not in VALID_LISTING_TYPES:
+            return JsonResponse({'error': 'Nevažeći tip oglasa.'}, status=400)
         listing.listing_type = data['listing_type']
+
+    if 'condition' in data and data['condition'] not in VALID_CONDITIONS:
+        return JsonResponse({'error': 'Nevažeće stanje predmeta.'}, status=400)
 
     listing.save()
     return JsonResponse({'ok': True, 'listing': _listing_data(listing)})
