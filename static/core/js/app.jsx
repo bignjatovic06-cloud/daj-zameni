@@ -118,6 +118,7 @@ function App() {
   const [wishlistIds, setWishlistIds]     = uS({});
   const [loading, setLoading]             = uS(true);
   const [apiError, setApiError]           = uS(null);
+  const [ownerListings, setOwnerListings] = uS(null);
   const [verifiedToast, setVerifiedToast] = uS(() => {
     const p = new URLSearchParams(window.location.search);
     return p.get('verified') === '1' ? true : false;
@@ -453,6 +454,11 @@ function App() {
     fetchListings(page);
   }, [page]);
 
+  uE(() => {
+    if (view !== 'my-listings') return;
+    apiMyListings().then(res => { if (res.ok) setOwnerListings(res.listings || []); });
+  }, [view]);
+
   const filtered = listings;
 
   const resetFilters = () => {
@@ -500,6 +506,7 @@ function App() {
     if (!newListing) return;
     const [normalized] = normalizeListings([newListing]);
     setListings(prev => [normalized, ...prev]);
+    setOwnerListings(null);
     apiCategories().then(catData => {
       if (catData && catData.results) {
         setCategories([
@@ -513,6 +520,7 @@ function App() {
   const handleDelete = async () => {
     await apiDeleteListing(selectedItem.id);
     setListings(prev => prev.filter(l => l.id !== selectedItem.id));
+    setOwnerListings(null);
     setDeleteConfirm(false);
     navigate('home', null);
   };
@@ -999,17 +1007,28 @@ function App() {
             <div className="section-head">
               <div>
                 <h2>Moji oglasi</h2>
-                <div className="sub">{myListings.length} oglasa</div>
+                <div className="sub">{ownerListings ? ownerListings.length : myListings.length} oglasa</div>
               </div>
               <button className="nav-btn primary" onClick={() => requirePhone(() => setPostOpen(true))}>
                 <Icon name="plus" size={14}/> Novi oglas
               </button>
             </div>
-            {myListings.length > 0 ? (
-              <div className="list-grid">
-                {myListings.map(l => (
-                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)} onOpenProfile={onOpenProfile}/>
-                ))}
+            {ownerListings === null ? (
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Učitavanje...</div>
+            ) : ownerListings.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {ownerListings.map(l => {
+                  const full = listings.find(x => x.id === l.id) || l;
+                  return (
+                    <div key={l.id} style={{ borderBottom: '1px solid var(--line)', paddingBottom: 12, marginBottom: 12 }}>
+                      <ListingCard item={full} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(full)} onOpenProfile={onOpenProfile}/>
+                      <div style={{ display: 'flex', gap: 20, paddingTop: 6, paddingLeft: 4, fontSize: 12.5, color: 'var(--ink-3)' }}>
+                        <span>👁 {l.views ?? 0} pregleda</span>
+                        <span>♡ {l.saves ?? 0} sačuvano</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
