@@ -4,13 +4,15 @@ const { useState: useS, useEffect: useE, useRef: useR } = React;
 function CategoryPickerModal({ categories, selected, onSelect, onClose }) {
   var [q, setQ]               = useS('');
   var [activeCat, setActiveCat] = useS(null);
+  var [drillCat, setDrillCat] = useS(null);
   var inputRef                = useR(null);
+  var isMobile                = window.innerWidth < 640;
 
   var displayCats = categories.filter(function(c) { return c.id !== 'sve'; });
 
   useE(function() {
     if (inputRef.current) inputRef.current.focus();
-    if (displayCats.length > 0) setActiveCat(displayCats[0]);
+    if (!isMobile && displayCats.length > 0) setActiveCat(displayCats[0]);
   }, []);
 
   var ql = q.toLowerCase();
@@ -29,33 +31,50 @@ function CategoryPickerModal({ categories, selected, onSelect, onClose }) {
   }
 
   var handleKey = function(e) {
-    if (e.key === 'Escape') onClose();
+    if (e.key === 'Escape') {
+      if (isMobile && drillCat) { setDrillCat(null); return; }
+      onClose();
+    }
   };
 
+  var overlayStyle = isMobile
+    ? { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000 }
+    : { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: 24 };
+
+  var panelStyle = isMobile
+    ? { background: '#fff', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
+    : { background: '#fff', borderRadius: 16, width: '100%', maxWidth: 900, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.2)', overflow: 'hidden' };
+
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: 24 }}
-      onClick={onClose}
-      onKeyDown={handleKey}
-    >
-      <div
-        style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 900, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.2)', overflow: 'hidden' }}
-        onClick={function(e) { e.stopPropagation(); }}
-      >
+    <div style={overlayStyle} onClick={isMobile ? undefined : onClose} onKeyDown={handleKey}>
+      <div style={panelStyle} onClick={function(e) { e.stopPropagation(); }}>
+
+        {/* Header */}
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Icon name="search" size={18} style={{ color: 'var(--ink-3)', flexShrink: 0 }}/>
-          <input
-            ref={inputRef}
-            value={q}
-            onChange={function(e) { setQ(e.target.value); }}
-            placeholder="Pretraži kategorije i podkategorije..."
-            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, color: 'var(--ink)', background: 'transparent' }}
-          />
+          {isMobile && drillCat ? (
+            <button onClick={function() { setDrillCat(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', padding: 4 }}>
+              <Icon name="arrow-l" size={20}/>
+            </button>
+          ) : (
+            <Icon name="search" size={18} style={{ color: 'var(--ink-3)', flexShrink: 0 }}/>
+          )}
+          {isMobile && drillCat ? (
+            <span style={{ flex: 1, fontWeight: 700, fontSize: 16, color: 'var(--ink)' }}>{drillCat.name}</span>
+          ) : (
+            <input
+              ref={inputRef}
+              value={q}
+              onChange={function(e) { setQ(e.target.value); if (isMobile) setDrillCat(null); }}
+              placeholder="Pretraži kategorije i podkategorije..."
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, color: 'var(--ink)', background: 'transparent' }}
+            />
+          )}
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', padding: 4 }}>
             <Icon name="x" size={20}/>
           </button>
         </div>
 
+        {/* Search results */}
         {q ? (
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
             {searchResults.length === 0 ? (
@@ -79,6 +98,57 @@ function CategoryPickerModal({ categories, selected, onSelect, onClose }) {
               );
             })}
           </div>
+
+        /* Mobile drill-down view */
+        ) : isMobile ? (
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {drillCat ? (
+              <>
+                <div
+                  onClick={function() { onSelect(drillCat.id); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--line)', cursor: 'pointer' }}
+                >
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)' }}>Sve u kategoriji {drillCat.name}</span>
+                  <Icon name="arrow-r" size={14} style={{ color: 'var(--accent)' }}/>
+                </div>
+                {(!drillCat.children || drillCat.children.length === 0) ? (
+                  <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Nema podkategorija.</div>
+                ) : drillCat.children.map(function(sub) {
+                  var isSel = selected === sub.id;
+                  return (
+                    <div
+                      key={sub.id}
+                      onClick={function() { onSelect(sub.id); }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid var(--line)', cursor: 'pointer', background: isSel ? 'var(--accent-soft)' : 'transparent' }}
+                    >
+                      <span style={{ fontSize: 15, color: isSel ? 'var(--accent)' : 'var(--ink)', fontWeight: isSel ? 600 : 400 }}>{sub.name}</span>
+                      <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>{sub.count || 0}</span>
+                    </div>
+                  );
+                })}
+              </>
+            ) : displayCats.map(function(cat) {
+              var hasChildren = cat.children && cat.children.length > 0;
+              return (
+                <div
+                  key={cat.id}
+                  onClick={function() { hasChildren ? setDrillCat(cat) : onSelect(cat.id); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid var(--line)', cursor: 'pointer' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Icon name={cat.icon || 'tag'} size={20} stroke={1.5} style={{ color: 'var(--accent)', flexShrink: 0 }}/>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--ink)' }}>{cat.name}</div>
+                      {hasChildren && <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 1 }}>{cat.children.length} podkategorija</div>}
+                    </div>
+                  </div>
+                  <Icon name={hasChildren ? 'arrow-r' : 'check'} size={16} style={{ color: selected === cat.id ? 'var(--accent)' : 'var(--ink-3)', flexShrink: 0 }}/>
+                </div>
+              );
+            })}
+          </div>
+
+        /* Desktop two-column view */
         ) : (
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '220px 1fr', overflow: 'hidden' }}>
             <div style={{ borderRight: '1px solid var(--line)', overflowY: 'auto' }}>
@@ -150,15 +220,17 @@ function CategoryPickerModal({ categories, selected, onSelect, onClose }) {
           </div>
         )}
 
-        <div style={{ padding: '10px 20px', borderTop: '1px solid var(--line)', background: '#faf8f1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
-            ⚡ Brzi tip: kucaj naziv predmeta i predložićemo kategoriju
+        {!isMobile && (
+          <div style={{ padding: '10px 20px', borderTop: '1px solid var(--line)', background: '#faf8f1', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+              ⚡ Brzi tip: kucaj naziv predmeta i predložićemo kategoriju
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+              <span style={{ background: 'var(--line)', padding: '2px 7px', borderRadius: 4, marginRight: 4 }}>Esc</span>
+              za izlaz
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
-            <span style={{ background: 'var(--line)', padding: '2px 7px', borderRadius: 4, marginRight: 4 }}>Esc</span>
-            za izlaz
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
