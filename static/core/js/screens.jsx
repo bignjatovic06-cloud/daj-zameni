@@ -2554,8 +2554,15 @@ function ProfileScreen({ user: profileData, currentUser, onBack, onOpenItem, onO
           {initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>
-            {displayName}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>
+              {displayName}
+            </div>
+            {u.is_verified && (
+              <span title="Verifikovan korisnik" style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#e6f4ea', color: '#276749', borderRadius: 20, padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>
+                <Icon name="check" size={12}/> Verifikovan
+              </span>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 6, fontSize: 13, color: 'var(--ink-3)' }}>
             {u.city && <span><Icon name="pin" size={13} style={{ verticalAlign: -2, marginRight: 2 }}/>{u.city}</span>}
@@ -2644,6 +2651,8 @@ function SettingsScreen({ currentUser, onUserUpdated }) {
   const [phone,   setPhone]   = useS(currentUser.phone || '');
   const [saving,  setSaving]  = useS(false);
   const [saveMsg, setSaveMsg] = useS('');
+  const [resendSent, setResendSent] = useS(false);
+  const [resendErr,  setResendErr]  = useS('');
   const [saveErr, setSaveErr] = useS('');
 
   // ── Avatar ──
@@ -2742,6 +2751,27 @@ function SettingsScreen({ currentUser, onUserUpdated }) {
 
         {tab === 'profile' && (
           <div>
+            {/* Verifikacija banner */}
+            {!currentUser.is_verified && (
+              <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, padding: '14px 16px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <Icon name="alert" size={18} style={{ color: '#b45309', flexShrink: 0, marginTop: 1 }}/>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>Email nije verifikovan</div>
+                  <div style={{ fontSize: 13, color: '#b45309', lineHeight: 1.5 }}>Verifikuj svoju email adresu kako bi dobio/la oznaku verifikovanog korisnika.</div>
+                  {resendSent
+                    ? <div style={{ marginTop: 8, fontSize: 13, color: '#276749', fontWeight: 500 }}>Email je poslat na {currentUser.email}</div>
+                    : <button
+                        onClick={async () => { setResendErr(''); const r = await apiResendVerification(); if (r.ok) setResendSent(true); else setResendErr('Greška. Pokušaj ponovo.'); }}
+                        style={{ marginTop: 8, background: 'none', border: '1px solid #b45309', borderRadius: 6, padding: '5px 12px', fontSize: 13, color: '#92400e', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Pošalji verifikacioni email
+                      </button>
+                  }
+                  {resendErr && <div style={{ marginTop: 6, fontSize: 12, color: '#dc2626' }}>{resendErr}</div>}
+                </div>
+              </div>
+            )}
+
             {/* Avatar */}
             <div style={card}>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', marginBottom: 16, fontFamily: 'var(--font-display)' }}>

@@ -48,6 +48,8 @@ urlpatterns = [
     path('auth/register/',                     views.register,               name='register'),
     path('auth/logout/',                       views.logout_view,            name='logout'),
     path('auth/password/',                     views.change_password,        name='change_password'),
+    path('auth/verify/<uuid:token>/',          views.verify_email,           name='verify_email'),
+    path('auth/resend-verification/',          views.resend_verification,    name='resend_verification'),
 
     # ─── SPA catch-all — mora biti poslednji ──────────────
     re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja|profil)(?:/.*)?$', views.app_view, name='spa_catchall'),

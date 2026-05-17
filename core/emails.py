@@ -98,6 +98,28 @@ def _listing_pill(title):
 
 # ── Email functions ──────────────────────────────────────────────
 
+def send_verification_email(user):
+    if not user.email:
+        return
+
+    verify_url = f'{SITE_URL}/auth/verify/{user.email_verification_token}/'
+    content = (
+        _h('Verifikuj svoju email adresu') +
+        _p(f'Zdravo <strong>{user.username}</strong>, hvala što si se registrovao/la na Daj Zameni!') +
+        _p('Klikni na dugme ispod da potvrdite svoju email adresu i aktivirate nalog:') +
+        _btn('Verifikuj email →', verify_url) +
+        _p(f'Ili kopiraj link: <a href="{verify_url}" style="color:#0d6e6f;word-break:break-all;">{verify_url}</a>') +
+        '<p style="margin:16px 0 0;font-size:13px;color:#9ca3af;">Ako nisi ti napravio/la nalog, ignoriši ovaj email.</p>'
+    )
+    text = f'Verifikuj email: {verify_url}'
+
+    _send_async(
+        subject='Verifikuj svoju email adresu — Daj Zameni',
+        text_body=text,
+        html_body=_wrap(content, 'Verifikacija emaila'),
+        to_email=user.email,
+    )
+
 def send_new_offer(to_user, from_username, listing_title, offered_title, cash_offer, message):
     """Listing owner receives: someone wants to swap."""
     if not to_user.email:

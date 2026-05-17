@@ -6,8 +6,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
 from django.db.models import Q, F, Avg, Count
 from django.core.paginator import Paginator
+from django.shortcuts import redirect
 from django_ratelimit.decorators import ratelimit
 import json
+import uuid
 
 from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review, Report
 from . import emails as email_service
@@ -61,6 +63,9 @@ def register(request):
         return JsonResponse(errors, status=400)
 
     user = User.objects.create_user(username=username, email=email, password=password)
+    user.email_verification_token = uuid.uuid4()
+    user.save()
+    email_service.send_verification_email(user)
     login(request, user)
     return JsonResponse({'user': _user_data(user)}, status=201)
 
@@ -842,6 +847,27 @@ def change_password(request):
     # keep session alive after password change
     from django.contrib.auth import update_session_auth_hash
     update_session_auth_hash(request, request.user)
+    return JsonResponse({'ok': True})
+
+
+def verify_email(request, token):
+    user = User.objects.filter(email_verification_token=token, is_verified=False).first()
+    if not user:
+        return redirect('/?verified=invalid')
+    user.is_verified = True
+    user.email_verification_token = None
+    user.save()
+    return redirect('/?verified=1')
+
+
+@login_required
+@require_POST
+def resend_verification(request):
+    if request.user.is_verified:
+        return JsonResponse({'error': 'Nalog je već verifikovan.'}, status=400)
+    request.user.email_verification_token = uuid.uuid4()
+    request.user.save()
+    email_service.send_verification_email(request.user)
     return JsonResponse({'ok': True})
 
 

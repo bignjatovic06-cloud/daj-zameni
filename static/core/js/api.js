@@ -210,3 +210,6 @@ async function apiUploadAvatar(file) {
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, ...data };
 }
+async function apiResendVerification() {
+  return apiFetch('/auth/resend-verification/', { method: 'POST' });
+}
