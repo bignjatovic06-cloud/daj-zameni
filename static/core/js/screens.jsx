@@ -2147,6 +2147,8 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
   const [sending, setSending]         = useS(false);
   const [reviewTarget, setReviewTarget]       = useS(null);
   const [reviewedOfferIds, setReviewedOfferIds] = useS([]);
+  const [mobileView, setMobileView]   = useS('list');
+  const isMobile                      = window.innerWidth < 640;
   const bottomRef = useR(null);
   const activeRef = useR(null);
 
@@ -2243,11 +2245,17 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
     return new Date(iso).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const openThread = (t) => {
+    setActive(t);
+    setMessages([]);
+    if (isMobile) setMobileView('chat');
+  };
+
   if (loading) {
     return (
       <>
         <div className="scrim" onClick={onClose}/>
-        <aside className="drawer" style={{ width: 'min(820px,100%)', display: 'grid', placeItems: 'center' }}>
+        <aside className="drawer" style={{ width: isMobile ? '100%' : 'min(820px,100%)', display: 'grid', placeItems: 'center' }}>
           <div style={{ color: 'var(--ink-3)', fontSize: 14 }}>Učitavam…</div>
         </aside>
       </>
@@ -2258,7 +2266,7 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
     return (
       <>
         <div className="scrim" onClick={onClose}/>
-        <aside className="drawer" style={{ width: 'min(820px,100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+        <aside className="drawer" style={{ width: isMobile ? '100%' : 'min(820px,100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
           <div style={{ fontSize: 14, color: 'var(--ink-3)' }}>Nema aktivnih razmena.</div>
           <button className="nav-btn" onClick={onClose}>Zatvori</button>
         </aside>
@@ -2269,7 +2277,84 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
   return (
     <>
       <div className="scrim" onClick={onClose}/>
-      <aside className="drawer" style={{ width: 'min(820px,100%)', display: 'grid', gridTemplateColumns: '320px 1fr' }}>
+      <aside className="drawer" style={{ width: isMobile ? '100%' : 'min(820px,100%)', display: isMobile ? 'flex' : 'grid', flexDirection: 'column', gridTemplateColumns: isMobile ? undefined : '320px 1fr' }}>
+
+        {/* ── MOBILE: lista konverzacija ── */}
+        {isMobile && mobileView === 'list' && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div className="dh">
+              <h3>Razmene</h3>
+              <button className="x-btn" onClick={onClose}><Icon name="x" size={16}/></button>
+            </div>
+            <div className="db" style={{ flex: 1, overflowY: 'auto' }}>
+              {threads.map(t => (
+                <div
+                  key={t.id}
+                  className={'thread' + (t.unread ? ' unread' : '')}
+                  onClick={() => openThread(t)}
+                >
+                  <div className="av">{(t.other_user?.username || 'K').slice(0, 2).toUpperCase()}</div>
+                  <div className="tx">
+                    <div className="nm">
+                      <span>{t.other_user?.username || '—'}</span>
+                      <span className="t">{fmtTime(t.last_time)}</span>
+                    </div>
+                    <div className="pv">{t.last_message || 'Nema poruka'}</div>
+                  </div>
+                  {t.unread && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }}/>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── MOBILE: chat ── */}
+        {isMobile && mobileView === 'chat' && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#faf8f1' }}>
+            <div className="dh" style={{ background: '#fff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <button onClick={() => setMobileView('list')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)', display: 'grid', placeItems: 'center', padding: '4px 8px 4px 0', flexShrink: 0 }}>
+                  <Icon name="arrow-l" size={20}/>
+                </button>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{active.other_user?.username}</div>
+                  {active.listing && (
+                    <div style={{ fontSize: 11, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{active.listing.title}</div>
+                  )}
+                </div>
+              </div>
+              {active.listing && (
+                <button
+                  className="nav-btn"
+                  style={{ flexShrink: 0, fontSize: 12, padding: '0 10px', height: 32 }}
+                  onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('dj:viewListing', { detail: { id: active.listing.id } })); }}
+                >
+                  Oglas
+                </button>
+              )}
+            </div>
+            <div style={{ flex: 1, padding: '14px 16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {messages.length === 0 && (
+                <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--ink-3)', margin: 'auto' }}>Započni razgovor…</div>
+              )}
+              {messages.map(msg => {
+                const who = msg.sender === currentUser?.username ? 'me' : 'them';
+                return msg.offer
+                  ? <OfferCard key={msg.id} msg={msg} who={who} currentUserId={currentUser?.id} onOfferAction={handleOfferAction} isReviewed={reviewedOfferIds.indexOf(msg.offer.id) !== -1}/>
+                  : <Bubble key={msg.id} who={who}>{msg.body}</Bubble>;
+              })}
+              <div ref={bottomRef}/>
+            </div>
+            <form onSubmit={send} style={{ padding: '10px 12px', borderTop: '1px solid var(--line)', background: '#fff', display: 'flex', gap: 8 }}>
+              <input className="input" value={text} onChange={e => setText(e.target.value)} placeholder="Napiši poruku…" style={{ flex: 1 }}/>
+              <button className="nav-btn primary" type="submit" disabled={sending}><Icon name="send" size={15}/></button>
+            </form>
+          </div>
+        )}
+
+        {/* ── DESKTOP: originalni dvostupčani layout ── */}
+        {!isMobile && (
+          <>
         <div style={{ borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column' }}>
           <div className="dh">
             <h3>Razmene</h3>
@@ -2280,7 +2365,7 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
               <div
                 key={t.id}
                 className={'thread' + (t.unread ? ' unread' : '')}
-                onClick={() => { setActive(t); setMessages([]); }}
+                onClick={() => openThread(t)}
                 style={active.id === t.id ? { background: 'var(--accent-softer)' } : {}}
               >
                 <div className="av">{(t.other_user?.username || 'K').slice(0, 2).toUpperCase()}</div>
@@ -2351,6 +2436,8 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
             </button>
           </form>
         </div>
+          </>
+        )}
       </aside>
       {reviewTarget && (
         <ReviewModal

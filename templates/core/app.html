@@ -449,6 +449,9 @@
     display:flex;flex-direction:column;
     animation:slideRight .22s cubic-bezier(.2,.8,.2,1);
   }
+  @media(max-width:640px){
+    .drawer{left:0;width:100% !important;max-width:100%}
+  }
   .drawer .dh{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
   .drawer .dh h3{margin:0;font-family:var(--font-display);font-size:18px}
   .drawer .db{flex:1;overflow-y:auto}
