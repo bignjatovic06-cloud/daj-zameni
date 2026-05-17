@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'cloudinary',
     'social_django',
+    'django_ratelimit',
     'core',
 ]
 
@@ -114,6 +115,13 @@ if os.environ.get('CLOUDINARY_CLOUD_NAME'):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 AUTH_USER_MODEL = 'core.User'
+
+# ── Cache (koristi ga django-ratelimit) ─────────────────────────
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
 
 # ── Email (Resend SMTP) ─────────────────────────────────────────
 EMAIL_BACKEND      = 'django.core.mail.backends.smtp.EmailBackend'

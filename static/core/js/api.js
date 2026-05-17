@@ -15,6 +15,9 @@ async function apiFetch(path, options = {}) {
     credentials: 'include',
     ...options,
   });
+  if (res.status === 429) {
+    return { ok: false, status: 429, error: 'Previše pokušaja. Sačekaj nekoliko minuta pa pokušaj ponovo.' };
+  }
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, ...data };
 }

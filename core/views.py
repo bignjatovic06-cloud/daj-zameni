@@ -6,6 +6,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
 from django.db.models import Q, F, Avg, Count
 from django.core.paginator import Paginator
+from django_ratelimit.decorators import ratelimit
 import json
 
 from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review, Report
@@ -33,6 +34,7 @@ def auth_status(request):
     return JsonResponse({'authenticated': False, 'user': None})
 
 
+@ratelimit(key='ip', rate='5/h', method='POST', block=True)
 @require_http_methods(['POST'])
 def register(request):
     data     = _parse(request)
@@ -60,6 +62,7 @@ def register(request):
     return JsonResponse({'user': _user_data(user)}, status=201)
 
 
+@ratelimit(key='ip', rate='10/m', method='POST', block=True)
 @require_http_methods(['POST'])
 def login_view(request):
     data     = _parse(request)
@@ -301,6 +304,7 @@ def my_listings(request):
     return JsonResponse({'results': data})
 
 
+@ratelimit(key='user', rate='5/h', method='POST', block=True)
 @login_required
 @require_POST
 def listing_report(request, pk):
@@ -386,6 +390,7 @@ def category_list(request):
 #  SWAP OFFERS
 # ─────────────────────────────────────────
 
+@ratelimit(key='user', rate='10/h', method='POST', block=True)
 @login_required
 @require_POST
 def offer_create(request, pk):
@@ -709,6 +714,7 @@ def inbox(request):
     return JsonResponse({'results': data})
 
 
+@ratelimit(key='user', rate='30/m', method='POST', block=True)
 @login_required
 def chat(request, conversation_id):
     conv = get_object_or_404(Conversation, pk=conversation_id)
