@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
-from django.db.models import Q, F
+from django.db.models import Q, F, Avg, Count
 from django.core.paginator import Paginator
 import json
 
@@ -617,9 +617,9 @@ def offer_review(request, offer_id):
         comment    = comment,
     )
 
-    reviews = Review.objects.filter(to_user=to_user)
-    to_user.rating       = sum(r.rating for r in reviews) / reviews.count()
-    to_user.rating_count = reviews.count()
+    result = Review.objects.filter(to_user=to_user).aggregate(avg=Avg('rating'), count=Count('id'))
+    to_user.rating       = round(result['avg'] or 0, 2)
+    to_user.rating_count = result['count']
     to_user.save()
 
     Notification.objects.create(
