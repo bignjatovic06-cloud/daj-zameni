@@ -1,7 +1,9 @@
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 import threading
+import logging
 
+logger = logging.getLogger(__name__)
 
 SITE_NAME = 'Daj Zameni'
 SITE_URL  = settings.SITE_URL
@@ -9,6 +11,7 @@ SITE_URL  = settings.SITE_URL
 
 def _send_async(subject, text_body, html_body, to_email):
     if not to_email:
+        logger.warning('Email skipped: no to_email')
         return
 
     def _send():
@@ -20,9 +23,10 @@ def _send_async(subject, text_body, html_body, to_email):
                 to=[to_email],
             )
             msg.attach_alternative(html_body, 'text/html')
-            msg.send(fail_silently=True)
-        except Exception:
-            pass
+            msg.send(fail_silently=False)
+            logger.info('Email sent to %s: %s', to_email, subject)
+        except Exception as e:
+            logger.error('Email failed to %s: %s — %s', to_email, subject, e)
 
     threading.Thread(target=_send, daemon=True).start()
 
