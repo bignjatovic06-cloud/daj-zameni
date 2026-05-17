@@ -574,7 +574,7 @@ function App() {
         currentUser={currentUser}
         onPostAd={() => requirePhone(() => setPostOpen(true))}
         onOpenNotifs={(e) => {
-          e.stopPropagation();
+          if (e && e.stopPropagation) e.stopPropagation();
           if (window.innerWidth < 640) {
             setMobileNotifsOpen(true);
             if (unreadNotifs > 0) apiMarkNotificationsRead().then(() => setNotifications(prev => prev.map(n => ({ ...n, is_read: true }))));
