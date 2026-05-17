@@ -1016,15 +1016,15 @@ function App() {
             {ownerListings === null ? (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Učitavanje...</div>
             ) : ownerListings.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div className="list-grid">
                 {ownerListings.map(l => {
                   const full = listings.find(x => x.id === l.id) || l;
                   return (
-                    <div key={l.id} style={{ borderBottom: '1px solid var(--line)', paddingBottom: 12, marginBottom: 12 }}>
+                    <div key={l.id} style={{ display: 'flex', flexDirection: 'column' }}>
                       <ListingCard item={full} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(full)} onOpenProfile={onOpenProfile}/>
-                      <div style={{ display: 'flex', gap: 20, paddingTop: 6, paddingLeft: 4, fontSize: 12.5, color: 'var(--ink-3)' }}>
-                        <span>👁 {l.views ?? 0} pregleda</span>
-                        <span>♡ {l.saves ?? 0} sačuvano</span>
+                      <div style={{ display: 'flex', gap: 12, paddingTop: 4, paddingLeft: 2, fontSize: 11.5, color: 'var(--ink-3)' }}>
+                        <span>👁 {l.views ?? 0}</span>
+                        <span>♡ {l.saves ?? 0}</span>
                       </div>
                     </div>
                   );
