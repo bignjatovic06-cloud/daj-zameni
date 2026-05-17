@@ -176,6 +176,30 @@ class Notification(models.Model):
         return f"{self.user} — {self.text[:40]}"
 
 
+class Report(models.Model):
+    REASON_CHOICES = [
+        ('spam',          'Spam ili prevara'),
+        ('inappropriate', 'Neprikladan sadržaj'),
+        ('wrong_cat',     'Pogrešna kategorija'),
+        ('duplicate',     'Duplikat oglasa'),
+        ('other',         'Ostalo'),
+    ]
+
+    listing    = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='reports')
+    reporter   = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_made')
+    reason     = models.CharField(max_length=20, choices=REASON_CHOICES, default='other')
+    details    = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved   = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = [('listing', 'reporter')]
+
+    def __str__(self):
+        return f'{self.reporter} → {self.listing.title[:40]} ({self.reason})'
+
+
 class Review(models.Model):
     from_user  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_reviews')
     to_user    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_reviews')

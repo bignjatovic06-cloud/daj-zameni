@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Listing, ListingImage, Category, SwapOffer, Conversation, Message, Review
+from django.utils.html import format_html
+from .models import User, Listing, ListingImage, Category, SwapOffer, Conversation, Message, Review, Report
 
 
 @admin.register(User)
@@ -60,3 +61,36 @@ class ReviewAdmin(admin.ModelAdmin):
     list_display  = ('from_user', 'to_user', 'rating', 'created_at')
     list_filter   = ('rating',)
     search_fields = ('from_user__username', 'to_user__username')
+
+
+def delete_reported_listing(modeladmin, request, queryset):
+    for report in queryset.select_related('listing'):
+        report.listing.delete()
+    queryset.update(resolved=True)
+delete_reported_listing.short_description = 'Obriši oglas i označi kao rešeno'
+
+
+def mark_resolved(modeladmin, request, queryset):
+    queryset.update(resolved=True)
+mark_resolved.short_description = 'Označi kao rešeno (bez brisanja oglasa)'
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display   = ('created_at', 'listing_link', 'reporter', 'reason', 'report_count', 'resolved')
+    list_filter    = ('reason', 'resolved')
+    search_fields  = ('listing__title', 'reporter__username', 'details')
+    readonly_fields = ('listing', 'reporter', 'reason', 'details', 'created_at')
+    actions        = [delete_reported_listing, mark_resolved]
+    ordering       = ('-created_at',)
+
+    def listing_link(self, obj):
+        return format_html('<a href="/admin/core/listing/{}/change/">{}</a>', obj.listing.pk, obj.listing.title[:60])
+    listing_link.short_description = 'Oglas'
+
+    def report_count(self, obj):
+        count = Report.objects.filter(listing=obj.listing, resolved=False).count()
+        if count > 1:
+            return format_html('<strong style="color:red">{} prijava</strong>', count)
+        return count
+    report_count.short_description = 'Ukupno prijava'

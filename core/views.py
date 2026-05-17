@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 import json
 
-from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review
+from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review, Report
 from . import emails as email_service
 
 User = get_user_model()
@@ -292,14 +292,18 @@ def listing_report(request, pk):
     if listing.user == request.user:
         return JsonResponse({'error': 'cannot_report_own'}, status=400)
 
-    data   = _parse(request)
-    reason = data.get('reason', 'other')[:50]
+    data    = _parse(request)
+    reason  = data.get('reason', 'other')[:20]
+    details = data.get('details', '').strip()[:500]
 
-    Notification.objects.create(
-        user = listing.user,
-        type = 'message',
-        text = f'Oglas „{listing.title}" je prijavljen — razlog: {reason}',
+    report, created = Report.objects.get_or_create(
+        listing  = listing,
+        reporter = request.user,
+        defaults = {'reason': reason, 'details': details},
     )
+    if not created:
+        return JsonResponse({'error': 'already_reported'}, status=400)
+
     return JsonResponse({'ok': True})
 
 
