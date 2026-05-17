@@ -99,7 +99,7 @@ def listing_list(request):
     sort  = request.GET.get('sort', '-created_at')
 
     if q:
-        qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q))
+        qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q) | Q(wants_in_exchange__icontains=q))
     if cat:
         qs = qs.filter(Q(category__slug=cat) | Q(category__parent__slug=cat))
     if city:

@@ -82,7 +82,7 @@ function Nav({
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Šta tražite?"
+            placeholder="Šta nudite?"
           />
           <button type="submit" className="s-btn">Pretraži</button>
         </form>
@@ -265,7 +265,7 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers 
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Šta tražite?"
+                placeholder="Šta nudite?"
               />
             </div>
             <div className="divider" />
