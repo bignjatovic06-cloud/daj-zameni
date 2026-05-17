@@ -405,6 +405,10 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers 
             </button>
           </form>
 
+          <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.5 }}>
+            Pronađi to što tražiš, ili osobu koja traži što ti nudiš.
+          </p>
+
           {pendingOffers.length > 0 && (
             <div className="hero-pending-strip">
               {pendingOffers.slice(0, 3).map(o => (
