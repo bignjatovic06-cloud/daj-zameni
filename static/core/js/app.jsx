@@ -80,6 +80,7 @@ function App() {
   const [filterCat, setFilterCat]         = uS('sve');
   const [filterChip, setFilterChip]       = uS('sve');
   const [searchQuery, setSearchQuery]     = uS('');
+  const [searchMode, setSearchMode]       = uS('find');
   const [filterCity, setFilterCity]       = uS('');
   const [filterRadius, setFilterRadius]   = uS(10);
   const [filterConditions, setFilterConditions] = uS([]);
@@ -384,9 +385,13 @@ function App() {
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      out = out.filter(l =>
-        (l.title + ' ' + (l.seek || '') + ' ' + (l.city || '')).toLowerCase().includes(q)
-      );
+      if (searchMode === 'offer') {
+        out = out.filter(l => (l.seek || '').toLowerCase().includes(q));
+      } else {
+        out = out.filter(l =>
+          (l.title + ' ' + (l.desc || '') + ' ' + (l.city || '')).toLowerCase().includes(q)
+        );
+      }
     }
 
     if (filterChip === 'barter') {
@@ -428,7 +433,7 @@ function App() {
     }
 
     return out;
-  }, [listings, filterCat, searchQuery, filterChip, filterCity, filterBarter, filterPremium, filterConditions, filterMaxPrice, filterSort, categories]);
+  }, [listings, filterCat, searchQuery, searchMode, filterChip, filterCity, filterBarter, filterPremium, filterConditions, filterMaxPrice, filterSort, categories]);
 
   const resetFilters = () => {
     setFilterBarter(false);
@@ -442,8 +447,9 @@ function App() {
 
   const hasActiveFilters = filterBarter || filterPremium || filterCity || filterConditions.length > 0 || filterMaxPrice < 300000 || filterCat !== 'sve';
 
-  const onSearch = (q) => {
+  const onSearch = (q, mode) => {
     setSearchQuery(q);
+    if (mode) setSearchMode(mode);
     setFilterChip('sve');
     navigate('search', null);
     window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -219,6 +219,7 @@ function NotificationsPopover({ notifications = [], onMarkRead, onNotifClick }) 
 /* ─── HERO ─────────────────────────────────────── */
 function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers = [], onOfferRespond }) {
   const [q, setQ] = useState('');
+  const [mode, setMode] = useState('find');
   const [city, setCity] = useState('');
   const [radius, setRadius] = useState(10);
   const [showPicker, setShowPicker] = useState(false);
@@ -244,7 +245,7 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers 
   const handleSubmit = (e) => {
     e.preventDefault();
     onCityChange && onCityChange(city, radius);
-    onSearch(q);
+    onSearch(q, mode);
   };
 
   return (
@@ -259,13 +260,30 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers 
             Poveži se sa ljudima na drugačiji način. Razmeni, kupi ili prodaj predmete — bez agencija, bez naknada, bez komplikacija.
           </p>
 
+          <div className="search-tabs">
+            <button
+              type="button"
+              className={'search-tab' + (mode === 'find' ? ' active' : '')}
+              onClick={() => setMode('find')}
+            >
+              Tražim predmet
+            </button>
+            <button
+              type="button"
+              className={'search-tab' + (mode === 'offer' ? ' active' : '')}
+              onClick={() => setMode('offer')}
+            >
+              Nudim za zamenu
+            </button>
+          </div>
+
           <form className="hero-search" onSubmit={handleSubmit}>
             <div className="field">
               <Icon name="search" size={18} stroke={1.8} />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Šta nudite?"
+                placeholder={mode === 'find' ? 'Koji predmet tražite?' : 'Šta nudite za zamenu?'}
               />
             </div>
             <div className="divider" />
