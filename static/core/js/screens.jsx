@@ -861,6 +861,8 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
           images: res.images && res.images.length > 0
             ? res.images.map(img => ({ url: img.url, is_cover: img.is_cover }))
             : item.images,
+          views:  res.views ?? item.views,
+          saves:  res.saves ?? item.saves ?? null,
         });
       }
     }).catch(() => {});
@@ -1111,11 +1113,11 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
               {isOwner && statsOpen && (
                 <div style={{ marginTop: 10, padding: '12px 14px', background: 'var(--accent-soft)', borderRadius: 10, fontSize: 13, color: 'var(--ink-2)', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Pregledi</span><b style={{ color: 'var(--ink)' }}>{item.views ?? 0}</b>
+                    <span>Pregledi</span><b style={{ color: 'var(--ink)' }}>{fullItem.views ?? 0}</b>
                   </div>
-                  {item.saves != null && (
+                  {fullItem.saves != null && (
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Sačuvano</span><b style={{ color: 'var(--ink)' }}>{item.saves}</b>
+                      <span>Sačuvano</span><b style={{ color: 'var(--ink)' }}>{fullItem.saves}</b>
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>

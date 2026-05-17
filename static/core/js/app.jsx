@@ -456,7 +456,7 @@ function App() {
 
   uE(() => {
     if (view !== 'my-listings') return;
-    apiMyListings().then(res => { if (res.ok) setOwnerListings(res.listings || []); });
+    apiMyListings().then(res => { if (res.ok) setOwnerListings(res.results || []); });
   }, [view]);
 
   const filtered = listings;

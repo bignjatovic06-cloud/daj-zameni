@@ -324,7 +324,6 @@ def wishlist_ids(request):
 
 
 @login_required
-@login_required
 def my_listings(request):
     listings = (
         Listing.objects
