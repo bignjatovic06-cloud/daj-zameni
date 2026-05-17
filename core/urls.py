@@ -39,6 +39,7 @@ urlpatterns = [
 
     # ─── Profil ───────────────────────────────────────
     path('profile/',                           views.profile,                name='profile'),
+    path('profile/avatar/',                    views.profile_avatar,         name='profile_avatar'),
     path('profile/<str:username>/',            views.profile_user,           name='profile_user'),
 
     # ─── Auth ─────────────────────────────────────────
@@ -46,6 +47,7 @@ urlpatterns = [
     path('auth/login/',                        views.login_view,             name='login'),
     path('auth/register/',                     views.register,               name='register'),
     path('auth/logout/',                       views.logout_view,            name='logout'),
+    path('auth/password/',                     views.change_password,        name='change_password'),
 
     # ─── SPA catch-all — mora biti poslednji ──────────────
     re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja|profil)(?:/.*)?$', views.app_view, name='spa_catchall'),

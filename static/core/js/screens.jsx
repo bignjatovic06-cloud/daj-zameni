@@ -2634,4 +2634,279 @@ function ProfileScreen({ user: profileData, currentUser, onBack, onOpenItem, onO
   );
 }
 
-Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen, RatingsScreen, CategoryPickerModal, ProfileScreen, PhoneGateModal });
+/* ─── SETTINGS SCREEN ────────────────────── */
+function SettingsScreen({ currentUser, onUserUpdated }) {
+  const [tab, setTab] = useS('profile');
+
+  // ── Javni profil ──
+  const [bio,     setBio]     = useS(currentUser.bio   || '');
+  const [city,    setCity]    = useS(currentUser.city  || '');
+  const [phone,   setPhone]   = useS(currentUser.phone || '');
+  const [saving,  setSaving]  = useS(false);
+  const [saveMsg, setSaveMsg] = useS('');
+  const [saveErr, setSaveErr] = useS('');
+
+  // ── Avatar ──
+  const avatarRef             = useR(null);
+  const [avatarPreview, setAvatarPreview] = useS(currentUser.avatar || null);
+  const [avatarUploading, setAvatarUploading] = useS(false);
+  const [avatarErr, setAvatarErr] = useS('');
+
+  // ── Lozinka ──
+  const [oldPwd,   setOldPwd]   = useS('');
+  const [newPwd,   setNewPwd]   = useS('');
+  const [confPwd,  setConfPwd]  = useS('');
+  const [pwdSaving, setPwdSaving] = useS(false);
+  const [pwdMsg,    setPwdMsg]    = useS('');
+  const [pwdErr,    setPwdErr]    = useS('');
+
+  const handleSaveProfile = async () => {
+    setSaving(true); setSaveMsg(''); setSaveErr('');
+    const res = await apiUpdateProfile({ bio, city, phone });
+    setSaving(false);
+    if (res.ok) {
+      onUserUpdated(res.user);
+      setSaveMsg('Sačuvano.');
+      setTimeout(() => setSaveMsg(''), 3000);
+    } else {
+      setSaveErr(res.error || 'Greška pri čuvanju.');
+    }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setAvatarErr('');
+    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarUploading(true);
+    const res = await apiUploadAvatar(file);
+    setAvatarUploading(false);
+    if (res.ok) {
+      onUserUpdated({ ...currentUser, avatar: res.avatar });
+      setAvatarPreview(res.avatar);
+    } else {
+      setAvatarErr(res.error || 'Greška pri uploadu.');
+      setAvatarPreview(currentUser.avatar || null);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPwdMsg(''); setPwdErr('');
+    if (newPwd !== confPwd) { setPwdErr('Lozinke se ne podudaraju.'); return; }
+    if (newPwd.length < 8)  { setPwdErr('Nova lozinka mora imati najmanje 8 karaktera.'); return; }
+    setPwdSaving(true);
+    const res = await apiChangePassword(oldPwd, newPwd);
+    setPwdSaving(false);
+    if (res.ok) {
+      setOldPwd(''); setNewPwd(''); setConfPwd('');
+      setPwdMsg('Lozinka uspešno promenjena.');
+      setTimeout(() => setPwdMsg(''), 4000);
+    } else {
+      setPwdErr(res.error || 'Greška pri promeni lozinke.');
+    }
+  };
+
+  const initials = currentUser.username ? currentUser.username.slice(0, 2).toUpperCase() : '??';
+
+  const tabStyle = (id) => ({
+    padding: '8px 16px',
+    fontSize: 14,
+    fontWeight: tab === id ? 600 : 400,
+    color: tab === id ? 'var(--accent)' : 'var(--ink-3)',
+    borderBottom: tab === id ? '2px solid var(--accent)' : '2px solid transparent',
+    background: 'none',
+    border: 'none',
+    borderBottom: tab === id ? '2px solid var(--accent)' : '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'color .15s',
+  });
+
+  const card = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '24px', marginBottom: 20 };
+  const label = { fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 6 };
+
+  return (
+    <section className="section" style={{ paddingTop: 32 }}>
+      <div className="section-inner" style={{ maxWidth: 640 }}>
+        <div className="section-head">
+          <div>
+            <h2>Podešavanja</h2>
+            <div className="sub">Upravljaj nalogom i ličnim podacima</div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--line)', marginBottom: 28 }}>
+          <button style={tabStyle('profile')} onClick={() => setTab('profile')}>Profil</button>
+          <button style={tabStyle('security')} onClick={() => setTab('security')}>Bezbednost</button>
+        </div>
+
+        {tab === 'profile' && (
+          <div>
+            {/* Avatar */}
+            <div style={card}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', marginBottom: 16, fontFamily: 'var(--font-display)' }}>
+                Profilna slika
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                <div
+                  onClick={() => avatarRef.current && avatarRef.current.click()}
+                  style={{
+                    width: 72, height: 72, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+                    background: avatarPreview ? 'none' : 'var(--accent-soft)',
+                    color: 'var(--accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 26, fontWeight: 700, overflow: 'hidden',
+                    border: '2px solid var(--line)',
+                    position: 'relative',
+                  }}
+                >
+                  {avatarPreview
+                    ? <img src={avatarPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                    : initials
+                  }
+                  {avatarUploading && (
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+                      <div style={{ width: 20, height: 20, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .7s linear infinite' }}/>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <button
+                    className="nav-btn"
+                    onClick={() => avatarRef.current && avatarRef.current.click()}
+                    disabled={avatarUploading}
+                    style={{ marginBottom: 6 }}
+                  >
+                    {avatarUploading ? 'Učitavanje...' : 'Promeni sliku'}
+                  </button>
+                  <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>JPG, PNG ili WebP · max 5 MB</div>
+                  {avatarErr && <div style={{ color: '#dc2626', fontSize: 13, marginTop: 4 }}>{avatarErr}</div>}
+                </div>
+              </div>
+              <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange}/>
+            </div>
+
+            {/* Podaci */}
+            <div style={card}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', marginBottom: 20, fontFamily: 'var(--font-display)' }}>
+                Lični podaci
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={label}>Korisničko ime</label>
+                <input className="finput" value={currentUser.username} disabled style={{ width: '100%', boxSizing: 'border-box', opacity: .6 }}/>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={label}>Email</label>
+                <input className="finput" value={currentUser.email} disabled style={{ width: '100%', boxSizing: 'border-box', opacity: .6 }}/>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={label}>Grad</label>
+                <input
+                  className="finput"
+                  placeholder="npr. Beograd"
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={label}>Broj telefona <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(vidljiv samo ulogovanim korisnicima)</span></label>
+                <input
+                  className="finput"
+                  type="tel"
+                  placeholder="+381 60 123 4567"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={label}>Kratka bio</label>
+                <textarea
+                  className="finput"
+                  placeholder="Nekoliko reči o tebi..."
+                  value={bio}
+                  onChange={e => setBio(e.target.value)}
+                  rows={3}
+                  style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 80 }}
+                />
+              </div>
+
+              {saveErr && <div style={{ color: '#dc2626', fontSize: 13, marginBottom: 12 }}>{saveErr}</div>}
+              {saveMsg && <div style={{ color: '#276749', fontSize: 13, marginBottom: 12 }}>{saveMsg}</div>}
+
+              <button
+                className="nav-btn primary"
+                onClick={handleSaveProfile}
+                disabled={saving}
+                style={{ minWidth: 140 }}
+              >
+                {saving ? 'Čuvanje...' : 'Sačuvaj izmene'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === 'security' && (
+          <div style={card}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', marginBottom: 20, fontFamily: 'var(--font-display)' }}>
+              Promena lozinke
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={label}>Trenutna lozinka</label>
+              <input
+                className="finput"
+                type="password"
+                value={oldPwd}
+                onChange={e => { setOldPwd(e.target.value); setPwdErr(''); }}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={label}>Nova lozinka</label>
+              <input
+                className="finput"
+                type="password"
+                value={newPwd}
+                onChange={e => { setNewPwd(e.target.value); setPwdErr(''); }}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={label}>Potvrdi novu lozinku</label>
+              <input
+                className="finput"
+                type="password"
+                value={confPwd}
+                onChange={e => { setConfPwd(e.target.value); setPwdErr(''); }}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {pwdErr && <div style={{ color: '#dc2626', fontSize: 13, marginBottom: 12 }}>{pwdErr}</div>}
+            {pwdMsg && <div style={{ color: '#276749', fontSize: 13, marginBottom: 12 }}>{pwdMsg}</div>}
+
+            <button
+              className="nav-btn primary"
+              onClick={handleChangePassword}
+              disabled={pwdSaving || !oldPwd || !newPwd || !confPwd}
+              style={{ minWidth: 180 }}
+            >
+              {pwdSaving ? 'Menjanje...' : 'Promeni lozinku'}
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+Object.assign(window, { ListingDetail, PostAdModal, RazmeneDrawer, LoginModal, RegisterModal, EditAdModal, SavedScreen, RatingsScreen, CategoryPickerModal, ProfileScreen, PhoneGateModal, SettingsScreen });

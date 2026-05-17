@@ -812,6 +812,39 @@ def profile(request):
     })
 
 
+@login_required
+@require_POST
+def profile_avatar(request):
+    img = request.FILES.get('avatar')
+    if not img:
+        return JsonResponse({'error': 'Nema slike.'}, status=400)
+    if img.size > 5 * 1024 * 1024:
+        return JsonResponse({'error': 'Slika ne sme biti veća od 5 MB.'}, status=400)
+    request.user.avatar = img
+    request.user.save()
+    return JsonResponse({'ok': True, 'avatar': request.user.avatar.url})
+
+
+@login_required
+@require_POST
+def change_password(request):
+    data         = _parse(request)
+    old_password = data.get('old_password', '')
+    new_password = data.get('new_password', '')
+
+    if not request.user.check_password(old_password):
+        return JsonResponse({'error': 'Pogrešna trenutna lozinka.'}, status=400)
+    if len(new_password) < 8:
+        return JsonResponse({'error': 'Nova lozinka mora imati najmanje 8 karaktera.'}, status=400)
+
+    request.user.set_password(new_password)
+    request.user.save()
+    # keep session alive after password change
+    from django.contrib.auth import update_session_auth_hash
+    update_session_auth_hash(request, request.user)
+    return JsonResponse({'ok': True})
+
+
 def profile_user(request, username):
     user = get_object_or_404(User, username=username)
     listings = (
@@ -854,8 +887,10 @@ def _user_data(user):
         'email':        user.email,
         'first_name':   user.first_name,
         'last_name':    user.last_name,
+        'bio':          user.bio,
         'city':         user.city,
         'phone':        user.phone,
+        'avatar':       user.avatar.url if user.avatar else None,
         'is_verified':  user.is_verified,
         'rating':       float(user.rating),
         'rating_count': user.rating_count,

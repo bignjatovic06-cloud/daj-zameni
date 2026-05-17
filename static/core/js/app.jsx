@@ -906,20 +906,11 @@ function App() {
         <RatingsScreen onOpenItem={onOpenItem}/>
       )}
 
-      {view === 'settings' && (
-        <section className="section" style={{ paddingTop: 32 }}>
-          <div className="section-inner">
-            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
-              <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
-                Podešavanja
-              </div>
-              <div style={{ fontSize: 13.5 }}>Ova stranica je u izradi.</div>
-              <button className="nav-btn" style={{ marginTop: 18 }} onClick={() => navigate('home', null)}>
-                Nazad na početnu
-              </button>
-            </div>
-          </div>
-        </section>
+      {view === 'settings' && currentUser && (
+        <SettingsScreen
+          currentUser={currentUser}
+          onUserUpdated={(updated) => setCurrentUser(u => ({ ...u, ...updated }))}
+        />
       )}
 
       {view === 'profile' && profileUser && (

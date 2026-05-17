@@ -183,3 +183,30 @@ async function apiSavePhone(phone) {
     body: JSON.stringify({ phone }),
   });
 }
+
+async function apiUpdateProfile(data) {
+  return apiFetch('/profile/', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+async function apiChangePassword(oldPassword, newPassword) {
+  return apiFetch('/auth/password/', {
+    method: 'POST',
+    body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+  });
+}
+
+async function apiUploadAvatar(file) {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  const res = await fetch('/profile/avatar/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+    credentials: 'include',
+    body: formData,
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, ...data };
+}
