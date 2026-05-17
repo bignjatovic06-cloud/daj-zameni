@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
-from django.db.models import Q
+from django.db.models import Q, F
 from django.core.paginator import Paginator
 import json
 
@@ -136,7 +136,8 @@ def listing_detail(request, pk):
         .prefetch_related('images'),
         pk=pk,
     )
-    Listing.objects.filter(pk=pk).update(views=listing.views + 1)
+    if not request.user.is_authenticated or request.user.pk != listing.user_id:
+        Listing.objects.filter(pk=pk).update(views=F('views') + 1)
     return JsonResponse(_listing_data(listing, full=True))
 
 
