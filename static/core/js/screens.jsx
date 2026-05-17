@@ -1707,7 +1707,7 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
                 <div className="field-group" style={{ margin: 0 }}>
                   <label>Grad</label>
-                  React.createElement(CityPicker, { value: city, onChange: setCity })
+                  <CityPicker value={city} onChange={setCity}/>
                 </div>
                 <div className="field-group" style={{ margin: 0 }}>
                   <label>Stanje</label>
