@@ -179,12 +179,14 @@ def listing_detail(request, pk):
     listing = get_object_or_404(
         Listing.objects
         .select_related('user', 'category', 'category__parent')
-        .prefetch_related('images'),
+        .prefetch_related('images')
+        .annotate(saves=Count('wishlisted_by')),
         pk=pk,
     )
     if not request.user.is_authenticated or request.user.pk != listing.user_id:
         Listing.objects.filter(pk=pk).update(views=F('views') + 1)
-    return JsonResponse(_listing_data(listing, full=True))
+    is_owner = request.user.is_authenticated and request.user.pk == listing.user_id
+    return JsonResponse(_listing_data(listing, full=True, show_saves=is_owner))
 
 
 @login_required
@@ -322,10 +324,12 @@ def wishlist_ids(request):
 
 
 @login_required
+@login_required
 def my_listings(request):
     listings = (
         Listing.objects
         .filter(user=request.user, status='active')
+        .annotate(saves=Count('wishlisted_by'))
         .prefetch_related('images')
         .order_by('-created_at')
     )
@@ -338,6 +342,8 @@ def my_listings(request):
             'title':     l.title,
             'condition': l.condition,
             'city':      l.city,
+            'views':     l.views,
+            'saves':     l.saves,
             'image':     cover.image.url if cover else None,
         })
     return JsonResponse({'results': data})
@@ -945,7 +951,7 @@ def _user_data(user):
     }
 
 
-def _listing_data(listing, full=False):
+def _listing_data(listing, full=False, show_saves=False):
     all_images = list(listing.images.all())
     cover      = next((img for img in all_images if img.is_cover), None) or (all_images[0] if all_images else None)
 
@@ -968,6 +974,7 @@ def _listing_data(listing, full=False):
         'status':            listing.status,
         'city':              listing.city,
         'views':             listing.views,
+        'saves':             getattr(listing, 'saves', None) if show_saves else None,
         'is_featured':       listing.is_featured,
         'is_premium':        listing.is_premium,
         'created_at':        listing.created_at.isoformat(),

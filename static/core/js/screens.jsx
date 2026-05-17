@@ -1113,6 +1113,11 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Pregledi</span><b style={{ color: 'var(--ink)' }}>{item.views ?? 0}</b>
                   </div>
+                  {item.saves != null && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Sačuvano</span><b style={{ color: 'var(--ink)' }}>{item.saves}</b>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Šifra oglasa</span>
                     <b style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink)' }}>DZ-{String(item.id).slice(-6).toUpperCase()}</b>
