@@ -97,6 +97,7 @@ function App() {
   const [razmeneOpen, setRazmeneOpen]     = uS(false);
   const [messageTarget, setMessageTarget] = uS(null);
   const [notifsOpen, setNotifsOpen]       = uS(false);
+  const [mobileNotifsOpen, setMobileNotifsOpen] = uS(false);
   const [userOpen, setUserOpen]           = uS(false);
   const [loginOpen, setLoginOpen]         = uS(false);
   const [registerOpen, setRegisterOpen]   = uS(false);
@@ -572,7 +573,16 @@ function App() {
         unreadThreads={unreadThreads}
         currentUser={currentUser}
         onPostAd={() => requirePhone(() => setPostOpen(true))}
-        onOpenNotifs={(e) => { e.stopPropagation(); setUserOpen(false); setNotifsOpen(v => !v); }}
+        onOpenNotifs={(e) => {
+          e.stopPropagation();
+          if (window.innerWidth < 640) {
+            setMobileNotifsOpen(true);
+            if (unreadNotifs > 0) apiMarkNotificationsRead().then(() => setNotifications(prev => prev.map(n => ({ ...n, is_read: true }))));
+          } else {
+            setUserOpen(false);
+            setNotifsOpen(v => !v);
+          }
+        }}
         onOpenRazmene={() => requireAuth(() => { setMessageTarget(null); setRazmeneOpen(true); })}
         onOpenUser={(e) => { e.stopPropagation(); setNotifsOpen(false); setUserOpen(v => !v); }}
         openNotifs={notifsOpen}
@@ -962,6 +972,15 @@ function App() {
           onClose={() => { setRazmeneOpen(false); setMessageTarget(null); }}
           currentUser={currentUser}
           targetListing={messageTarget}
+        />
+      )}
+
+      {mobileNotifsOpen && (
+        <NotificationsDrawer
+          notifications={notifications}
+          onClose={() => setMobileNotifsOpen(false)}
+          onMarkRead={() => { handleMarkRead(); }}
+          onNotifClick={(notif) => { setMobileNotifsOpen(false); handleNotifClick(notif); }}
         />
       )}
 

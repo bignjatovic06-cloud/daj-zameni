@@ -344,6 +344,76 @@ function NotificationsPopover({ notifications = [], onMarkRead, onNotifClick }) 
   );
 }
 
+/* ─── NOTIFICATIONS DRAWER (mobile) ─────────────── */
+function NotificationsDrawer({ notifications = [], onClose, onMarkRead, onNotifClick }) {
+  const fmtTime = (iso) => {
+    if (!iso) return '';
+    const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (diff < 60)    return 'upravo';
+    if (diff < 3600)  return Math.floor(diff / 60) + ' min';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+    return Math.floor(diff / 86400) + 'd';
+  };
+
+  const typeIcon = (type) => {
+    if (type === 'offer' || type === 'offer_accepted' || type === 'offer_declined') return 'swap';
+    if (type === 'message') return 'msg';
+    return 'bell';
+  };
+
+  return ReactDOM.createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.5)' }} onClick={onClose}>
+      <div
+        style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: '#fff', display: 'flex', flexDirection: 'column', animation: 'slideInRight .22s cubic-bezier(.22,.61,.36,1) both' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--ink)' }}>Obaveštenja</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {notifications.some(n => !n.is_read) && (
+              <button onClick={onMarkRead} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--accent)', fontWeight: 600, padding: 0 }}>
+                Sve pročitano
+              </button>
+            )}
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', padding: 4 }}>
+              <Icon name="x" size={22} />
+            </button>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {notifications.length === 0 ? (
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>
+              Nema novih obaveštenja
+            </div>
+          ) : notifications.map(n => (
+            <div
+              key={n.id}
+              onClick={() => onNotifClick && onNotifClick(n)}
+              style={{
+                display: 'flex', alignItems: 'flex-start', gap: 14,
+                padding: '16px 20px', borderBottom: '1px solid var(--line)',
+                background: n.is_read ? 'transparent' : 'var(--accent-soft)',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: n.is_read ? 'var(--line)' : 'var(--accent-soft)', border: n.is_read ? 'none' : '1.5px solid var(--accent)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <Icon name={typeIcon(n.type)} size={16} style={{ color: n.is_read ? 'var(--ink-3)' : 'var(--accent)' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, color: 'var(--ink)', fontWeight: n.is_read ? 400 : 600, lineHeight: 1.4 }}>{n.text}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4 }}>{fmtTime(n.created_at)}</div>
+              </div>
+              {!n.is_read && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 4 }}/>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 /* ─── HERO ─────────────────────────────────────── */
 function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers = [], onOfferRespond }) {
   const [q, setQ] = useState('');
@@ -763,5 +833,5 @@ function Footer() {
 Object.assign(window, {
   Nav, Hero, TrustStrip, Categories,
   ListingCard, HowItWorks, Footer,
-  NotificationsPopover,
+  NotificationsPopover, NotificationsDrawer,
 });
