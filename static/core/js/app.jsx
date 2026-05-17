@@ -878,7 +878,7 @@ function App() {
                 <button onClick={resetFilters} style={{ background: 'none', border: 'none', fontSize: 13, color: 'var(--ink-3)', cursor: 'pointer', padding: '4px 0' }}>Resetuj</button>
               )}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
+            <div className="search-text-row" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
               <span style={{ cursor: 'pointer', color: 'var(--accent)' }} onClick={() => navigate('home', null)}>Početna</span>
               <span>›</span>
               <span style={{ color: 'var(--ink-2)' }}>
@@ -886,7 +886,7 @@ function App() {
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div className="search-text-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 22, fontFamily: 'var(--font-display)', fontWeight: 700 }}>
                   {searchQuery ? ('Rezultati: \u201e' + searchQuery + '\u201c') : activeCat?.name || 'Svi oglasi'}
@@ -915,7 +915,7 @@ function App() {
                   ))}
                 </div>
                 {totalPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 32, flexWrap: 'wrap' }}>
+                  <div className="search-text-row" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 32, flexWrap: 'wrap' }}>
                     <button
                       onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
                       disabled={page === 1}
@@ -947,7 +947,7 @@ function App() {
                 )}
               </>
             ) : (
-              <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
+              <div className="search-text-row" style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
                 <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 8, fontFamily: 'var(--font-display)' }}>
                   {searchQuery ? ('Nema rezultata za \u201e' + searchQuery + '\u201c') : 'Nema rezultata'}
                 </div>
