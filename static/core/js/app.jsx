@@ -232,6 +232,17 @@ function App() {
     });
   }, []);
 
+  // poll for new notifications every 30s when logged in
+  uE(() => {
+    if (!currentUser) return;
+    const id = setInterval(() => {
+      apiNotifications().then(res => {
+        if (res.ok && res.results) setNotifications(res.results);
+      });
+    }, 30000);
+    return () => clearInterval(id);
+  }, [currentUser]);
+
   // handle browser back/forward
   uE(() => {
     const onPop = (e) => {
