@@ -46,7 +46,7 @@ function CityPicker({ value, onChange, className, inputStyle }) {
       open && React.createElement('div', {
         style: {
           position: 'absolute', zIndex: 999, top: 'calc(100% + 4px)', left: 0, right: 0,
-          background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 10,
+          background: '#fff', border: '1px solid var(--line)', borderRadius: 10,
           boxShadow: '0 4px 20px rgba(0,0,0,.12)', maxHeight: 220, overflowY: 'auto',
         },
       },
