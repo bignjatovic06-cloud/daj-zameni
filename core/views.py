@@ -335,7 +335,15 @@ def listing_start_thread(request, pk):
 # ─────────────────────────────────────────
 
 def category_list(request):
+    # One query: count active listings per subcategory
+    sub_counts = dict(
+        Category.objects.filter(parent__isnull=False)
+        .annotate(n=Count('listings', filter=Q(listings__status='active')))
+        .values_list('id', 'n')
+    )
+
     cats = Category.objects.filter(parent=None).prefetch_related('children').order_by('order', 'name')
+
     return JsonResponse({'results': [
         {
             'id':       c.id,
@@ -343,17 +351,14 @@ def category_list(request):
             'slug':     c.slug,
             'icon':     c.icon,
             'tint':     c.tint,
-            'count':    Listing.objects.filter(
-                            Q(category=c) | Q(category__parent=c),
-                            status='active',
-                        ).count(),
+            'count':    sum(sub_counts.get(s.id, 0) for s in c.children.all()),
             'children': [
                 {
                     'id':    s.id,
                     'name':  s.name,
                     'slug':  s.slug,
                     'icon':  s.icon,
-                    'count': s.listings.filter(status='active').count(),
+                    'count': sub_counts.get(s.id, 0),
                 }
                 for s in c.children.order_by('order', 'name')
             ],
