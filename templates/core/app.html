@@ -100,6 +100,12 @@
   .nav-search .s-btn:hover{filter:brightness(.95)}
 
   .nav-actions{display:flex;align-items:center;gap:6px}
+  .nav-actions-desktop{display:flex;align-items:center;gap:6px}
+  .nav-actions-mobile{display:none;align-items:center;gap:6px}
+  .drawer-item{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;font-size:15px;font-weight:500;color:var(--ink);cursor:pointer;gap:12px}
+  .drawer-item:hover{background:#f7f5ee}
+  .drawer-item.danger{color:#c0392b}
+  .drawer-item > div, .drawer-item > span{display:flex;align-items:center;gap:12px}
   .nav-btn{
     height:36px;padding:0 12px;border:1px solid var(--line);background:#fff;
     border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--ink);
@@ -585,10 +591,15 @@
     .search-aside{grid-column:1 !important;grid-row:1 !important;position:static !important;width:auto !important}
     .search-main{grid-column:1 !important;grid-row:2 !important;min-height:300px !important}
   }
+  @media (max-width: 640px){
+    .nav-actions-desktop{display:none}
+    .nav-actions-mobile{display:flex}
+    .nav-beta{display:none}
+    .nav-inner{grid-template-columns:auto 1fr auto !important;gap:6px;padding:10px 14px}
+    .nav-search{display:none !important}
+  }
   @media (max-width: 480px){
     .nav-inner{padding:8px 12px}
-    .nav-btn span{display:none}
-    .nav-btn.primary{padding:0 10px}
     .hero-inner{padding:28px 16px 36px}
     .hero h1{font-size:clamp(28px,9vw,40px)}
     .detail .gallery .main{height:260px}

@@ -39,6 +39,7 @@ function Nav({
 }) {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('');
+  const [burgerOpen, setBurgerOpen] = useState(false);
   const userRef = useRef(null);
 
   const initials = currentUser
@@ -63,6 +64,12 @@ function Nav({
     onSelectCat && onSelectCat(val || 'sve');
   };
 
+  const closeBurger = () => setBurgerOpen(false);
+
+  const burgerNav = (view) => { closeBurger(); onNav && onNav(view); };
+
+  const totalBadge = (unreadNotifs || 0) + (unreadThreads || 0);
+
   return (
     <header className="nav">
       <div className="nav-inner">
@@ -74,7 +81,7 @@ function Nav({
             </svg>
           </div>
           <span>Daj Zameni</span>
-          <small>beta</small>
+          <small className="nav-beta">beta</small>
         </div>
 
         <form className="nav-search" onSubmit={handleSubmit}>
@@ -87,7 +94,8 @@ function Nav({
           <button type="submit" className="s-btn">Pretraži</button>
         </form>
 
-        <div className="nav-actions">
+        {/* Desktop actions */}
+        <div className="nav-actions nav-actions-desktop">
           <button className="nav-btn primary" onClick={onPostAd}>
             <Icon name="plus" size={15} stroke={2.2} />
             <span>Oglas</span>
@@ -162,7 +170,116 @@ function Nav({
             </button>
           )}
         </div>
+
+        {/* Mobile actions */}
+        <div className="nav-actions-mobile">
+          <button className="nav-btn primary" onClick={onPostAd} style={{ padding: '0 14px' }}>
+            <Icon name="plus" size={17} stroke={2.4} />
+          </button>
+          <button
+            className="nav-btn icon"
+            onClick={() => setBurgerOpen(true)}
+            style={{ position: 'relative' }}
+            aria-label="Meni"
+          >
+            <Icon name="menu" size={20} />
+            {totalBadge > 0 && (
+              <span className="badge">{totalBadge > 9 ? '9+' : totalBadge}</span>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Burger drawer overlay */}
+      {burgerOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.45)' }}
+          onClick={closeBurger}
+        >
+          <div
+            style={{
+              position: 'absolute', top: 0, right: 0, bottom: 0, width: 280,
+              background: '#fff', display: 'flex', flexDirection: 'column',
+              boxShadow: '-4px 0 24px rgba(0,0,0,.15)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Drawer header */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {currentUser ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span className="avatar" style={{ width: 36, height: 36, fontSize: 13 }}>{initials}</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{displayName}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }}>{currentUser.email}</div>
+                  </div>
+                </div>
+              ) : (
+                <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>Meni</span>
+              )}
+              <button onClick={closeBurger} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', padding: 4 }}>
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+
+            {/* Drawer items */}
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {currentUser ? (
+                <>
+                  <div className="drawer-item" onClick={() => { closeBurger(); onOpenNotifs && onOpenNotifs(); }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <Icon name="bell" size={18} />
+                      <span>Obaveštenja</span>
+                    </div>
+                    {unreadNotifs > 0 && (
+                      <span style={{ background: 'var(--accent)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 10, fontFamily: 'var(--font-mono)' }}>
+                        {unreadNotifs}
+                      </span>
+                    )}
+                  </div>
+                  <div className="drawer-item" onClick={() => { closeBurger(); onOpenRazmene && onOpenRazmene(); }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <Icon name="swap" size={18} />
+                      <span>Razmene</span>
+                    </div>
+                    {unreadThreads > 0 && (
+                      <span style={{ background: 'var(--accent)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 10, fontFamily: 'var(--font-mono)' }}>
+                        {unreadThreads}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ height: 1, background: 'var(--line)', margin: '4px 20px' }} />
+                  <div className="drawer-item" onClick={() => burgerNav('my-listings')}>
+                    <Icon name="tag" size={18} /><span>Moji oglasi</span>
+                  </div>
+                  <div className="drawer-item" onClick={() => burgerNav('saved')}>
+                    <Icon name="heart" size={18} /><span>Sačuvano</span>
+                  </div>
+                  <div className="drawer-item" onClick={() => burgerNav('ratings')}>
+                    <Icon name="star" size={18} /><span>Ocene i istorija</span>
+                  </div>
+                  <div className="drawer-item" onClick={() => burgerNav('settings')}>
+                    <Icon name="sliders" size={18} /><span>Podešavanja</span>
+                  </div>
+                  <div style={{ height: 1, background: 'var(--line)', margin: '4px 20px' }} />
+                  <div className="drawer-item danger" onClick={() => { closeBurger(); onLogout && onLogout(); }}>
+                    <Icon name="logout" size={18} /><span>Odjava</span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: 20 }}>
+                  <button
+                    onClick={() => { closeBurger(); onLogin && onLogin(); }}
+                    style={{ width: '100%', padding: '12px 0', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+                  >
+                    Prijava / Registracija
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
