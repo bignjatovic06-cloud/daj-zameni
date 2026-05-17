@@ -2435,10 +2435,10 @@ function ProfileScreen({ user: profileData, currentUser, onBack, onOpenItem, onO
                 <ListingCard
                   key={l.id}
                   item={norm}
-                  onOpen={onOpenItem}
+                  onClick={() => onOpenItem(norm)}
+                  fav={false}
+                  onFav={() => {}}
                   onOpenProfile={onOpenProfile}
-                  isSaved={false}
-                  onSaveToggle={() => {}}
                 />
               );
             })}
