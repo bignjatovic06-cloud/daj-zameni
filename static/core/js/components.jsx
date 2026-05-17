@@ -173,18 +173,15 @@ function Nav({
 
         {/* Mobile actions */}
         <div className="nav-actions-mobile">
-          <button className="nav-btn primary" onClick={onPostAd} style={{ padding: '0 14px' }}>
-            <Icon name="plus" size={17} stroke={2.4} />
-          </button>
           <button
             className="nav-btn icon"
             onClick={() => setBurgerOpen(true)}
-            style={{ position: 'relative' }}
+            style={{ position: 'relative', width: 40, height: 40 }}
             aria-label="Meni"
           >
-            <Icon name="menu" size={20} />
+            <Icon name="menu" size={22} />
             {totalBadge > 0 && (
-              <span className="badge">{totalBadge > 9 ? '9+' : totalBadge}</span>
+              <span className="badge" style={{ top: 4, right: 4 }}>{totalBadge > 9 ? '9+' : totalBadge}</span>
             )}
           </button>
         </div>
@@ -197,82 +194,95 @@ function Nav({
           onClick={closeBurger}
         >
           <div
-            style={{
-              position: 'absolute', top: 0, right: 0, bottom: 0, width: 280,
-              background: '#fff', display: 'flex', flexDirection: 'column',
-              boxShadow: '-4px 0 24px rgba(0,0,0,.15)',
-            }}
+            className="mobile-drawer"
             onClick={e => e.stopPropagation()}
           >
-            {/* Drawer header */}
+            {/* Drawer header — profil ili naziv */}
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               {currentUser ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="avatar" style={{ width: 36, height: 36, fontSize: 13 }}>{initials}</span>
+                  <span className="avatar" style={{ width: 38, height: 38, fontSize: 14 }}>{initials}</span>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{displayName}</div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>{displayName}</div>
                     <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }}>{currentUser.email}</div>
                   </div>
                 </div>
               ) : (
-                <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>Meni</span>
+                <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink)' }}>Meni</span>
               )}
-              <button onClick={closeBurger} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', padding: 4 }}>
-                <Icon name="x" size={20} />
+              <button onClick={closeBurger} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'grid', placeItems: 'center', padding: 6 }}>
+                <Icon name="x" size={22} />
               </button>
             </div>
 
-            {/* Drawer items */}
+            {/* Postavi oglas — uvek vidljivo na vrhu */}
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)' }}>
+              <button
+                onClick={() => { closeBurger(); onPostAd && onPostAd(); }}
+                style={{ width: '100%', padding: '13px 0', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
+                <Icon name="plus" size={18} stroke={2.5} />
+                Postavi oglas
+              </button>
+            </div>
+
+            {/* Drawer stavke */}
             <div style={{ flex: 1, overflowY: 'auto' }}>
               {currentUser ? (
                 <>
                   <div className="drawer-item" onClick={() => { closeBurger(); onOpenNotifs && onOpenNotifs(); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <Icon name="bell" size={18} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <Icon name="bell" size={20} />
                       <span>Obaveštenja</span>
                     </div>
                     {unreadNotifs > 0 && (
-                      <span style={{ background: 'var(--accent)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 10, fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ background: 'var(--accent)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10, fontFamily: 'var(--font-mono)' }}>
                         {unreadNotifs}
                       </span>
                     )}
                   </div>
                   <div className="drawer-item" onClick={() => { closeBurger(); onOpenRazmene && onOpenRazmene(); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <Icon name="swap" size={18} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <Icon name="swap" size={20} />
                       <span>Razmene</span>
                     </div>
                     {unreadThreads > 0 && (
-                      <span style={{ background: 'var(--accent)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 10, fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ background: 'var(--accent)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10, fontFamily: 'var(--font-mono)' }}>
                         {unreadThreads}
                       </span>
                     )}
                   </div>
-                  <div style={{ height: 1, background: 'var(--line)', margin: '4px 20px' }} />
+                  <div style={{ height: 1, background: 'var(--line)', margin: '6px 20px' }} />
                   <div className="drawer-item" onClick={() => burgerNav('my-listings')}>
-                    <Icon name="tag" size={18} /><span>Moji oglasi</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><Icon name="tag" size={20} /><span>Moji oglasi</span></div>
                   </div>
                   <div className="drawer-item" onClick={() => burgerNav('saved')}>
-                    <Icon name="heart" size={18} /><span>Sačuvano</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><Icon name="heart" size={20} /><span>Sačuvano</span></div>
                   </div>
                   <div className="drawer-item" onClick={() => burgerNav('ratings')}>
-                    <Icon name="star" size={18} /><span>Ocene i istorija</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><Icon name="star" size={20} /><span>Ocene i istorija</span></div>
                   </div>
                   <div className="drawer-item" onClick={() => burgerNav('settings')}>
-                    <Icon name="sliders" size={18} /><span>Podešavanja</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><Icon name="sliders" size={20} /><span>Podešavanja</span></div>
                   </div>
-                  <div style={{ height: 1, background: 'var(--line)', margin: '4px 20px' }} />
+                  <div style={{ height: 1, background: 'var(--line)', margin: '6px 20px' }} />
                   <div className="drawer-item danger" onClick={() => { closeBurger(); onLogout && onLogout(); }}>
-                    <Icon name="logout" size={18} /><span>Odjava</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><Icon name="logout" size={20} /><span>Odjava</span></div>
                   </div>
                 </>
               ) : (
-                <div style={{ padding: 20 }}>
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <button
                     onClick={() => { closeBurger(); onLogin && onLogin(); }}
-                    style={{ width: '100%', padding: '12px 0', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+                    style={{ width: '100%', padding: '13px 0', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
                   >
-                    Prijava / Registracija
+                    Prijava
+                  </button>
+                  <button
+                    onClick={() => { closeBurger(); onLogin && onLogin(); }}
+                    style={{ width: '100%', padding: '13px 0', background: 'transparent', color: 'var(--ink)', border: '1.5px solid var(--line)', borderRadius: 10, fontWeight: 600, fontSize: 15, cursor: 'pointer' }}
+                  >
+                    Registracija
                   </button>
                 </div>
               )}
