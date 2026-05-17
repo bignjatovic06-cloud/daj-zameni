@@ -101,7 +101,8 @@ function App() {
   const [razmeneOpen, setRazmeneOpen]     = uS(false);
   const [messageTarget, setMessageTarget] = uS(null);
   const [notifsOpen, setNotifsOpen]       = uS(false);
-  const [mobileNotifsOpen, setMobileNotifsOpen] = uS(false);
+  const [mobileNotifsOpen, setMobileNotifsOpen]   = uS(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = uS(false);
   const [userOpen, setUserOpen]           = uS(false);
   const [loginOpen, setLoginOpen]         = uS(false);
   const [registerOpen, setRegisterOpen]   = uS(false);
@@ -762,7 +763,107 @@ function App() {
             )}
           </aside>
 
+          {mobileFiltersOpen && ReactDOM.createPortal(
+            <div className="filter-sheet-overlay" onClick={() => setMobileFiltersOpen(false)}>
+              <div className="filter-sheet" onClick={e => e.stopPropagation()}>
+                <div className="filter-sheet-handle"/>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 12px' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>Filteri</div>
+                  {hasActiveFilters && (
+                    <button onClick={resetFilters} style={{ background: 'none', border: 'none', fontSize: 13, color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>Resetuj</button>
+                  )}
+                </div>
+
+                <div style={{ padding: '0 16px 8px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 8, textTransform: 'uppercase' }}>Kategorija</div>
+                  <button
+                    onClick={() => { setMobileFiltersOpen(false); setCatPickerOpen(true); }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid ' + (filterCat !== 'sve' ? 'var(--accent)' : 'var(--line)'), background: filterCat !== 'sve' ? 'var(--accent-soft)' : '#faf8f1', fontSize: 13, color: filterCat !== 'sve' ? 'var(--accent)' : 'var(--ink-2)', cursor: 'pointer', fontWeight: filterCat !== 'sve' ? 600 : 400, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }}
+                  >
+                    <Icon name="grid" size={14}/>
+                    <span style={{ flex: 1 }}>{filterCat !== 'sve' ? (activeCat ? activeCat.name : filterCat) : 'Izaberi kategoriju'}</span>
+                    {filterCat !== 'sve' && <span onClick={e => { e.stopPropagation(); setFilterCat('sve'); }} style={{ color: 'var(--accent)', fontSize: 16, fontWeight: 700 }}>×</span>}
+                  </button>
+                </div>
+
+                <div style={{ padding: '12px 16px 8px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 10, textTransform: 'uppercase' }}>Tip oglasa</div>
+                  {[
+                    { state: filterBarter,  set: setFilterBarter,  label: 'Spreman za razmenu' },
+                    { state: filterPremium, set: setFilterPremium, label: 'Premium oglasi' },
+                  ].map(opt => (
+                    <label key={opt.label} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 12, fontSize: 14, color: 'var(--ink)' }}>
+                      <input type="checkbox" checked={opt.state} onChange={e => opt.set(e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--accent)', cursor: 'pointer' }}/>
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+
+                <div style={{ padding: '12px 16px 8px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 8, textTransform: 'uppercase' }}>Grad</div>
+                  <select value={filterCity} onChange={e => setFilterCity(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 14, color: 'var(--ink)', background: '#faf8f1', outline: 'none' }}>
+                    <option value="">Svi gradovi</option>
+                    {['Beograd','Novi Sad','Niš','Kragujevac','Subotica','Zrenjanin','Pančevo','Čačak','Novi Pazar','Kraljevo','Smederevo','Leskovac','Valjevo','Vranje','Šabac','Užice','Požarevac','Sombor','Kikinda'].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ padding: '12px 16px 8px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 4, textTransform: 'uppercase' }}>
+                    Cena do {filterMaxPrice >= 300000 ? '300.000+' : filterMaxPrice.toLocaleString('sr-RS')} RSD
+                  </div>
+                  <input type="range" min={1000} max={300000} step={1000} value={filterMaxPrice} onChange={e => setFilterMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent)', marginTop: 8 }}/>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
+                    <span>1.000</span><span>300.000+</span>
+                  </div>
+                </div>
+
+                <div style={{ padding: '12px 16px 8px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 10, textTransform: 'uppercase' }}>Stanje</div>
+                  {[
+                    { id: 'new',      label: 'Novo' },
+                    { id: 'like_new', label: 'Polovno — kao novo' },
+                    { id: 'good',     label: 'Polovno — odlično' },
+                    { id: 'fair',     label: 'Polovno — vrlo dobro' },
+                    { id: 'poor',     label: 'Polovno — dobro' },
+                    { id: 'antique',  label: 'Antikvitet' },
+                  ].map(opt => (
+                    <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 10, fontSize: 14, color: 'var(--ink)' }}>
+                      <input type="checkbox" checked={filterConditions.includes(opt.id)} onChange={e => setFilterConditions(prev => e.target.checked ? [...prev, opt.id] : prev.filter(c => c !== opt.id))} style={{ width: 18, height: 18, accentColor: 'var(--accent)', cursor: 'pointer' }}/>
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+
+                <div style={{ padding: '16px', position: 'sticky', bottom: 0, background: '#fff', borderTop: '1px solid var(--line)' }}>
+                  <button className="nav-btn primary" style={{ width: '100%', justifyContent: 'center', fontSize: 15 }} onClick={() => setMobileFiltersOpen(false)}>
+                    Prikaži {totalCount} {totalCount === 1 ? 'oglas' : 'oglasa'}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
           <main className="search-main" style={{ gridColumn: 2, gridRow: 1, minWidth: 0, minHeight: 620 }}>
+            <div className="mobile-filter-bar" style={{ display: 'none', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <button
+                onClick={() => setMobileFiltersOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 8, border: '1px solid ' + (hasActiveFilters ? 'var(--accent)' : 'var(--line)'), background: hasActiveFilters ? 'var(--accent-soft)' : '#fff', fontSize: 13, fontWeight: 600, color: hasActiveFilters ? 'var(--accent)' : 'var(--ink)', cursor: 'pointer' }}
+              >
+                <Icon name="filter" size={14}/>
+                Filteri
+                {hasActiveFilters && (
+                  <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+                    {[filterBarter, filterPremium, filterCity, filterConditions.length > 0, filterMaxPrice < 300000, filterCat !== 'sve'].filter(Boolean).length}
+                  </span>
+                )}
+              </button>
+              {hasActiveFilters && (
+                <button onClick={resetFilters} style={{ background: 'none', border: 'none', fontSize: 13, color: 'var(--ink-3)', cursor: 'pointer', padding: '4px 0' }}>Resetuj</button>
+              )}
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
               <span style={{ cursor: 'pointer', color: 'var(--accent)' }} onClick={() => navigate('home', null)}>Početna</span>
               <span>›</span>
