@@ -726,7 +726,7 @@ function App() {
                 style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', background: '#faf8f1', outline: 'none', cursor: 'pointer' }}
               >
                 <option value="">Svi gradovi</option>
-                {['Beograd','Novi Sad','Niš','Kragujevac','Subotica','Zrenjanin','Pančevo','Čačak','Novi Pazar','Kraljevo','Smederevo','Leskovac','Valjevo','Vranje','Šabac','Užice','Požarevac','Sombor','Kikinda'].map(c => (
+                {(typeof CITIES !== 'undefined' ? CITIES : []).map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -823,7 +823,7 @@ function App() {
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 8, textTransform: 'uppercase' }}>Grad</div>
                   <select value={filterCity} onChange={e => setFilterCity(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 14, color: 'var(--ink)', background: '#faf8f1', outline: 'none' }}>
                     <option value="">Svi gradovi</option>
-                    {['Beograd','Novi Sad','Niš','Kragujevac','Subotica','Zrenjanin','Pančevo','Čačak','Novi Pazar','Kraljevo','Smederevo','Leskovac','Valjevo','Vranje','Šabac','Užice','Požarevac','Sombor','Kikinda'].map(c => (
+                    {(typeof CITIES !== 'undefined' ? CITIES : []).map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>

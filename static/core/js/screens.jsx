@@ -1,5 +1,76 @@
 const { useState: useS, useEffect: useE, useRef: useR } = React;
 
+/* ─── CITY LIST ──────────────────────────────────── */
+const CITIES = ['Ada','Aleksandrovac','Aleksinac','Alibunar','Apatin','Aranđelovac','Arilje','Bajina Bašta','Batočina','Bač','Bačka Palanka','Bačka Topola','Bela Palanka','Bela Crkva','Beograd','Beočin','Bečej','Blace','Bogatić','Bojnik','Boljevac','Bor','Bosilegrad','Brus','Bujanovac','Valjevo','Varvarin','Velika Plana','Veliko Gradište','Vladimirci','Vladičin Han','Vlasotince','Vranje','Vrbas','Vrnjačka Banja','Vršac','Gadžin Han','Golubac','Gornji Milanovac','Despotovac','Dimitrovgrad','Doljevac','Žabalj','Žabari','Žagubica','Žitište','Zaječar','Zrenjanin','Ivanjica','Inđija','Irig','Jagodina','Kanjiža','Kikinda','Kladovo','Knić','Knjaževac','Kovin','Koceljeva','Kosjerić','Kovačica','Kragujevac','Kraljevo','Kruševac','Kučevo','Kuršumlija','Lazarevac','Lapovo','Lebane','Leskovac','Ljig','Ljubovija','Majdanpek','Mali Zvornik','Mali Iđoš','Merošina','Mionica','Mladenovac','Negotin','Niš','Nova Crnja','Nova Varoš','Novi Bečej','Novi Kneževac','Novi Pazar','Novi Sad','Odžaci','Opovo','Pančevo','Paraćin','Petrovac na Mlavi','Pećinci','Pirot','Plandište','Požarevac','Požega','Predejane','Preševo','Priboj','Prijepolje','Prokuplje','Rača','Raška','Rekovac','Ruma','Senta','Sečanj','Sjenica','Smederevo','Smederevska Palanka','Sokobanja','Sombor','Srbobran','Sremska Mitrovica','Sremski Karlovci','Stara Pazova','Subotica','Surdulica','Svrljig','Temerin','Titel','Topola','Trgovište','Trstenik','Tutin','Ub','Užice','Ćićevac','Ćuprija','Čajetina','Čačak','Čoka','Šabac','Šid'];
+
+/* ─── CITY PICKER ────────────────────────────────── */
+function CityPicker({ value, onChange, className, inputStyle }) {
+  var [q, setQ]         = useS('');
+  var [open, setOpen]   = useS(false);
+  var wrapRef           = useR(null);
+
+  useE(function() {
+    if (!open) return;
+    function handler(e) { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', handler);
+    return function() { document.removeEventListener('mousedown', handler); };
+  }, [open]);
+
+  var ql      = q.toLowerCase();
+  var matches = ql ? CITIES.filter(function(c) { return c.toLowerCase().includes(ql); }) : CITIES;
+
+  function select(city) {
+    onChange(city);
+    setQ('');
+    setOpen(false);
+  }
+
+  return (
+    React.createElement('div', { ref: wrapRef, style: { position: 'relative' } },
+      React.createElement('div', {
+        style: { display: 'flex', alignItems: 'center', gap: 0, position: 'relative' },
+      },
+        React.createElement('input', {
+          className: className || 'input',
+          style: Object.assign({ width: '100%', boxSizing: 'border-box', paddingRight: 28 }, inputStyle || {}),
+          value: open ? q : (value || ''),
+          placeholder: value || 'Izaberi grad...',
+          onFocus: function() { setOpen(true); setQ(''); },
+          onChange: function(e) { setQ(e.target.value); if (!open) setOpen(true); },
+          autoComplete: 'off',
+        }),
+        React.createElement('span', {
+          style: { position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--ink-3)', fontSize: 11 },
+        }, open ? '▲' : '▼')
+      ),
+      open && React.createElement('div', {
+        style: {
+          position: 'absolute', zIndex: 999, top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 10,
+          boxShadow: '0 4px 20px rgba(0,0,0,.12)', maxHeight: 220, overflowY: 'auto',
+        },
+      },
+        matches.length === 0
+          ? React.createElement('div', { style: { padding: '10px 14px', fontSize: 13, color: 'var(--ink-3)' } }, 'Nema rezultata')
+          : matches.map(function(city) {
+              return React.createElement('div', {
+                key: city,
+                onMouseDown: function(e) { e.preventDefault(); select(city); },
+                style: {
+                  padding: '8px 14px', fontSize: 14, cursor: 'pointer',
+                  background: city === value ? 'var(--accent-soft)' : 'transparent',
+                  fontWeight: city === value ? 600 : 400,
+                  color: 'var(--ink)',
+                },
+                onMouseEnter: function(e) { e.currentTarget.style.background = 'var(--hover)'; },
+                onMouseLeave: function(e) { e.currentTarget.style.background = city === value ? 'var(--accent-soft)' : 'transparent'; },
+              }, city);
+            })
+      )
+    )
+  );
+}
+
 /* ─── CATEGORY PICKER MODAL ────────────────────── */
 function CategoryPickerModal({ categories, selected, onSelect, onClose }) {
   var [q, setQ]               = useS('');
@@ -1223,7 +1294,7 @@ function EditAdModal({ item, onClose, categories = [], onSaved }) {
           </div>
           <div className="field-group">
             <label>Grad</label>
-            <input className="input" value={city} onChange={(e) => setCity(e.target.value)}/>
+            <CityPicker value={city} onChange={setCity}/>
           </div>
         </form>
         <div className="mf">
@@ -1636,7 +1707,7 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
                 <div className="field-group" style={{ margin: 0 }}>
                   <label>Grad</label>
-                  <input className="input" value={city} onChange={function(e) { setCity(e.target.value); }} placeholder="npr. Beograd"/>
+                  React.createElement(CityPicker, { value: city, onChange: setCity })
                 </div>
                 <div className="field-group" style={{ margin: 0 }}>
                   <label>Stanje</label>
@@ -2841,13 +2912,7 @@ function SettingsScreen({ currentUser, onUserUpdated }) {
 
               <div style={{ marginBottom: 16 }}>
                 <label style={label}>Grad</label>
-                <input
-                  className="finput"
-                  placeholder="npr. Beograd"
-                  value={city}
-                  onChange={e => setCity(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box' }}
-                />
+                <CityPicker value={city} onChange={setCity} className="finput" inputStyle={{ width: '100%', boxSizing: 'border-box' }}/>
               </div>
 
               <div style={{ marginBottom: 16 }}>
