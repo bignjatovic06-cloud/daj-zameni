@@ -114,6 +114,21 @@ def listing_list(request):
     if request.GET.get('premium') == '1':
         qs = qs.filter(is_premium=True)
 
+    conditions = [c for c in request.GET.get('condition', '').split(',') if c]
+    if conditions:
+        qs = qs.filter(condition__in=conditions)
+
+    max_price = request.GET.get('max_price', '')
+    if max_price:
+        try:
+            qs = qs.filter(Q(price__lte=float(max_price)) | Q(price__isnull=True))
+        except ValueError:
+            pass
+
+    if request.GET.get('search_mode') == 'offer':
+        if q:
+            qs = qs.filter(wants_in_exchange__icontains=q)
+
     if sort in ('created_at', '-created_at', 'price', '-price'):
         qs = qs.order_by(sort)
 

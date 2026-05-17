@@ -91,6 +91,10 @@ function App() {
   const [filterPremium, setFilterPremium]       = uS(false);
   const [filterSort, setFilterSort]             = uS('newest');
   const [catPickerOpen, setCatPickerOpen]       = uS(false);
+  const [page, setPage]                         = uS(1);
+  const [totalPages, setTotalPages]             = uS(1);
+  const [totalCount, setTotalCount]             = uS(0);
+  const [listingsLoading, setListingsLoading]   = uS(false);
 
   const [favPending, setFavPending]       = uS({});
   const [postOpen, setPostOpen]           = uS(false);
@@ -179,7 +183,7 @@ function App() {
 
     Promise.all([
       apiAuthStatus(),
-      apiListings(),
+      apiListings({ page: 1, sort: '-created_at' }),
       apiCategories(),
     ]).then(([auth, listData, catData]) => {
       if (auth.authenticated) {
@@ -199,6 +203,8 @@ function App() {
       }
       const allListings = normalizeListings(listData.results || []);
       setListings(allListings);
+      setTotalPages(listData.pages || 1);
+      setTotalCount(listData.count || 0);
       setCategories([
         { id: 'sve', slug: 'sve', name: 'Sve kategorije', icon: 'grid', count: listData.count || 0, children: [] },
         ...normalizeCategories(catData.results || []),
@@ -402,70 +408,47 @@ function App() {
     if (res.ok) setHeroPendingOffers(prev => prev.filter(o => o.id !== offerId));
   };
 
-  const filtered = useMemo(() => {
-    let out = listings;
-
+  const buildParams = (p) => {
+    const params = { page: p || page };
+    if (searchQuery)        params.q        = searchQuery;
     if (filterCat !== 'sve') {
       const cat = categories.find(c => c.id === filterCat);
-      if (cat && cat.children && cat.children.length > 0) {
-        const childIds = new Set(cat.children.map(s => s.id));
-        out = out.filter(l => l.cat === filterCat || childIds.has(l.cat));
-      } else {
-        out = out.filter(l => l.cat === filterCat);
-      }
+      if (cat) params.category = cat.slug;
     }
+    if (filterCity)         params.city     = filterCity;
+    if (filterBarter)       params.type     = 'barter';
+    if (filterChip === 'sell') params.type  = 'sell';
+    if (filterPremium)      params.premium  = '1';
+    if (filterConditions.length > 0) params.condition = filterConditions.join(',');
+    if (filterMaxPrice < 300000) params.max_price = filterMaxPrice;
+    const sortMap = { newest: '-created_at', price_asc: 'price', price_desc: '-price' };
+    params.sort = sortMap[filterSort] || '-created_at';
+    if (searchMode === 'offer') params.search_mode = 'offer';
+    return params;
+  };
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (searchMode === 'offer') {
-        out = out.filter(l => (l.seek || '').toLowerCase().includes(q));
-      } else {
-        out = out.filter(l =>
-          (l.title + ' ' + (l.desc || '') + ' ' + (l.city || '')).toLowerCase().includes(q)
-        );
-      }
-    }
+  const fetchListings = (p) => {
+    setListingsLoading(true);
+    apiListings(buildParams(p)).then(res => {
+      setListings(normalizeListings(res.results || []));
+      setTotalPages(res.pages || 1);
+      setTotalCount(res.count || 0);
+      setListingsLoading(false);
+    });
+  };
 
-    if (filterChip === 'barter') {
-      out = out.filter(l => l.type === 'barter' || l.type === 'both');
-    } else if (filterChip === 'sell') {
-      out = out.filter(l => l.type === 'sell' || l.type === 'both');
-    } else if (filterChip === 'with_img') {
-      out = out.filter(l => l.images && l.images.length > 0);
-    }
+  uE(() => {
+    if (view !== 'search' && view !== 'home') return;
+    setPage(1);
+    fetchListings(1);
+  }, [filterCat, searchQuery, filterCity, filterBarter, filterChip, filterPremium, filterConditions, filterMaxPrice, filterSort, searchMode]);
 
-    if (filterCity) {
-      out = out.filter(l =>
-        l.city && l.city.toLowerCase().includes(filterCity.toLowerCase())
-      );
-    }
+  uE(() => {
+    if (view !== 'search' && view !== 'home') return;
+    fetchListings(page);
+  }, [page]);
 
-    if (filterBarter) {
-      out = out.filter(l => l.type === 'barter' || l.type === 'both');
-    }
-
-    if (filterPremium) {
-      out = out.filter(l => l.is_premium || l.is_featured);
-    }
-
-    if (filterConditions.length > 0) {
-      out = out.filter(l => filterConditions.includes(l.condition));
-    }
-
-    if (filterMaxPrice < 300000) {
-      out = out.filter(l => !l.price || parseFloat(l.price) <= filterMaxPrice);
-    }
-
-    if (filterChip === 'newest' || filterSort === 'newest') {
-      out = [...out].sort((a, b) => new Date(b.created) - new Date(a.created));
-    } else if (filterSort === 'price_asc') {
-      out = [...out].sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
-    } else if (filterSort === 'price_desc') {
-      out = [...out].sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
-    }
-
-    return out;
-  }, [listings, filterCat, searchQuery, searchMode, filterChip, filterCity, filterBarter, filterPremium, filterConditions, filterMaxPrice, filterSort, categories]);
+  const filtered = listings;
 
   const resetFilters = () => {
     setFilterBarter(false);
@@ -793,7 +776,7 @@ function App() {
                 <h2 style={{ margin: 0, fontSize: 22, fontFamily: 'var(--font-display)', fontWeight: 700 }}>
                   {searchQuery ? ('Rezultati: \u201e' + searchQuery + '\u201c') : activeCat?.name || 'Svi oglasi'}
                 </h2>
-                <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 3 }}>{filtered.length} oglasa</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 3 }}>{totalCount} oglasa</div>
               </div>
               <select
                 value={filterSort}
@@ -806,12 +789,47 @@ function App() {
               </select>
             </div>
 
-            {filtered.length > 0 ? (
-              <div className="list-grid">
-                {filtered.map(l => (
-                  <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)} onOpenProfile={onOpenProfile}/>
-                ))}
-              </div>
+            {listingsLoading ? (
+              <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14 }}>Učitavam…</div>
+            ) : filtered.length > 0 ? (
+              <>
+                <div className="list-grid">
+                  {filtered.map(l => (
+                    <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)} onOpenProfile={onOpenProfile}/>
+                  ))}
+                </div>
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 32, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
+                      disabled={page === 1}
+                      style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--line)', background: '#fff', cursor: page === 1 ? 'default' : 'pointer', color: page === 1 ? 'var(--ink-3)' : 'var(--ink)', fontSize: 13 }}
+                    >← Prethodna</button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 2)
+                      .reduce((acc, n, i, arr) => {
+                        if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+                        acc.push(n);
+                        return acc;
+                      }, [])
+                      .map((n, i) => n === '...' ? (
+                        <span key={'dots' + i} style={{ color: 'var(--ink-3)', fontSize: 13, padding: '0 4px' }}>…</span>
+                      ) : (
+                        <button
+                          key={n}
+                          onClick={() => { setPage(n); window.scrollTo(0, 0); }}
+                          style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid ' + (page === n ? 'var(--accent)' : 'var(--line)'), background: page === n ? 'var(--accent)' : '#fff', color: page === n ? '#fff' : 'var(--ink)', fontWeight: page === n ? 700 : 400, cursor: 'pointer', fontSize: 13 }}
+                        >{n}</button>
+                      ))
+                    }
+                    <button
+                      onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
+                      disabled={page === totalPages}
+                      style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--line)', background: '#fff', cursor: page === totalPages ? 'default' : 'pointer', color: page === totalPages ? 'var(--ink-3)' : 'var(--ink)', fontSize: 13 }}
+                    >Sledeća →</button>
+                  </div>
+                )}
+              </>
             ) : (
               <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ink-3)' }}>
                 <div style={{ fontSize: 18, color: 'var(--ink-2)', marginBottom: 8, fontFamily: 'var(--font-display)' }}>
