@@ -630,9 +630,9 @@ function App() {
       )}
 
       {view === 'search' && (
-        <div className="search-layout" style={{ display: 'grid', gridTemplateColumns: '268px 1fr', gap: 28, maxWidth: 1280, margin: '0 auto', padding: '24px 24px 60px', alignItems: 'start' }}>
+        <div className="search-layout">
 
-          <aside className="search-aside" style={{ gridColumn: 1, gridRow: 1, position: 'sticky', top: 80, width: 268 }}>
+          <aside className="search-aside">
 
             <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 12, padding: '16px', marginBottom: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.07em', color: 'var(--ink-3)', marginBottom: 10, textTransform: 'uppercase' }}>Kategorija</div>
@@ -860,7 +860,7 @@ function App() {
             document.body
           )}
 
-          <main className="search-main" style={{ gridColumn: 2, gridRow: 1, minWidth: 0, minHeight: 620 }}>
+          <main className="search-main">
             <div className="mobile-filter-bar" style={{ display: 'none', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <button
                 onClick={() => setMobileFiltersOpen(true)}
