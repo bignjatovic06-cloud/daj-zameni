@@ -192,35 +192,44 @@ def listing_detail(request, pk):
 @login_required
 @require_http_methods(['POST'])
 def listing_create(request):
-    try:
-        data      = _parse(request)
-        ltype     = data.get('listing_type', 'both')
-        condition = data.get('condition', 'good')
+    data      = _parse(request)
+    ltype     = data.get('listing_type', 'both')
+    condition = data.get('condition', 'good')
 
-        if ltype not in VALID_LISTING_TYPES:
-            return JsonResponse({'error': 'Nevažeći tip oglasa.'}, status=400)
-        if condition not in VALID_CONDITIONS:
-            return JsonResponse({'error': 'Nevažeće stanje predmeta.'}, status=400)
+    if ltype not in VALID_LISTING_TYPES:
+        return JsonResponse({'error': 'Nevažeći tip oglasa.'}, status=400)
+    if condition not in VALID_CONDITIONS:
+        return JsonResponse({'error': 'Nevažeće stanje predmeta.'}, status=400)
 
-        category = None
-        if data.get('category'):
-            category = Category.objects.filter(slug=data['category']).first()
+    title = data.get('title', '').strip()
+    if not title:
+        return JsonResponse({'error': 'Naslov je obavezan.'}, status=400)
 
-        listing = Listing.objects.create(
-            user              = request.user,
-            category          = category,
-            title             = data.get('title', '').strip(),
-            description       = data.get('description', '').strip(),
-            price             = data.get('price') or None,
-            listing_type      = ltype,
-            condition         = condition,
-            city              = data.get('city', '').strip(),
-            wants_in_exchange = data.get('wants_in_exchange', '').strip(),
-        )
-        return JsonResponse({'ok': True, 'listing': _listing_data(listing, full=True)}, status=201)
-    except Exception as e:
-        import traceback
-        return JsonResponse({'ok': False, 'error': str(e), 'detail': traceback.format_exc()}, status=500)
+    price = data.get('price')
+    if price not in (None, ''):
+        try:
+            price = float(price)
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'Nevažeća cena.'}, status=400)
+    else:
+        price = None
+
+    category = None
+    if data.get('category'):
+        category = Category.objects.filter(slug=data['category']).first()
+
+    listing = Listing.objects.create(
+        user              = request.user,
+        category          = category,
+        title             = title,
+        description       = data.get('description', '').strip(),
+        price             = price,
+        listing_type      = ltype,
+        condition         = condition,
+        city              = data.get('city', '').strip(),
+        wants_in_exchange = data.get('wants_in_exchange', '').strip(),
+    )
+    return JsonResponse({'ok': True, 'listing': _listing_data(listing, full=True)}, status=201)
 
 
 @login_required
