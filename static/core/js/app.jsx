@@ -644,7 +644,7 @@ function App() {
                 </div>
               ) : (
                 <div className="list-grid">
-                  {listings.slice(0, 8).map(l => (
+                  {listings.slice(0, 12).map(l => (
                     <ListingCard key={l.id} item={l} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(l)} onOpenProfile={onOpenProfile}/>
                   ))}
                 </div>
