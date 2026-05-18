@@ -1135,7 +1135,7 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
                   <div className="actions">
                     {isOwner ? (
                       <>
-                        <button className="nav-btn primary" onClick={onEdit}>
+                        <button className="nav-btn primary" onClick={() => onEdit(fullItem)}>
                           <Icon name="edit" size={15}/> Uredi oglas
                         </button>
                         <button className="nav-btn" style={{ color: 'var(--warn)', borderColor: 'var(--warn)' }} onClick={onDelete}>
@@ -1691,18 +1691,9 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
 
           {step === 3 && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                <div className="field-group" style={{ margin: 0 }}>
-                  <label>Cena</label>
-                  <input className="input" value={price} onChange={function(e) { setPrice(e.target.value); }} placeholder="0" type="number" min="0"/>
-                </div>
-                <div className="field-group" style={{ margin: 0 }}>
-                  <label>Valuta</label>
-                  <div className="seg" style={{ width: '100%' }}>
-                    <button className={currency === 'RSD' ? 'on' : ''} onClick={function() { setCurrency('RSD'); }}>RSD</button>
-                    <button className={currency === 'EUR' ? 'on' : ''} onClick={function() { setCurrency('EUR'); }}>EUR</button>
-                  </div>
-                </div>
+              <div className="field-group">
+                <label>Cena (RSD)</label>
+                <input className="input" value={price} onChange={function(e) { setPrice(e.target.value); }} placeholder="0" type="number" min="0"/>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
                 <div className="field-group" style={{ margin: 0 }}>

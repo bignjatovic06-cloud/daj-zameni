@@ -989,7 +989,7 @@ function App() {
             currentUser={currentUser}
             onBack={() => { navigate('home', null); setPendingOffer(null); }}
             onMessage={() => requireAuth(() => { setMessageTarget(selectedItem); setRazmeneOpen(true); })}
-            onEdit={() => setEditItem(selectedItem)}
+            onEdit={(fullItem) => setEditItem(fullItem || selectedItem)}
             onDelete={() => setDeleteConfirm(true)}
             onLogin={() => setLoginOpen(true)}
             pendingOffer={pendingOffer}
