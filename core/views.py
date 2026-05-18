@@ -805,7 +805,8 @@ def chat(request, conversation_id):
 
 
 @login_required
-def delete_message(request, conversation_id, message_id):    if request.method != 'DELETE':
+def delete_message(request, conversation_id, message_id):
+    if request.method != 'DELETE':
         return JsonResponse({'error': 'Method not allowed.'}, status=405)
     conv = get_object_or_404(Conversation, pk=conversation_id)
     if not conv.participants.filter(pk=request.user.pk).exists():
