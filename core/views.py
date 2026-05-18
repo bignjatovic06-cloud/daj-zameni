@@ -7,7 +7,11 @@ from django.views.decorators.http import require_POST, require_http_methods
 from django.db.models import Q, F, Avg, Count
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
+from django.utils import timezone
+from datetime import timedelta
 from django_ratelimit.decorators import ratelimit
+
+EMAIL_VERIFICATION_TTL = timedelta(hours=48)
 import json
 import uuid
 import re
@@ -84,6 +88,7 @@ def register(request):
 
     user = User.objects.create_user(username=username, email=email, password=password)
     user.email_verification_token = uuid.uuid4()
+    user.email_verification_sent_at = timezone.now()
     user.save()
     email_service.send_verification_email(user)
     login(request, user)
@@ -940,8 +945,11 @@ def verify_email(request, token):
     user = User.objects.filter(email_verification_token=token, is_verified=False).first()
     if not user:
         return redirect('/?verified=invalid')
+    if not user.email_verification_sent_at or timezone.now() - user.email_verification_sent_at > EMAIL_VERIFICATION_TTL:
+        return redirect('/?verified=expired')
     user.is_verified = True
     user.email_verification_token = None
+    user.email_verification_sent_at = None
     user.save()
     return redirect('/?verified=1')
 
@@ -952,6 +960,7 @@ def resend_verification(request):
     if request.user.is_verified:
         return JsonResponse({'error': 'Nalog je već verifikovan.'}, status=400)
     request.user.email_verification_token = uuid.uuid4()
+    request.user.email_verification_sent_at = timezone.now()
     request.user.save()
     email_service.send_verification_email(request.user)
     return JsonResponse({'ok': True})
