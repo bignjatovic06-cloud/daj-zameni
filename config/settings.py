@@ -18,6 +18,9 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(","
 if os.environ.get("RAILWAY_ENVIRONMENT"):
     ALLOWED_HOSTS.append(".railway.app")
 
+# Custom domains
+ALLOWED_HOSTS += ["dajzameni.rs", "www.dajzameni.rs", "dajzameni.online", "www.dajzameni.online"]
+
 CSRF_TRUSTED_ORIGINS = [
     o for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o
 ]
@@ -25,6 +28,9 @@ CSRF_TRUSTED_ORIGINS = [
 # Auto-add Railway CSRF origin
 if os.environ.get("RAILWAY_PUBLIC_DOMAIN"):
     CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ['RAILWAY_PUBLIC_DOMAIN']}")
+
+# Custom domain CSRF
+CSRF_TRUSTED_ORIGINS += ["https://dajzameni.rs", "https://www.dajzameni.rs", "https://dajzameni.online", "https://www.dajzameni.online"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
