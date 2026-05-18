@@ -3,9 +3,14 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-oqg@0f%0hs_ef+4cb4m8umfkxuaik4-^*5d1e3x#z7-_$7+s=^")
-
 DEBUG = os.environ.get("DEBUG", "False") == "True"
+
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "django-insecure-dev-only-key-do-not-use-in-production"
+    else:
+        raise RuntimeError("SECRET_KEY environment variable must be set in production.")
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
@@ -77,6 +82,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Trust Railway's SSL termination proxy
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 if os.environ.get('DATABASE_URL'):
     import dj_database_url
