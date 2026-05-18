@@ -846,6 +846,7 @@ function ReportModal({ item, onClose }) {
 /* ─── LISTING DETAIL ──────────────────────────────── */
 function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories = [], currentUser = null, onLogin = null, pendingOffer = null, onOfferRespond = null, isSaved = false, onSaveToggle = null, onOpenProfile = null }) {
   const [active, setActive]           = useS(0);
+  const [lightbox, setLightbox]       = useS(false);
   const [statsOpen, setStatsOpen]     = useS(false);
   const [saved, setSaved]             = useS(isSaved);
   const [savePending, setSavePending] = useS(false);
@@ -983,7 +984,7 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
         <div className="detail">
           <div>
             <div className="gallery">
-              <div className="main">
+              <div className="main" style={thumbs[active] && thumbs[active].url ? { cursor: 'zoom-in' } : {}} onClick={() => { if (thumbs[active] && thumbs[active].url) setLightbox(true); }}>
                 {thumbs[active] && thumbs[active].url
                   ? <img src={thumbs[active].url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
                   : <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-3)' }}>{item.catName || '📦'}</span>
@@ -1143,6 +1144,33 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
       )}
       {showReport && (
         <ReportModal item={item} onClose={() => setShowReport(false)} />
+      )}
+      {lightbox && thumbs[active] && thumbs[active].url && (
+        <div
+          onClick={() => setLightbox(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)',
+            zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'zoom-out', padding: 20,
+          }}
+        >
+          <img
+            src={thumbs[active].url}
+            alt={item.title}
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'default' }}
+          />
+          <button
+            onClick={() => setLightbox(false)}
+            style={{
+              position: 'absolute', top: 16, right: 16,
+              background: 'rgba(255,255,255,0.15)', color: '#fff',
+              border: 'none', borderRadius: '50%', width: 40, height: 40,
+              fontSize: 24, cursor: 'pointer', lineHeight: 1,
+            }}
+            aria-label="Zatvori"
+          >×</button>
+        </div>
       )}
     </>
   );
