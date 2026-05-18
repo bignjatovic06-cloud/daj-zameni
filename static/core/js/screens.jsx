@@ -499,7 +499,8 @@ function OfferModal({ item, onClose, onSuccess }) {
   const submit = async () => {
     setLoading(true);
     setErr('');
-    const res = await apiCreateOffer(item.id, selected ? selected.id : null, msg, cashNum);
+    const offerCash = noListings ? (item.price || null) : cashNum;
+    const res = await apiCreateOffer(item.id, selected ? selected.id : null, msg, offerCash);
     setLoading(false);
     if (res.ok) { onSuccess(); }
     else if (res.error === 'already_offered') setErr('Već si poslao/la ponudu za ovaj oglas.');
@@ -534,23 +535,13 @@ function OfferModal({ item, onClose, onSuccess }) {
           ) : noListings ? (
             <>
               <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
-                Nemaš aktivnih oglasa. Možeš poslati ponudu za otkup:
+                Nemaš aktivnih oglasa. Možeš poslati ponudu za otkup po ceni oglasa:
               </p>
-              <div className="field-group" style={{ marginBottom: 12 }}>
-                <label>Iznos ponude</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    className="input"
-                    type="number"
-                    min="0"
-                    step="100"
-                    value={cash}
-                    onChange={e => setCash(e.target.value)}
-                    placeholder={item.price ? String(item.price) : 'npr. 5000'}
-                    style={{ paddingRight: 48 }}
-                  />
-                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', pointerEvents: 'none' }}>RSD</span>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--accent-soft)', border: '1.5px solid var(--accent)', borderRadius: 10, marginBottom: 16 }}>
+                <span style={{ fontSize: 14, color: 'var(--ink-2)' }}>Cena oglasa</span>
+                <b style={{ fontSize: 20, color: 'var(--accent)', fontFamily: 'var(--font-display)' }}>
+                  {item.price ? Number(item.price).toLocaleString('sr-RS') + ' RSD' : 'Nije navedena'}
+                </b>
               </div>
               <div className="field-group">
                 <label>Poruka <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(opciono)</span></label>
@@ -648,7 +639,7 @@ function OfferModal({ item, onClose, onSuccess }) {
         {myListings !== null && !isBarter && noListings && (
           <div className="mf">
             <button className="nav-btn" onClick={onClose} disabled={loading}>Odustani</button>
-            <button className="nav-btn primary" onClick={submit} disabled={loading || !cashNum}>
+            <button className="nav-btn primary" onClick={submit} disabled={loading || !item.price}>
               {loading ? 'Šalje se…' : '💸 Pošalji ponudu'}
             </button>
           </div>
