@@ -2309,6 +2309,11 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
     }
   };
 
+  const handleDeleteMessage = async (msgId) => {
+    const res = await apiDeleteMessage(active.id, msgId);
+    if (res.ok) setMessages(prev => prev.filter(m => m.id !== msgId));
+  };
+
   const fmtTime = (iso) => {
     if (!iso) return '';
     return new Date(iso).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
@@ -2410,7 +2415,7 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
                 const who = msg.sender === currentUser?.username ? 'me' : 'them';
                 return msg.offer
                   ? <OfferCard key={msg.id} msg={msg} who={who} currentUserId={currentUser?.id} onOfferAction={handleOfferAction} isReviewed={reviewedOfferIds.indexOf(msg.offer.id) !== -1}/>
-                  : <Bubble key={msg.id} who={who}>{msg.body}</Bubble>;
+                  : <Bubble key={msg.id} who={who} onDelete={who === 'me' ? () => handleDeleteMessage(msg.id) : null}>{msg.body}</Bubble>;
               })}
               <div ref={bottomRef}/>
             </div>
@@ -2520,21 +2525,36 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
 }
 
 /* ─── BUBBLE ──────────────────────────────────────── */
-function Bubble({ who, children }) {
+function Bubble({ who, children, onDelete }) {
   const me = who === 'me';
+  const [hovered, setHovered] = useS(false);
   return (
-    <div style={{
-      alignSelf: me ? 'flex-end' : 'flex-start',
-      background: me ? 'var(--accent)' : '#fff',
-      color: me ? '#fff' : 'var(--ink)',
-      padding: '10px 14px', borderRadius: 14,
-      borderTopRightRadius: me ? 4 : 14,
-      borderTopLeftRadius:  me ? 14 : 4,
-      maxWidth: '80%', fontSize: 14,
-      boxShadow: me ? 'none' : '0 1px 2px rgba(0,0,0,.04)',
-      border: me ? '0' : '1px solid var(--line)',
-    }}>
-      {children}
+    <div
+      style={{ alignSelf: me ? 'flex-end' : 'flex-start', display: 'flex', alignItems: 'center', gap: 6, maxWidth: '80%' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {me && hovered && onDelete && (
+        <button
+          onClick={onDelete}
+          title="Obriši poruku"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 2, display: 'grid', placeItems: 'center', borderRadius: 4, flexShrink: 0 }}
+        >
+          <Icon name="x" size={13}/>
+        </button>
+      )}
+      <div style={{
+        background: me ? 'var(--accent)' : '#fff',
+        color: me ? '#fff' : 'var(--ink)',
+        padding: '10px 14px', borderRadius: 14,
+        borderTopRightRadius: me ? 4 : 14,
+        borderTopLeftRadius:  me ? 14 : 4,
+        fontSize: 14,
+        boxShadow: me ? 'none' : '0 1px 2px rgba(0,0,0,.04)',
+        border: me ? '0' : '1px solid var(--line)',
+      }}>
+        {children}
+      </div>
     </div>
   );
 }

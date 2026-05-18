@@ -213,3 +213,7 @@ async function apiUploadAvatar(file) {
 async function apiResendVerification() {
   return apiFetch('/auth/resend-verification/', { method: 'POST' });
 }
+
+async function apiDeleteMessage(conversationId, messageId) {
+  return apiFetch('/inbox/' + conversationId + '/messages/' + messageId + '/delete/', { method: 'DELETE' });
+}
