@@ -263,6 +263,11 @@ def listing_delete(request, pk):
     return JsonResponse({'ok': True})
 
 
+MAX_IMAGES_PER_LISTING = 10
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
+
+
 @login_required
 @require_POST
 def listing_image_upload(request, pk):
@@ -271,6 +276,22 @@ def listing_image_upload(request, pk):
 
     if not images:
         return JsonResponse({'error': 'Nema slika.'}, status=400)
+
+    existing = listing.images.count()
+    if existing + len(images) > MAX_IMAGES_PER_LISTING:
+        return JsonResponse({
+            'error': f'Maksimalno {MAX_IMAGES_PER_LISTING} slika po oglasu.'
+        }, status=400)
+
+    for img in images:
+        if img.size > MAX_IMAGE_SIZE:
+            return JsonResponse({
+                'error': f'Slika "{img.name}" je veća od 5MB.'
+            }, status=400)
+        if img.content_type not in ALLOWED_IMAGE_TYPES:
+            return JsonResponse({
+                'error': f'"{img.name}" nije podržan format (JPG, PNG ili WebP).'
+            }, status=400)
 
     created = []
     for i, img in enumerate(images):
