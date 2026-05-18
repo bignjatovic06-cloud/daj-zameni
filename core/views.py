@@ -805,8 +805,7 @@ def chat(request, conversation_id):
 
 
 @login_required
-def delete_message(request, conversation_id, message_id):
-    if request.method != 'DELETE':
+def delete_message(request, conversation_id, message_id):    if request.method != 'DELETE':
         return JsonResponse({'error': 'Method not allowed.'}, status=405)
     conv = get_object_or_404(Conversation, pk=conversation_id)
     if not conv.participants.filter(pk=request.user.pk).exists():
@@ -815,6 +814,17 @@ def delete_message(request, conversation_id, message_id):
     if msg.sender_id != request.user.pk:
         return JsonResponse({'error': 'Možeš obrisati samo svoje poruke.'}, status=403)
     msg.delete()
+    return JsonResponse({'ok': True})
+
+
+@login_required
+def delete_conversation(request, conversation_id):
+    if request.method != 'DELETE':
+        return JsonResponse({'error': 'Method not allowed.'}, status=405)
+    conv = get_object_or_404(Conversation, pk=conversation_id)
+    if not conv.participants.filter(pk=request.user.pk).exists():
+        return JsonResponse({'error': 'Zabranjen pristup.'}, status=403)
+    conv.delete()
     return JsonResponse({'ok': True})
 
 

@@ -22,6 +22,7 @@ const Icon = ({ name, size = 18, stroke = 1.6, filled, ...rest }) => {
     case 'check-circle':  return <svg {...p}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>;
     case 'filter':        return <svg {...p}><path d="M22 3H2l8 9.46V19l4 2v-8.54z"/></svg>;
     case 'lock':          return <svg {...p}><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>;
+    case 'trash':         return <svg {...p}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
     case 'more':
     case 'dots':          return <svg {...p}><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>;
     /* ── user / social ── */

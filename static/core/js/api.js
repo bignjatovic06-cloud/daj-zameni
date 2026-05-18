@@ -217,3 +217,7 @@ async function apiResendVerification() {
 async function apiDeleteMessage(conversationId, messageId) {
   return apiFetch('/inbox/' + conversationId + '/messages/' + messageId + '/delete/', { method: 'DELETE' });
 }
+
+async function apiDeleteConversation(conversationId) {
+  return apiFetch('/inbox/' + conversationId + '/delete/', { method: 'DELETE' });
+}

@@ -2314,6 +2314,18 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
     if (res.ok) setMessages(prev => prev.filter(m => m.id !== msgId));
   };
 
+  const handleDeleteConversation = async () => {
+    if (!window.confirm('Obrisati ceo chat? Ova radnja se ne može poništiti.')) return;
+    const res = await apiDeleteConversation(active.id);
+    if (res.ok) {
+      const remaining = threads.filter(t => t.id !== active.id);
+      setThreads(remaining);
+      setActive(remaining.length > 0 ? remaining[0] : null);
+      setMessages([]);
+      if (isMobile) setMobileView('list');
+    }
+  };
+
   const fmtTime = (iso) => {
     if (!iso) return '';
     return new Date(iso).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
@@ -2397,15 +2409,25 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
                   )}
                 </div>
               </div>
-              {active.listing && (
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                {active.listing && (
+                  <button
+                    className="nav-btn"
+                    style={{ fontSize: 12, padding: '0 10px', height: 32 }}
+                    onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('dj:viewListing', { detail: { id: active.listing.id } })); }}
+                  >
+                    Oglas
+                  </button>
+                )}
                 <button
                   className="nav-btn"
-                  style={{ flexShrink: 0, fontSize: 12, padding: '0 10px', height: 32 }}
-                  onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('dj:viewListing', { detail: { id: active.listing.id } })); }}
+                  style={{ fontSize: 12, padding: '0 10px', height: 32, color: '#e53e3e', borderColor: '#e53e3e' }}
+                  onClick={handleDeleteConversation}
+                  title="Obriši chat"
                 >
-                  Oglas
+                  <Icon name="trash" size={14}/>
                 </button>
-              )}
+              </div>
             </div>
             <div style={{ flex: 1, padding: '14px 16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {messages.length === 0 && (
@@ -2465,14 +2487,24 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
                 </div>
               )}
             </div>
-            {active.listing && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {active.listing && (
+                <button
+                  className="nav-btn"
+                  onClick={() => window.dispatchEvent(new CustomEvent('dj:viewListing', { detail: { id: active.listing.id } }))}
+                >
+                  Pogledaj oglas
+                </button>
+              )}
               <button
                 className="nav-btn"
-                onClick={() => window.dispatchEvent(new CustomEvent('dj:viewListing', { detail: { id: active.listing.id } }))}
+                style={{ color: '#e53e3e', borderColor: '#e53e3e' }}
+                onClick={handleDeleteConversation}
+                title="Obriši chat"
               >
-                Pogledaj oglas
+                <Icon name="trash" size={14}/>
               </button>
-            )}
+            </div>
           </div>
 
           <div style={{ flex: 1, padding: '18px 22px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>

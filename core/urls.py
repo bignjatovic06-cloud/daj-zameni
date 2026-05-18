@@ -32,6 +32,7 @@ urlpatterns = [
     # ─── Inbox ────────────────────────────────────────
     path('inbox/',                             views.inbox,                  name='inbox'),
     path('inbox/<int:conversation_id>/',       views.chat,                   name='chat'),
+    path('inbox/<int:conversation_id>/delete/', views.delete_conversation,   name='delete_conversation'),
     path('inbox/<int:conversation_id>/messages/<int:message_id>/delete/', views.delete_message, name='delete_message'),
 
     # ─── Notifikacije ─────────────────────────────────
