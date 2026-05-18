@@ -465,6 +465,12 @@ def offer_create(request, pk):
     except (TypeError, ValueError):
         pass
 
+    if not offered_listing and listing.listing_type == 'barter':
+        return JsonResponse({'error': 'barter_only'}, status=400)
+
+    if not offered_listing and not cash_offer:
+        return JsonResponse({'error': 'Moraš ponuditi oglas ili novčani iznos.'}, status=400)
+
     offer = SwapOffer.objects.create(
         listing         = listing,
         from_user       = request.user,

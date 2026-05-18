@@ -493,15 +493,18 @@ function OfferModal({ item, onClose, onSuccess }) {
   }, []);
 
   const cashNum = parseFloat(cash.replace(/\./g, '').replace(',', '.')) || null;
+  const isBarter = item.type === 'barter';
+  const noListings = myListings !== null && myListings.length === 0;
 
   const submit = async () => {
-    if (!selected) return;
     setLoading(true);
     setErr('');
-    const res = await apiCreateOffer(item.id, selected.id, msg, cashNum);
+    const res = await apiCreateOffer(item.id, selected ? selected.id : null, msg, cashNum);
     setLoading(false);
     if (res.ok) { onSuccess(); }
-    else setErr(res.error === 'already_offered' ? 'Već si poslao/la ponudu za ovaj oglas.' : 'Greška pri slanju ponude.');
+    else if (res.error === 'already_offered') setErr('Već si poslao/la ponudu za ovaj oglas.');
+    else if (res.error === 'barter_only') setErr('Korisnik ne želi otkup, samo razmenu.');
+    else setErr(res.error || 'Greška pri slanju ponude.');
   };
 
   const condLabel = { new: 'Novo', like_new: 'Polovno — kao novo', good: 'Polovno — odlično', fair: 'Polovno — vrlo dobro', poor: 'Polovno — dobro', antique: 'Antikvitet' };
@@ -520,15 +523,41 @@ function OfferModal({ item, onClose, onSuccess }) {
 
           {myListings === null ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--ink-3)', fontSize: 13 }}>Učitavam tvoje oglase…</div>
-          ) : myListings.length === 0 ? (
-            <div style={{ padding: '20px 16px', background: '#faf8f1', borderRadius: 12, textAlign: 'center' }}>
-              <div style={{ fontSize: 28, marginBottom: 10 }}>📦</div>
-              <p style={{ fontWeight: 600, marginBottom: 6 }}>Nemaš aktivnih oglasa</p>
-              <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
-                Da bi predložio/la razmenu, moraš imati bar jedan aktivan oglas koji nudiš.
+          ) : noListings && isBarter ? (
+            <div style={{ padding: '20px 16px', background: '#fff8ee', border: '1px solid #f6d860', borderRadius: 12, textAlign: 'center' }}>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>🔄</div>
+              <p style={{ fontWeight: 600, marginBottom: 6 }}>Korisnik ne želi otkup, samo razmenu</p>
+              <p style={{ fontSize: 13, color: 'var(--ink-3)' }}>
+                Da bi predložio/la razmenu, postavi oglas i ponudi ga u zamenu.
               </p>
-              <button className="nav-btn primary" onClick={onClose}>Postavi oglas prvo</button>
             </div>
+          ) : noListings ? (
+            <>
+              <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 16 }}>
+                Nemaš aktivnih oglasa. Možeš poslati ponudu za otkup:
+              </p>
+              <div className="field-group" style={{ marginBottom: 12 }}>
+                <label>Iznos ponude</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    step="100"
+                    value={cash}
+                    onChange={e => setCash(e.target.value)}
+                    placeholder={item.price ? String(item.price) : 'npr. 5000'}
+                    style={{ paddingRight: 48 }}
+                  />
+                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', pointerEvents: 'none' }}>RSD</span>
+                </div>
+              </div>
+              <div className="field-group">
+                <label>Poruka <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(opciono)</span></label>
+                <textarea className="textarea" value={msg} onChange={e => setMsg(e.target.value)} placeholder="Dodaj napomenu…" rows={2}/>
+              </div>
+              {err && <div style={{ padding: '10px 14px', background: '#fff0ee', border: '1px solid #fdc5bc', borderRadius: 8, fontSize: 13, color: 'var(--warn)', marginTop: 8 }}>{err}</div>}
+            </>
           ) : (
             <>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', letterSpacing: '.06em', marginBottom: 10 }}>
@@ -616,6 +645,14 @@ function OfferModal({ item, onClose, onSuccess }) {
             </>
           )}
         </div>
+        {myListings !== null && !isBarter && noListings && (
+          <div className="mf">
+            <button className="nav-btn" onClick={onClose} disabled={loading}>Odustani</button>
+            <button className="nav-btn primary" onClick={submit} disabled={loading || !cashNum}>
+              {loading ? 'Šalje se…' : '💸 Pošalji ponudu'}
+            </button>
+          </div>
+        )}
         {myListings !== null && myListings.length > 0 && (
           <div className="mf">
             <button className="nav-btn" onClick={onClose} disabled={loading}>Odustani</button>
