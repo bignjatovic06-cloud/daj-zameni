@@ -121,7 +121,11 @@ function App() {
   const [ownerListings, setOwnerListings] = uS(null);
   const [verifiedToast, setVerifiedToast] = uS(() => {
     const p = new URLSearchParams(window.location.search);
-    return p.get('verified') === '1' ? true : false;
+    const v = p.get('verified');
+    if (v === '1')       return 'success';
+    if (v === 'expired') return 'expired';
+    if (v === 'invalid') return 'invalid';
+    return false;
   });
 
   const unreadNotifs  = notifications.filter(n => !n.is_read).length;
@@ -594,8 +598,11 @@ function App() {
       />
 
       {verifiedToast && ReactDOM.createPortal(
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 2000, background: '#276749', color: '#fff', borderRadius: 10, padding: '14px 20px', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 4px 20px rgba(0,0,0,.18)', whiteSpace: 'nowrap' }}>
-          <Icon name="check" size={16}/> Email uspešno verifikovan!
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 2000, background: verifiedToast === 'success' ? '#276749' : '#c53030', color: '#fff', borderRadius: 10, padding: '14px 20px', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 4px 20px rgba(0,0,0,.18)', whiteSpace: 'nowrap' }}>
+          <Icon name="check" size={16}/>
+          {verifiedToast === 'success' && 'Email uspešno verifikovan!'}
+          {verifiedToast === 'expired' && 'Verifikacioni link je istekao. Pošalji novi.'}
+          {verifiedToast === 'invalid' && 'Verifikacioni link nije validan.'}
           <button onClick={() => { setVerifiedToast(false); window.history.replaceState({}, '', '/'); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 18, lineHeight: 1, marginLeft: 4 }}>×</button>
         </div>,
         document.body
