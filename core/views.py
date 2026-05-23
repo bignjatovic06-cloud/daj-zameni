@@ -105,7 +105,7 @@ def pomoc_view(request):
 
 def auth_status(request):
     if request.user.is_authenticated:
-        return JsonResponse({'authenticated': True, 'user': _user_data(request.user)})
+        return JsonResponse({'authenticated': True, 'user': _self_data(request.user)})
     return JsonResponse({'authenticated': False, 'user': None})
 
 
@@ -140,7 +140,7 @@ def register(request):
     user.save()
     email_service.send_verification_email(user)
     login(request, user)
-    return JsonResponse({'user': _user_data(user)}, status=201)
+    return JsonResponse({'user': _self_data(user)}, status=201)
 
 
 @ratelimit(key='ip', rate='10/m', method='POST', block=True)
@@ -155,7 +155,7 @@ def login_view(request):
         return JsonResponse({'detail': 'Pogrešno korisničko ime ili lozinka.'}, status=401)
 
     login(request, user)
-    return JsonResponse({'user': _user_data(user)})
+    return JsonResponse({'user': _self_data(user)})
 
 
 @require_POST
@@ -972,11 +972,11 @@ def profile(request):
             if field in data:
                 setattr(request.user, field, data[field])
         request.user.save()
-        return JsonResponse({'ok': True, 'user': _user_data(request.user)})
+        return JsonResponse({'ok': True, 'user': _self_data(request.user)})
 
     listings = Listing.objects.filter(user=request.user).order_by('-created_at')
     return JsonResponse({
-        'user':     _user_data(request.user),
+        'user':     _self_data(request.user),
         'listings': [_listing_data(l) for l in listings],
     })
 
@@ -1078,7 +1078,6 @@ def _user_data(user):
     return {
         'id':           user.pk,
         'username':     user.username,
-        'email':        user.email,
         'first_name':   user.first_name,
         'last_name':    user.last_name,
         'bio':          user.bio,
@@ -1091,6 +1090,12 @@ def _user_data(user):
         'joined':       user.date_joined.isoformat(),
         'has_phone':    bool(user.phone),
     }
+
+
+def _self_data(user):
+    data = _user_data(user)
+    data['email'] = user.email
+    return data
 
 
 def _listing_data(listing, full=False, show_saves=False):
