@@ -946,7 +946,10 @@ def delete_conversation(request, conversation_id):
     conv = get_object_or_404(Conversation, pk=conversation_id)
     if not conv.participants.filter(pk=request.user.pk).exists():
         return JsonResponse({'error': 'Zabranjen pristup.'}, status=403)
-    conv.delete()
+    conv.participants.remove(request.user)
+    # Clean up only when no one is left — preserves the other party's history.
+    if not conv.participants.exists():
+        conv.delete()
     return JsonResponse({'ok': True})
 
 
