@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Verifikuj email — Daj Zameni</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #0F6E56;
+    --ink: #1a1a18;
+    --muted: #6b6b66;
+    --border: #e8e6df;
+    --bg: #fafaf7;
+    --white: #ffffff;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .card {
+    max-width: 440px;
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: var(--green);
+    font-size: 22px;
+    margin-bottom: 1.5rem;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--green-light);
+    color: var(--green);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  p {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 1.5rem;
+  }
+  .username {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  button {
+    width: 100%;
+    background: var(--green);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    padding: 0.85rem 1.5rem;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--green-dark); }
+  .note {
+    margin-top: 1rem;
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <a href="/" class="logo">⇄ Daj Zameni</a>
+    <div class="icon">✉</div>
+    <h1>Potvrdi email adresu</h1>
+    <p>Zdravo <span class="username">{{ username }}</span>, klikni dugme ispod da verifikuješ nalog i ulogujemo te.</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">Verifikuj nalog</button>
+    </form>
+    <div class="note">Ako ovo nisi ti pokrenuo/la, samo zatvori stranicu.</div>
+  </div>
+</body>
+</html>

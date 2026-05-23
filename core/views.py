@@ -1153,18 +1153,27 @@ def change_password(request):
     return JsonResponse({'ok': True})
 
 
+@ratelimit(key='ip', rate='20/h', method=['GET', 'POST'], block=True)
 def verify_email(request, token):
+    # GET shows a confirm-button page; POST performs the verification.
+    # This keeps link-preview / antivirus prefetchers (which only GET)
+    # from auto-verifying the account, and keeps the state change behind
+    # CSRF + a real user gesture.
     user = User.objects.filter(email_verification_token=token, is_verified=False).first()
     if not user:
         return redirect('/?verified=invalid')
     if not user.email_verification_sent_at or timezone.now() - user.email_verification_sent_at > EMAIL_VERIFICATION_TTL:
         return redirect('/?verified=expired')
-    user.is_verified = True
-    user.email_verification_token = None
-    user.email_verification_sent_at = None
-    user.save()
-    login(request, user)
-    return redirect('/?verified=1')
+
+    if request.method == 'POST':
+        user.is_verified = True
+        user.email_verification_token = None
+        user.email_verification_sent_at = None
+        user.save()
+        login(request, user)
+        return redirect('/?verified=1')
+
+    return render(request, 'core/verify_email.html', {'username': user.username})
 
 
 @ratelimit(key='user', rate='3/h', method='POST', block=True)
