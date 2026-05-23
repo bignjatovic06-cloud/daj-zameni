@@ -779,7 +779,7 @@ def inbox(request):
     for conv in convs:
         msgs     = list(conv.messages.all())
         last_msg = msgs[-1] if msgs else None
-        other    = conv.participants.exclude(pk=request.user.pk).first()
+        other    = next((p for p in conv.participants.all() if p.pk != request.user.pk), None)
         unread   = sum(1 for m in msgs if not m.is_read and m.sender_id != request.user.pk)
         offer_id = None
         first_with_offer = next((m for m in msgs if m.swap_offer_id), None)
