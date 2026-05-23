@@ -1,5 +1,6 @@
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+from html import escape as _e
 import threading
 import logging
 
@@ -105,7 +106,7 @@ def send_verification_email(user):
     verify_url = f'{SITE_URL}/auth/verify/{user.email_verification_token}/'
     content = (
         _h('Verifikuj svoju email adresu') +
-        _p(f'Zdravo <strong>{user.username}</strong>, hvala što si se registrovao/la na Daj Zameni!') +
+        _p(f'Zdravo <strong>{_e(user.username)}</strong>, hvala što si se registrovao/la na Daj Zameni!') +
         _p('Klikni na dugme ispod da potvrdite svoju email adresu i aktivirate nalog:') +
         _btn('Verifikuj email →', verify_url) +
         _p(f'Ili kopiraj link: <a href="{verify_url}" style="color:#0d6e6f;word-break:break-all;">{verify_url}</a>') +
@@ -125,13 +126,16 @@ def send_new_offer(to_user, from_username, listing_title, offered_title, cash_of
     if not to_user.email:
         return
 
+    from_username = _e(from_username)
+    listing_title = _e(listing_title)
+
     extra = ''
     if offered_title:
-        extra += f'<br>Nudi: {_listing_pill(offered_title)}'
+        extra += f'<br>Nudi: {_listing_pill(_e(offered_title))}'
     if cash_offer:
         extra += f'<br>Doplata: <strong>{int(cash_offer)} RSD</strong>'
     if message:
-        extra += f'<br><em style="color:#6b7280;">„{message}"</em>'
+        extra += f'<br><em style="color:#6b7280;">„{_e(message)}"</em>'
 
     content = (
         _h(f'{from_username} želi da zameni tvoj oglas') +
@@ -152,6 +156,9 @@ def send_offer_accepted(to_user, by_username, listing_title):
     """Offer sender receives: their offer was accepted."""
     if not to_user.email:
         return
+
+    by_username   = _e(by_username)
+    listing_title = _e(listing_title)
 
     content = (
         _h('Tvoja ponuda je prihvaćena! 🎉') +
@@ -174,6 +181,9 @@ def send_offer_declined(to_user, by_username, listing_title):
     if not to_user.email:
         return
 
+    by_username   = _e(by_username)
+    listing_title = _e(listing_title)
+
     content = (
         _h('Ponuda nije prihvaćena') +
         _p(f'<strong>{by_username}</strong> nije prihvatio/la tvoju ponudu za oglas {_listing_pill(listing_title)}.') +
@@ -194,6 +204,9 @@ def send_swap_waiting_confirm(to_user, from_username, listing_title):
     """One party confirmed swap, waiting for the other."""
     if not to_user.email:
         return
+
+    from_username = _e(from_username)
+    listing_title = _e(listing_title)
 
     content = (
         _h('Čeka se tvoja potvrda') +
@@ -216,6 +229,9 @@ def send_swap_completed(to_user, other_username, listing_title):
     if not to_user.email:
         return
 
+    other_username = _e(other_username)
+    listing_title  = _e(listing_title)
+
     content = (
         _h('Razmena završena! ✓') +
         _p(f'Razmena sa <strong>{other_username}</strong> za oglas {_listing_pill(listing_title)} je uspešno završena.') +
@@ -237,7 +253,9 @@ def send_new_message(to_user, from_username, listing_title):
     if not to_user.email:
         return
 
-    subject_listing = f' o oglasu „{listing_title}"' if listing_title else ''
+    from_username   = _e(from_username)
+    subject_listing = f' o oglasu „{_e(listing_title)}"' if listing_title else ''
+
     content = (
         _h(f'Nova poruka od {from_username}') +
         _p(f'<strong>{from_username}</strong> ti je poslao/la poruku{subject_listing}.') +
@@ -257,6 +275,9 @@ def send_offer_reminder(to_user, from_username, listing_title):
     """Listing owner receives: reminder about pending offer after 48h."""
     if not to_user.email:
         return
+
+    from_username = _e(from_username)
+    listing_title = _e(listing_title)
 
     content = (
         _h('Imaš ponudu koja čeka odgovor') +
