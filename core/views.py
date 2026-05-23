@@ -626,53 +626,58 @@ def offer_create(request, pk):
 @login_required
 @require_POST
 def offer_respond(request, offer_id):
-    offer  = get_object_or_404(SwapOffer, pk=offer_id, to_user=request.user)
     data   = _parse(request)
     action = data.get('action')
 
-    if offer.status != 'pending':
-        return JsonResponse({'error': 'Ponuda je već obrađena.'}, status=400)
+    with transaction.atomic():
+        offer = get_object_or_404(
+            SwapOffer.objects.select_for_update(),
+            pk=offer_id, to_user=request.user,
+        )
 
-    if action == 'accept':
-        offer.status         = 'accepted'
-        offer.listing.status = 'reserved'
-        offer.listing.save()
-        SwapOffer.objects.filter(
-            listing=offer.listing,
-            status='pending',
-        ).exclude(pk=offer.pk).update(status='declined')
-        Notification.objects.create(
-            user = offer.from_user,
-            type = 'offer_accepted',
-            text = f'{request.user.username} je prihvatio/la tvoju ponudu za „{offer.listing.title}"',
-        )
-        push_service.send_push_to_user(
-            offer.from_user,
-            title='Ponuda prihvaćena!',
-            body=f'{request.user.username} je prihvatio/la ponudu za „{offer.listing.title}"',
-            url='/',
-        )
-        email_service.send_offer_accepted(
-            to_user       = offer.from_user,
-            by_username   = request.user.username,
-            listing_title = offer.listing.title,
-        )
-    elif action == 'decline':
-        offer.status = 'declined'
-        Notification.objects.create(
-            user = offer.from_user,
-            type = 'offer_declined',
-            text = f'{request.user.username} je odbio/la tvoju ponudu za „{offer.listing.title}"',
-        )
-        email_service.send_offer_declined(
-            to_user       = offer.from_user,
-            by_username   = request.user.username,
-            listing_title = offer.listing.title,
-        )
-    else:
-        return JsonResponse({'error': 'Nevažeća akcija.'}, status=400)
+        if offer.status != 'pending':
+            return JsonResponse({'error': 'Ponuda je već obrađena.'}, status=400)
 
-    offer.save()
+        if action == 'accept':
+            offer.status         = 'accepted'
+            offer.listing.status = 'reserved'
+            offer.listing.save()
+            SwapOffer.objects.filter(
+                listing=offer.listing,
+                status='pending',
+            ).exclude(pk=offer.pk).update(status='declined')
+            Notification.objects.create(
+                user = offer.from_user,
+                type = 'offer_accepted',
+                text = f'{request.user.username} je prihvatio/la tvoju ponudu za „{offer.listing.title}"',
+            )
+            push_service.send_push_to_user(
+                offer.from_user,
+                title='Ponuda prihvaćena!',
+                body=f'{request.user.username} je prihvatio/la ponudu za „{offer.listing.title}"',
+                url='/',
+            )
+            email_service.send_offer_accepted(
+                to_user       = offer.from_user,
+                by_username   = request.user.username,
+                listing_title = offer.listing.title,
+            )
+        elif action == 'decline':
+            offer.status = 'declined'
+            Notification.objects.create(
+                user = offer.from_user,
+                type = 'offer_declined',
+                text = f'{request.user.username} je odbio/la tvoju ponudu za „{offer.listing.title}"',
+            )
+            email_service.send_offer_declined(
+                to_user       = offer.from_user,
+                by_username   = request.user.username,
+                listing_title = offer.listing.title,
+            )
+        else:
+            return JsonResponse({'error': 'Nevažeća akcija.'}, status=400)
+
+        offer.save()
     return JsonResponse({'ok': True, 'status': offer.status})
 
 
