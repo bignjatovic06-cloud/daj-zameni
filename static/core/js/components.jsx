@@ -789,9 +789,9 @@ function ListingCard({ item, fav, onFav, onClick, onOpenProfile }) {
 /* ─── HOW IT WORKS ─────────────────────────────── */
 function HowItWorks() {
   const steps = [
-    { n: '01', t: 'Postavi oglas',  p: 'Slikaj predmet, opiši ga i naznači da li tražiš razmenu, novac ili oboje. Postavljanje traje manje od minuta.' },
-    { n: '02', t: 'Razmeni poruke', p: 'Korisnici ti pišu direktno. Bez agencija i posrednika — dogovaraš se sa osobom koja je zainteresovana.' },
-    { n: '03', t: 'Završi razmenu', p: 'Nađite se uživo, predaj predmet, oceni iskustvo. Vaše ocene grade poverenje u zajednici.' },
+    { n: '01', t: 'Postavi oglas',  p: 'Slikaj predmet, opiši ga i reci šta tražiš — razmenu, novac ili oboje. Gotovo za manje od minuta.' },
+    { n: '02', t: 'Razmeni poruke', p: 'Neko je zainteresovan — piše ti direktno. Bez posrednika, samo vi dvoje.' },
+    { n: '03', t: 'Završi razmenu', p: 'Dogovorite se, nađite se, razmenite. Ocenite jedno drugo i gradite poverenje u zajednici.' },
   ];
   return (
     <section className="section">
@@ -799,7 +799,7 @@ function HowItWorks() {
         <div className="section-head">
           <div>
             <h2>Kako funkcioniše</h2>
-            <div className="sub">Tri koraka. Bez registracije sa karticom, bez pretplata, bez provizija.</div>
+            <div className="sub">Tri koraka. Bez pretplata, bez provizija.</div>
           </div>
         </div>
         <div className="how">
