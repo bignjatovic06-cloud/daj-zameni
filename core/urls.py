@@ -18,6 +18,7 @@ urlpatterns = [
     path('listings/<uuid:pk>/wishlist/',       views.toggle_wishlist,        name='toggle_wishlist'),
     path('listings/<uuid:pk>/thread/',         views.listing_start_thread,   name='listing_start_thread'),
     path('listings/<uuid:pk>/report/',         views.listing_report,         name='listing_report'),
+    path('listings/<uuid:pk>/reserve/',        views.listing_reserve,        name='listing_reserve'),
 
     # ─── Kategorije ───────────────────────────────────
     path('categories/',                        views.category_list,          name='category_list'),
@@ -52,6 +53,17 @@ urlpatterns = [
     path('auth/password/',                     views.change_password,        name='change_password'),
     path('auth/verify/<uuid:token>/',          views.verify_email,           name='verify_email'),
     path('auth/resend-verification/',          views.resend_verification,    name='resend_verification'),
+
+    # ─── Push notifikacije ────────────────────────────────
+    path('push/subscribe/',                    views.push_subscribe,         name='push_subscribe'),
+    path('push/unsubscribe/',                  views.push_unsubscribe,       name='push_unsubscribe'),
+    path('sw.js',                              views.service_worker,         name='service_worker'),
+
+    # ─── SSR oglas detalj (SEO) ───────────────────────────
+    path('oglasi/<uuid:pk>/', views.listing_page, name='listing_page'),
+
+    # ─── Statičke stranice ────────────────────────────────
+    path('o-nama/', views.about_view, name='about'),
 
     # ─── SPA catch-all — mora biti poslednji ──────────────
     re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja|profil)(?:/.*)?$', views.app_view, name='spa_catchall'),

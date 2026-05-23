@@ -51,6 +51,10 @@ def app_view(request):
     return render(request, 'core/app.html')
 
 
+def about_view(request):
+    return render(request, 'core/about.html')
+
+
 # ─────────────────────────────────────────
 #  AUTH VIEWS
 # ─────────────────────────────────────────
