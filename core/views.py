@@ -88,6 +88,10 @@ def about_view(request):
     return render(request, 'core/about.html')
 
 
+def pravila_view(request):
+    return render(request, 'core/pravila.html')
+
+
 # ─────────────────────────────────────────
 #  AUTH VIEWS
 # ─────────────────────────────────────────

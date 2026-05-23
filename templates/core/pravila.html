@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pravila zajednice — Daj Zameni</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #0F6E56;
+    --amber: #EF9F27;
+    --amber-light: #FAEEDA;
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --ink: #1a1a18;
+    --muted: #6b6b66;
+    --border: #e8e6df;
+    --bg: #fafaf7;
+    --white: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 5rem 2rem 6rem;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 1.25rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toc {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 3rem;
+  }
+
+  .toc-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .toc ol {
+    padding-left: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 2rem;
+  }
+
+  .toc li {
+    font-size: 0.9rem;
+  }
+
+  .toc a {
+    color: var(--green-dark);
+    text-decoration: none;
+    font-weight: 400;
+  }
+
+  .toc a:hover { text-decoration: underline; }
+
+  .rule-section {
+    margin-bottom: 2.75rem;
+    scroll-margin-top: 2rem;
+  }
+
+  .rule-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .rule-num {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 3px;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  .rule-body p {
+    color: #3a3a36;
+    margin-bottom: 0.85rem;
+    padding-left: 3rem;
+  }
+
+  .rule-body p:last-child { margin-bottom: 0; }
+
+  .check-list {
+    padding-left: 3rem;
+    margin: 0.75rem 0;
+    list-style: none;
+  }
+
+  .check-list li {
+    font-size: 0.95rem;
+    color: #3a3a36;
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .check-list li::before {
+    content: '✓';
+    color: var(--green);
+    font-weight: 500;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .check-list.no li::before {
+    content: '✕';
+    color: var(--red);
+  }
+
+  .notice {
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0 0.75rem 3rem;
+    font-size: 0.9rem;
+  }
+
+  .notice.warn {
+    background: var(--amber-light);
+    color: #633806;
+    border-left: 3px solid var(--amber);
+  }
+
+  .notice.danger {
+    background: var(--red-light);
+    color: #791F1F;
+    border-left: 3px solid var(--red);
+  }
+
+  .notice.good {
+    background: var(--green-light);
+    color: var(--green-dark);
+    border-left: 3px solid var(--green);
+  }
+
+  .notice strong { font-weight: 500; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.75rem 0 2.75rem;
+  }
+
+  .consequences {
+    margin: 1rem 0 1rem 3rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .cons-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .cons-row + .cons-row {
+    border-top: 1px solid var(--border);
+  }
+
+  .cons-cell {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: #3a3a36;
+  }
+
+  .cons-cell:first-child {
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.82rem;
+  }
+
+  .closing {
+    margin-top: 4rem;
+    padding: 2.5rem;
+    background: var(--green-light);
+    border-radius: 16px;
+    text-align: center;
+  }
+
+  .closing p {
+    color: var(--green-dark);
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .closing p:last-child { margin-bottom: 0; }
+
+  .closing strong {
+    font-size: 1.1rem;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+  }
+
+  .meta {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .page > * { animation: fadeUp 0.45s ease both; }
+  .page > *:nth-child(2) { animation-delay: 0.06s; }
+  .page > *:nth-child(3) { animation-delay: 0.12s; }
+  .page > *:nth-child(4) { animation-delay: 0.18s; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <p class="eyebrow">Pravila zajednice</p>
+  <h1>Kako funkcionišemo zajedno</h1>
+  <p class="lead">
+    Daj Zameni funkcioniše na poverenju između stvarnih ljudi. Da bi ta zajednica bila sigurna, poštena i prijatna za sve, postavili smo jasna pravila. Kratka su i konkretna — molimo te da ih pročitaš pre nego što počneš da koristiš platformu.
+  </p>
+
+  <div class="toc">
+    <p class="toc-title">Sadržaj</p>
+    <ol>
+      <li><a href="#oglasi">Oglasi i predmeti</a></li>
+      <li><a href="#razmena">Razmena i prodaja</a></li>
+      <li><a href="#komunikacija">Komunikacija</a></li>
+      <li><a href="#profil">Profil i identitet</a></li>
+      <li><a href="#bezbednost">Bezbednost</a></li>
+      <li><a href="#posledice">Posledice kršenja</a></li>
+    </ol>
+  </div>
+
+  <div class="rule-section" id="oglasi">
+    <div class="rule-header">
+      <div class="rule-num">1</div>
+      <h2>Oglasi i predmeti</h2>
+    </div>
+    <div class="rule-body">
+      <p>Svaki oglas mora da odražava stvarno stanje predmeta. Fotografije moraju biti stvarne — bez preuzetih slika s interneta. Opis mora biti tačan i potpun: napiši mane, oštećenja i istorijat predmeta ako je relevantno.</p>
+      <ul class="check-list">
+        <li>Originalne fotografije predmeta koji prodaješ ili menjuješ</li>
+        <li>Tačan opis stanja — novo, kao novo, dobro, vidljivi tragovi korišćenja</li>
+        <li>Realna cena ili jasno definisana želja za razmenom</li>
+        <li>Tačna lokacija (grad ili opština)</li>
+      </ul>
+      <ul class="check-list no">
+        <li>Isti predmet objavljen više puta istovremeno</li>
+        <li>Oglasi za usluge, zapošljavanje ili nekretnine — za to postoje druge platforme</li>
+        <li>Predmeti koji su zabranjeni zakonom ili ovim pravilima</li>
+        <li>Lažno prikazano stanje ili poreklo predmeta</li>
+      </ul>
+      <div class="notice warn">
+        <strong>Zabranjeni predmeti:</strong> oružje, municija, droga i supstance, lekovi bez recepta, falsifikovana roba, alkohol bez dozvole, predmeti ukradenog porekla, žive životinje, i svi drugi predmeti čija prodaja ili razmena nije dozvoljena zakonom Republike Srbije.
+      </div>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="rule-section" id="razmena">
+    <div class="rule-header">
+      <div class="rule-num">2</div>
+      <h2>Razmena i prodaja</h2>
+    </div>
+    <div class="rule-body">
+      <p>Kad se dogovoriš razmenu ili prodaju, budi pouzdan. Otkazivanje bez razloga i u poslednji čas šteti celoj zajednici i ostavlja negativan utisak na tvoj profil.</p>
+      <ul class="check-list">
+        <li>Drži se dogovorene cene i uslova razmene</li>
+        <li>Komuniciraj blagovremeno ako se nešto promenilo</li>
+        <li>Preuzimanje na javnom mestu uvek je dobra ideja</li>
+        <li>Ostavi ocenu nakon završene transakcije — pomaže celoj zajednici</li>
+      </ul>
+      <ul class="check-list no">
+        <li>Menjanje cene u poslednji čas bez dogovora</li>
+        <li>Nestanak bez odgovora nakon potvrđenog dogovora</li>
+        <li>Slanje predmeta koji ne odgovara opisu iz oglasa</li>
+      </ul>
+      <div class="notice good">
+        <strong>Savet:</strong> Uvek se dogovaraj putem chata na platformi — tako imaš zapis razgovora i zaštitu u slučaju spora.
+      </div>
+
+      <p style="margin-top: 1.25rem;"><strong style="font-weight: 500;">Slanje kurirskim službama</strong></p>
+      <p>Razmena i prodaja nisu ograničene na isto mesto — predmete možeš slati kurirskom službom po celoj Srbiji. U tom slučaju važe sledeća pravila:</p>
+      <ul class="check-list">
+        <li>Troškove slanja unapred dogovorite i jasno definišite u chatu — ko plaća kurira</li>
+        <li>Preporučujemo slanje s otkupninom (pouzećem) kad god je moguće — kupac plaća tek kad preuzme paket</li>
+        <li>Pošiljalac zadržava broj pošiljke i deli ga sa kupcem odmah po predaji kuriru</li>
+        <li>Predmet mora biti adekvatno upakovan i zaštićen od oštećenja u transportu</li>
+        <li>Za vrednije predmete (preko 5.000 RSD), preporučujemo slanje s osiguranjem paketa</li>
+      </ul>
+      <ul class="check-list no">
+        <li>Slanje bez prethodnog pisanog dogovora o uslovima u chatu</li>
+        <li>Traženje avansne uplate pre slanja od korisnika bez ocena ili istorijata — to je čest obrazac prevare</li>
+        <li>Odbijanje davanja broja pošiljke nakon slanja</li>
+      </ul>
+      <div class="notice warn">
+        <strong>Napomena:</strong> Daj Zameni nije strana u kurirskim transakcijama i ne snosi odgovornost za oštećenje, gubitak ili kašnjenje paketa. U slučaju problema, reklamaciju upućuješ direktno kurirskoj službi.
+      </div>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="rule-section" id="komunikacija">
+    <div class="rule-header">
+      <div class="rule-num">3</div>
+      <h2>Komunikacija</h2>
+    </div>
+    <div class="rule-body">
+      <p>Platforma je prostor za normalne ljude koji žele da se dogovore. Komuniciraj onako kako bi želeo da drugi komuniciraju s tobom — direktno, pošteno i kulturno.</p>
+      <ul class="check-list no">
+        <li>Uvrede, pretnje ili uznemiravanje bilo kog oblika</li>
+        <li>Spam poruke ili automatizovane ponude</li>
+        <li>Traženje ličnih podataka (JMBG, broj kartice, lozinka)</li>
+        <li>Reklamiranje sopstvenih platformi ili servisa u porukama</li>
+        <li>Rasistički, seksistički ili diskriminatorni sadržaj</li>
+      </ul>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="rule-section" id="profil">
+    <div class="rule-header">
+      <div class="rule-num">4</div>
+      <h2>Profil i identitet</h2>
+    </div>
+    <div class="rule-body">
+      <p>Svaka osoba ima jedan nalog. Nalog mora biti vezan za stvarnu osobu — lažni profili i lažni identiteti nisu dozvoljeni. Poverenjem se gradi — i gubi.</p>
+      <ul class="check-list">
+        <li>Jedan nalog po osobi</li>
+        <li>Tačne informacije o lokaciji i kontaktu</li>
+        <li>Fotografija profila koja prikazuje stvarnu osobu ili jasno prepoznatljiv avatar</li>
+      </ul>
+      <ul class="check-list no">
+        <li>Kreiranje više naloga iste osobe</li>
+        <li>Lažno predstavljanje kao drugi korisnik ili poznata osoba</li>
+        <li>Korišćenje naloga u komercijalne svrhe (firme, dileri, uvoznici)</li>
+      </ul>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="rule-section" id="bezbednost">
+    <div class="rule-header">
+      <div class="rule-num">5</div>
+      <h2>Bezbednost</h2>
+    </div>
+    <div class="rule-body">
+      <p>Brinemo o bezbednosti svakoga u zajednici. Evo nekoliko jednostavnih saveta koji ti mogu sačuvati dosta glavobolje.</p>
+      <ul class="check-list">
+        <li>Prvom susretu s kupcem ili prodavcem idi na javno mesto (kafić, tržni centar, parking pred supermarketom)</li>
+        <li>Proveri profil i ocene pre nego što prihvatiš dogovor</li>
+        <li>Za vrednije predmete, dogovori preuzimanje tokom dana</li>
+        <li>Koristi "Prijavi oglas" dugme ako primetiš nešto sumnjivo</li>
+      </ul>
+      <p>Ako si žrtva prevare ili se osećaš ugroženo, odmah kontaktiraj policiju i prijavi incident na <strong>podrska@dajzameni.rs</strong>. Reagujemo u roku od 24 sata.</p>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="rule-section" id="posledice">
+    <div class="rule-header">
+      <div class="rule-num">6</div>
+      <h2>Posledice kršenja pravila</h2>
+    </div>
+    <div class="rule-body">
+      <p>Kršenje pravila ima jasne posledice. Pristupamo svakom slučaju individualno, ali delujemo brzo kada je bezbednost zajednice ugrožena.</p>
+
+      <div class="consequences">
+        <div class="cons-row">
+          <div class="cons-cell">Prvo upozorenje</div>
+          <div class="cons-cell">Obaveštenje i zahtev za ispravku sadržaja u roku od 48 sati</div>
+        </div>
+        <div class="cons-row">
+          <div class="cons-cell">Ponavljanje</div>
+          <div class="cons-cell">Privremena suspenzija naloga (7–30 dana zavisno od težine)</div>
+        </div>
+        <div class="cons-row">
+          <div class="cons-cell">Teže kršenje</div>
+          <div class="cons-cell">Trajno brisanje naloga bez prethodnog upozorenja</div>
+        </div>
+        <div class="cons-row">
+          <div class="cons-cell">Prevara ili nezakonito</div>
+          <div class="cons-cell">Prijava nadležnim organima i trajna zabrana platforme</div>
+        </div>
+      </div>
+
+      <p>Odluke o suspenziji možeš osporiti slanjem mejla na <strong>podrska@dajzameni.rs</strong> u roku od 7 dana.</p>
+    </div>
+  </div>
+
+  <div class="closing">
+    <p>Daj Zameni radi jer su korisnici pošteni jedni prema drugima.</p>
+    <p><strong>Hvala što si deo zajednice koja funkcioniše na poverenju.</strong></p>
+  </div>
+
+  <p class="meta">Poslednja izmena: maj 2025. · Pitanja? <a href="mailto:podrska@dajzameni.rs" style="color: var(--green-dark);">podrska@dajzameni.rs</a></p>
+
+</div>
+</body>
+</html>
