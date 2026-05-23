@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politika privatnosti — Daj Zameni</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #0F6E56;
+    --amber: #EF9F27;
+    --amber-light: #FAEEDA;
+    --ink: #1a1a18;
+    --muted: #6b6b66;
+    --border: #e8e6df;
+    --bg: #fafaf7;
+    --white: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 5rem 2rem 6rem;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 1.25rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 3rem;
+  }
+
+  .summary-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+
+  .summary-icon {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .summary-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+
+  .summary-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .toc {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 3rem;
+  }
+
+  .toc-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .toc ol {
+    padding-left: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 2rem;
+  }
+
+  .toc li { font-size: 0.9rem; }
+
+  .toc a {
+    color: var(--green-dark);
+    text-decoration: none;
+  }
+
+  .toc a:hover { text-decoration: underline; }
+
+  .section {
+    margin-bottom: 2.75rem;
+    scroll-margin-top: 2rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-num {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 3px;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  .section-body p {
+    color: #3a3a36;
+    margin-bottom: 0.85rem;
+    padding-left: 3rem;
+  }
+
+  .section-body p:last-child { margin-bottom: 0; }
+
+  h3 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 1.25rem 0 0.5rem 3rem;
+  }
+
+  .data-list {
+    padding-left: 4.5rem;
+    margin: 0.5rem 0 0.85rem;
+    list-style: none;
+  }
+
+  .data-list li {
+    font-size: 0.95rem;
+    color: #3a3a36;
+    padding: 0.2rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .data-list li::before {
+    content: '–';
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .rights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 8px;
+    margin: 0.75rem 0 0.75rem 3rem;
+  }
+
+  .right-item {
+    background: var(--green-light);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+  }
+
+  .right-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--green-dark);
+    margin-bottom: 0.25rem;
+  }
+
+  .right-desc {
+    font-size: 0.78rem;
+    color: #0F6E56;
+    line-height: 1.45;
+  }
+
+  .notice {
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0 0.75rem 3rem;
+    font-size: 0.9rem;
+  }
+
+  .notice.warn {
+    background: var(--amber-light);
+    color: #633806;
+    border-left: 3px solid var(--amber);
+  }
+
+  .notice.good {
+    background: var(--green-light);
+    color: var(--green-dark);
+    border-left: 3px solid var(--green);
+  }
+
+  .notice strong { font-weight: 500; }
+
+  .retention-table {
+    margin: 0.75rem 0 0.75rem 3rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    width: calc(100% - 3rem);
+  }
+
+  .ret-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .ret-row + .ret-row { border-top: 1px solid var(--border); }
+
+  .ret-row.header { background: var(--bg); }
+
+  .ret-cell {
+    padding: 0.7rem 1rem;
+    font-size: 0.88rem;
+    color: #3a3a36;
+  }
+
+  .ret-row.header .ret-cell {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .ret-cell:first-child { border-right: 1px solid var(--border); }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.75rem 0 2.75rem;
+  }
+
+  .contact-box {
+    margin: 1rem 0 0 3rem;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    font-size: 0.92rem;
+    color: #3a3a36;
+    line-height: 1.8;
+  }
+
+  .contact-box a { color: var(--green-dark); text-decoration: none; }
+  .contact-box a:hover { text-decoration: underline; }
+
+  .meta {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .page > * { animation: fadeUp 0.45s ease both; }
+  .page > *:nth-child(2) { animation-delay: 0.06s; }
+  .page > *:nth-child(3) { animation-delay: 0.12s; }
+  .page > *:nth-child(4) { animation-delay: 0.18s; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <p class="eyebrow">Politika privatnosti</p>
+  <h1>Tvoji podaci, tvoja pravila</h1>
+  <p class="lead">
+    Daj Zameni prikuplja samo podatke koji su neophodni da platforma funkcioniše. Ne prodajemo tvoje podatke, ne pratimo te na internetu i ne bombardujemo te reklamama trećih strana. Ova stranica objašnjava tačno šta prikupljamo, zašto i kako to kontrolišeš.
+  </p>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon">🔒</div>
+      <div class="summary-title">Ne prodajemo podatke</div>
+      <p class="summary-desc">Tvoje informacije nikada ne idu trećim stranama radi zarade.</p>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon">✉️</div>
+      <div class="summary-title">Email samo kad trebaš</div>
+      <p class="summary-desc">Šaljemo notifikacije vezane za tvoje oglase i ponude, ništa više.</p>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon">🗑️</div>
+      <div class="summary-title">Možeš obrisati sve</div>
+      <p class="summary-desc">Brisanjem naloga trajno uklanjamo tvoje podatke iz sistema.</p>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon">📍</div>
+      <div class="summary-title">Lokacija — samo grad</div>
+      <p class="summary-desc">Nikada ne pratimo tačnu GPS lokaciju, samo grad koji sam upišeš.</p>
+    </div>
+  </div>
+
+  <div class="toc">
+    <p class="toc-title">Sadržaj</p>
+    <ol>
+      <li><a href="#podaci">Koji podaci se prikupljaju</a></li>
+      <li><a href="#zasto">Zašto ih koristimo</a></li>
+      <li><a href="#trece">Treće strane</a></li>
+      <li><a href="#cuvanje">Koliko dugo čuvamo podatke</a></li>
+      <li><a href="#prava">Tvoja prava</a></li>
+      <li><a href="#kolacici">Kolačići</a></li>
+      <li><a href="#kontakt">Kontakt</a></li>
+    </ol>
+  </div>
+
+  <div class="section" id="podaci">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <h2>Koji podaci se prikupljaju</h2>
+    </div>
+    <div class="section-body">
+      <h3>Podaci koje ti daješ</h3>
+      <ul class="data-list">
+        <li>Ime i prezime ili korisničko ime</li>
+        <li>Email adresa (za registraciju i notifikacije)</li>
+        <li>Grad ili opština (koji sam upisuješ — bez GPS praćenja)</li>
+        <li>Fotografija profila (opciono)</li>
+        <li>Sadržaj oglasa: fotografije, opisi, cene, željene razmene</li>
+        <li>Poruke u chatu između korisnika</li>
+        <li>Ocene i recenzije koje ostavljaš ili primaš</li>
+      </ul>
+
+      <h3>Podaci koji se prikupljaju automatski</h3>
+      <ul class="data-list">
+        <li>IP adresa i tip uređaja (za bezbednost i dijagnostiku)</li>
+        <li>Pretraživač i verzija operativnog sistema</li>
+        <li>Stranice koje posećuješ na platformi i vreme posete</li>
+        <li>Greške i padovi aplikacije (za tehnički tim)</li>
+      </ul>
+
+      <h3>Podaci pri prijavi Google nalogom</h3>
+      <ul class="data-list">
+        <li>Ime, email i profilna fotografija sa Google naloga</li>
+        <li>Ne dobijamo pristup tvojoj lozinki, kontaktima ni Google Drive-u</li>
+      </ul>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="section" id="zasto">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <h2>Zašto ih koristimo</h2>
+    </div>
+    <div class="section-body">
+      <p>Svaki podatak koji prikupljamo ima konkretan razlog. Evo tačnog pregleda:</p>
+
+      <h3>Za funkcionisanje platforme</h3>
+      <ul class="data-list">
+        <li>Kreiranje i upravljanje tvojim nalogom</li>
+        <li>Prikazivanje tvojih oglasa ostalim korisnicima</li>
+        <li>Omogućavanje chata i sistema ponuda između korisnika</li>
+        <li>Slanje notifikacija o novim porukama, ponudama i aktivnosti</li>
+      </ul>
+
+      <h3>Za bezbednost i kvalitet</h3>
+      <ul class="data-list">
+        <li>Otkrivanje lažnih profila, spam aktivnosti i prevara</li>
+        <li>Rešavanje sporova između korisnika</li>
+        <li>Tehnička dijagnostika i otklanjanje grešaka</li>
+        <li>Poboljšanje funkcionalnosti na osnovu načina korišćenja</li>
+      </ul>
+
+      <div class="notice good">
+        <strong>Ne koristimo tvoje podatke za:</strong> prodaju oglašivačima, profilisanje u marketinške svrhe, ili deljenje sa bilo kojom trećom stranom radi njihove zarade.
+      </div>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="section" id="trece">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <h2>Treće strane</h2>
+    </div>
+    <div class="section-body">
+      <p>Koristimo ograničen broj pouzdanih servisa koji su neophodni za rad platforme. Svaki od njih obrađuje podatke isključivo u svrhu za koju je angažovan.</p>
+
+      <h3>Servisi koje koristimo</h3>
+      <ul class="data-list">
+        <li><strong style="font-weight:500;">Google (prijava)</strong> — autentikacija korisnika koji se prijavljuju Google nalogom</li>
+        <li><strong style="font-weight:500;">Hosting provajder</strong> — serveri na kojima platforma funkcioniše, smešteni u EU</li>
+        <li><strong style="font-weight:500;">Email servis</strong> — slanje transakcijskih mejlova (potvrda registracije, notifikacije)</li>
+        <li><strong style="font-weight:500;">Analitika</strong> — anonimizovani podaci o posećenosti, bez ličnih podataka</li>
+      </ul>
+
+      <p>Nijedan od ovih servisa ne dobija tvoje podatke radi vlastitog marketinga. Sa svima imamo ugovore o obradi podataka usklađene sa GDPR regulativom.</p>
+
+      <div class="notice warn">
+        <strong>Javni sadržaj:</strong> Oglasi koje objaviš su vidljivi svim korisnicima platforme, uključujući i neprijavljene posetioce. Nemoj unositi lične kontakt podatke direktno u oglas — za komunikaciju koristi interni chat.
+      </div>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="section" id="cuvanje">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <h2>Koliko dugo čuvamo podatke</h2>
+    </div>
+    <div class="section-body">
+      <p>Podatke čuvamo samo onoliko dugo koliko je neophodno za svrhu zbog koje su prikupljeni.</p>
+
+      <div class="retention-table">
+        <div class="ret-row header">
+          <div class="ret-cell">Vrsta podatka</div>
+          <div class="ret-cell">Period čuvanja</div>
+        </div>
+        <div class="ret-row">
+          <div class="ret-cell">Podaci naloga (aktivni korisnik)</div>
+          <div class="ret-cell">Dok je nalog aktivan</div>
+        </div>
+        <div class="ret-row">
+          <div class="ret-cell">Objavljeni oglasi</div>
+          <div class="ret-cell">Do brisanja od strane korisnika</div>
+        </div>
+        <div class="ret-row">
+          <div class="ret-cell">Chat poruke</div>
+          <div class="ret-cell">12 meseci od poslednje aktivnosti</div>
+        </div>
+        <div class="ret-row">
+          <div class="ret-cell">Ocene i recenzije</div>
+          <div class="ret-cell">Trajno (deo javnog profila)</div>
+        </div>
+        <div class="ret-row">
+          <div class="ret-cell">Tehnički logovi</div>
+          <div class="ret-cell">90 dana</div>
+        </div>
+        <div class="ret-row">
+          <div class="ret-cell">Podaci po brisanju naloga</div>
+          <div class="ret-cell">30 dana (backup), zatim trajno brisanje</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="section" id="prava">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <h2>Tvoja prava</h2>
+    </div>
+    <div class="section-body">
+      <p>U skladu sa Zakonom o zaštiti podataka o ličnosti Republike Srbije i GDPR regulativom, imaš sledeća prava:</p>
+
+      <div class="rights-grid">
+        <div class="right-item">
+          <div class="right-title">Pravo na uvid</div>
+          <p class="right-desc">Možeš zatražiti kopiju svih podataka koje čuvamo o tebi.</p>
+        </div>
+        <div class="right-item">
+          <div class="right-title">Pravo na ispravku</div>
+          <p class="right-desc">Možeš izmeniti netačne ili zastarele podatke u svom profilu.</p>
+        </div>
+        <div class="right-item">
+          <div class="right-title">Pravo na brisanje</div>
+          <p class="right-desc">Možeš zatražiti brisanje naloga i svih tvojih podataka.</p>
+        </div>
+        <div class="right-item">
+          <div class="right-title">Pravo na prenosivost</div>
+          <p class="right-desc">Možeš zatražiti izvoz tvojih podataka u čitljivom formatu.</p>
+        </div>
+        <div class="right-item">
+          <div class="right-title">Pravo na prigovor</div>
+          <p class="right-desc">Možeš prigovoriti određenim načinima obrade tvojih podataka.</p>
+        </div>
+        <div class="right-item">
+          <div class="right-title">Odjava notifikacija</div>
+          <p class="right-desc">Email notifikacije možeš isključiti u podešavanjima naloga.</p>
+        </div>
+      </div>
+
+      <p>Da ostvariš bilo koje od ovih prava, pošalji zahtev na <strong>privatnost@dajzameni.rs</strong>. Odgovaramo u roku od 30 dana.</p>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="section" id="kolacici">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <h2>Kolačići</h2>
+    </div>
+    <div class="section-body">
+      <p>Koristimo minimalan broj kolačića — samo one koji su neophodni za funkcionisanje sajta.</p>
+
+      <h3>Neophodni kolačići (uvek aktivni)</h3>
+      <ul class="data-list">
+        <li>Sesija prijave — da ostaneš ulogovan između poseta</li>
+        <li>Bezbednosni token — zaštita od CSRF napada</li>
+        <li>Tvoje preference (jezik, filteri pretrage)</li>
+      </ul>
+
+      <h3>Analitički kolačići (možeš odbiti)</h3>
+      <ul class="data-list">
+        <li>Anonimizovani podaci o posećenosti stranica — bez ličnih podataka</li>
+        <li>Koristimo ih isključivo da razumemo koje funkcije su korisne</li>
+      </ul>
+
+      <p>Ne koristimo reklamne kolačiće trećih strana. Nema Facebookovog pixela, nema Google Ads praćenja.</p>
+    </div>
+  </div>
+  <hr class="divider">
+
+  <div class="section" id="kontakt">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <h2>Kontakt za pitanja o privatnosti</h2>
+    </div>
+    <div class="section-body">
+      <p>Ako imaš pitanje, zahtev ili žalbu vezanu za privatnost tvojih podataka, možeš nas kontaktirati:</p>
+      <div class="contact-box">
+        <strong style="font-weight:500;">Daj Zameni</strong><br>
+        Email: <a href="mailto:privatnost@dajzameni.rs">privatnost@dajzameni.rs</a><br>
+        Web: <a href="https://dajzameni.rs">dajzameni.rs</a><br><br>
+        Ako smatraš da tvoja prava nisu ispoštovana, imaš pravo da podneseš pritužbu Povereniku za informacije od javnog značaja i zaštitu podataka o ličnosti Republike Srbije.
+      </div>
+    </div>
+  </div>
+
+  <p class="meta">Poslednja izmena: maj 2025. · Ova politika privatnosti važi za dajzameni.rs i sve prateće mobilne aplikacije.</p>
+
+</div>
+</body>
+</html>

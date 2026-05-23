@@ -92,6 +92,10 @@ def pravila_view(request):
     return render(request, 'core/pravila.html')
 
 
+def privatnost_view(request):
+    return render(request, 'core/privatnost.html')
+
+
 # ─────────────────────────────────────────
 #  AUTH VIEWS
 # ─────────────────────────────────────────
