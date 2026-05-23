@@ -638,6 +638,12 @@ def offer_respond(request, offer_id):
         if offer.status != 'pending':
             return JsonResponse({'error': 'Ponuda je već obrađena.'}, status=400)
 
+        # Snapshot values needed for side effects — referenced inside
+        # on_commit closures after the lock is released.
+        from_user      = offer.from_user
+        by_username    = request.user.username
+        listing_title  = offer.listing.title
+
         if action == 'accept':
             offer.status         = 'accepted'
             offer.listing.status = 'reserved'
@@ -647,33 +653,33 @@ def offer_respond(request, offer_id):
                 status='pending',
             ).exclude(pk=offer.pk).update(status='declined')
             Notification.objects.create(
-                user = offer.from_user,
+                user = from_user,
                 type = 'offer_accepted',
-                text = f'{request.user.username} je prihvatio/la tvoju ponudu za „{offer.listing.title}"',
+                text = f'{by_username} je prihvatio/la tvoju ponudu za „{listing_title}"',
             )
-            push_service.send_push_to_user(
-                offer.from_user,
+            transaction.on_commit(lambda: push_service.send_push_to_user(
+                from_user,
                 title='Ponuda prihvaćena!',
-                body=f'{request.user.username} je prihvatio/la ponudu za „{offer.listing.title}"',
+                body=f'{by_username} je prihvatio/la ponudu za „{listing_title}"',
                 url='/',
-            )
-            email_service.send_offer_accepted(
-                to_user       = offer.from_user,
-                by_username   = request.user.username,
-                listing_title = offer.listing.title,
-            )
+            ))
+            transaction.on_commit(lambda: email_service.send_offer_accepted(
+                to_user       = from_user,
+                by_username   = by_username,
+                listing_title = listing_title,
+            ))
         elif action == 'decline':
             offer.status = 'declined'
             Notification.objects.create(
-                user = offer.from_user,
+                user = from_user,
                 type = 'offer_declined',
-                text = f'{request.user.username} je odbio/la tvoju ponudu za „{offer.listing.title}"',
+                text = f'{by_username} je odbio/la tvoju ponudu za „{listing_title}"',
             )
-            email_service.send_offer_declined(
-                to_user       = offer.from_user,
-                by_username   = request.user.username,
-                listing_title = offer.listing.title,
-            )
+            transaction.on_commit(lambda: email_service.send_offer_declined(
+                to_user       = from_user,
+                by_username   = by_username,
+                listing_title = listing_title,
+            ))
         else:
             return JsonResponse({'error': 'Nevažeća akcija.'}, status=400)
 
