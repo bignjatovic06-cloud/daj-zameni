@@ -82,6 +82,11 @@ class Listing(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at'], name='listing_status_created_idx'),
+            models.Index(fields=['user', 'status'],        name='listing_user_status_idx'),
+            models.Index(fields=['category', 'status'],    name='listing_category_status_idx'),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -129,6 +134,10 @@ class SwapOffer(models.Model):
     updated_at          = models.DateTimeField(auto_now=True)
 
     class Meta:
+        indexes = [
+            models.Index(fields=['from_user', 'status'], name='offer_from_user_status_idx'),
+            models.Index(fields=['listing', 'status'],   name='offer_listing_status_idx'),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=['listing', 'from_user'],
@@ -160,6 +169,10 @@ class Message(models.Model):
 
     class Meta:
         ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['conversation', 'created_at'], name='message_conv_created_idx'),
+            models.Index(fields=['conversation', 'is_read'],    name='message_conv_read_idx'),
+        ]
 
     def __str__(self):
         return f"{self.sender}: {self.body[:40]}"
@@ -182,6 +195,9 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at'], name='notification_user_created_idx'),
+        ]
 
     def __str__(self):
         return f"{self.user} — {self.text[:40]}"
