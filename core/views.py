@@ -1227,10 +1227,14 @@ def push_subscribe(request):
     endpoint = data.get('endpoint', '')
     if not endpoint:
         return JsonResponse({'error': 'Nema endpoint-a.'}, status=400)
+    # Scope lookup to this user so we can't hijack another user's subscription.
+    # If someone else registered the same endpoint, evict them first (their
+    # browser session is gone anyway — same device, new login).
+    PushSubscription.objects.filter(endpoint=endpoint).exclude(user=request.user).delete()
     PushSubscription.objects.update_or_create(
+        user=request.user,
         endpoint=endpoint,
         defaults={
-            'user':              request.user,
             'subscription_json': json.dumps(data),
         },
     )
