@@ -139,10 +139,10 @@ AUTH_USER_MODEL = 'core.User'
 # ── Cache (koristi ga django-ratelimit) ─────────────────────────
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'django_cache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+SILENCED_SYSTEM_CHECKS = ['django_ratelimit.E003', 'django_ratelimit.W001']
 
 # ── Email (Resend HTTP API via Anymail) ─────────────────────────
 EMAIL_BACKEND      = 'anymail.backends.resend.EmailBackend'
