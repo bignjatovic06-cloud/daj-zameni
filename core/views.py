@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
@@ -128,8 +130,13 @@ def register(request):
         errors['email'] = ['Email adresa nije validna ili domen ne postoji.']
     elif User.objects.filter(email=email).exists():
         errors['email'] = ['Email je već registrovan.']
-    if len(password) < 8:
-        errors['password'] = ['Lozinka mora imati najmanje 8 karaktera.']
+    if not errors.get('password'):
+        # Build a temporary user so UserAttributeSimilarityValidator can compare
+        tmp_user = User(username=username, email=email)
+        try:
+            validate_password(password, tmp_user)
+        except ValidationError as e:
+            errors['password'] = list(e.messages)
 
     if errors:
         return JsonResponse(errors, status=400)
@@ -1003,8 +1010,10 @@ def change_password(request):
 
     if not request.user.check_password(old_password):
         return JsonResponse({'error': 'Pogrešna trenutna lozinka.'}, status=400)
-    if len(new_password) < 8:
-        return JsonResponse({'error': 'Nova lozinka mora imati najmanje 8 karaktera.'}, status=400)
+    try:
+        validate_password(new_password, request.user)
+    except ValidationError as e:
+        return JsonResponse({'error': ' '.join(e.messages)}, status=400)
 
     request.user.set_password(new_password)
     request.user.save()
