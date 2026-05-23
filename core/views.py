@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
 from django.db.models import Q, F, Avg, Count
@@ -395,36 +396,67 @@ ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
 ALLOWED_PIL_FORMATS = {'JPEG', 'PNG', 'WEBP'}
 
 
-def _validate_image(uploaded):
-    """Return None if the uploaded file is a real JPEG/PNG/WebP, else an
-    error string. content_type is client-supplied and spoofable, so we
-    decode the actual bytes with Pillow."""
-    import warnings
+MAX_IMAGE_PIXELS_CAP = 50_000_000  # ~50 megapixels
+
+
+def _clean_image(uploaded):
+    """Validate the uploaded file is a real JPEG/PNG/WebP within the
+    pixel cap, then return a freshly re-encoded copy with all metadata
+    stripped (EXIF/GPS, color profiles, comments). content_type is
+    client-supplied and unreliable, so we decode the actual bytes.
+
+    Returns (error_or_None, sanitized_file_or_None).
+    """
+    import io
     from PIL import Image, UnidentifiedImageError
-    # Cap pixel count and treat the DecompressionBomb warning as an error
-    # so we reject crafted files declaring huge dimensions before Pillow
-    # tries to decode them. Pillow raises DecompressionBombWarning above
-    # MAX_IMAGE_PIXELS and DecompressionBombError above 2× that.
-    Image.MAX_IMAGE_PIXELS = 50_000_000  # ~50 megapixels
+    from django.core.files.base import ContentFile
+
     try:
         uploaded.seek(0)
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', Image.DecompressionBombWarning)
-            with Image.open(uploaded) as im:
-                im.verify()
-                fmt = im.format
-    except (Image.DecompressionBombWarning, Image.DecompressionBombError):
-        return 'Slika je prevelika.'
+        # Image.open is lazy — opens just the header. We do an explicit
+        # size check before load() so a billion-pixel bomb is rejected
+        # before any decode. This sidesteps warnings.catch_warnings()
+        # which mutates process-global state and is not thread-safe.
+        im = Image.open(uploaded)
+        fmt = im.format
+        if fmt not in ALLOWED_PIL_FORMATS:
+            return 'Podržani formati: JPG, PNG, WebP.', None
+        w, h = im.size
+        if w <= 0 or h <= 0:
+            return 'Fajl nije validna slika.', None
+        if w * h > MAX_IMAGE_PIXELS_CAP:
+            return 'Slika je prevelika.', None
+        im.load()  # actually decode pixels
+    except Image.DecompressionBombError:
+        # Pillow does its own bomb pre-check at a larger global threshold
+        # and raises this before our explicit check fires.
+        return 'Slika je prevelika.', None
     except (UnidentifiedImageError, OSError, ValueError, SyntaxError):
-        return 'Fajl nije validna slika.'
+        return 'Fajl nije validna slika.', None
     finally:
         try:
             uploaded.seek(0)
         except (IOError, ValueError) as e:
             logger.warning('Could not rewind uploaded file: %s', e)
-    if fmt not in ALLOWED_PIL_FORMATS:
-        return 'Podržani formati: JPG, PNG, WebP.'
-    return None
+
+    # Re-encode, dropping all metadata. Not passing exif= / icc_profile=
+    # to save() means none is written.
+    out = io.BytesIO()
+    save_kwargs = {}
+    if fmt == 'JPEG':
+        save_kwargs['quality'] = 90
+        save_kwargs['optimize'] = True
+        # JPEG can't store alpha or palette — coerce to RGB.
+        if im.mode not in ('RGB', 'L'):
+            im = im.convert('RGB')
+    elif fmt == 'PNG':
+        save_kwargs['optimize'] = True
+    im.save(out, format=fmt, **save_kwargs)
+    out.seek(0)
+
+    ext_map = {'JPEG': 'jpg', 'PNG': 'png', 'WEBP': 'webp'}
+    safe_name = f'upload.{ext_map[fmt]}'
+    return None, ContentFile(out.read(), name=safe_name)
 
 
 @login_required
@@ -442,6 +474,7 @@ def listing_image_upload(request, pk):
             'error': f'Maksimalno {MAX_IMAGES_PER_LISTING} slika po oglasu.'
         }, status=400)
 
+    cleaned = []
     for img in images:
         if img.size > MAX_IMAGE_SIZE:
             return JsonResponse({
@@ -451,16 +484,17 @@ def listing_image_upload(request, pk):
             return JsonResponse({
                 'error': f'"{img.name}" nije podržan format (JPG, PNG ili WebP).'
             }, status=400)
-        err = _validate_image(img)
+        err, clean = _clean_image(img)
         if err:
             return JsonResponse({'error': f'"{img.name}": {err}'}, status=400)
+        cleaned.append(clean)
 
     created = []
-    for i, img in enumerate(images):
+    for i, clean in enumerate(cleaned):
         is_cover = (i == 0 and not listing.images.exists())
         li = ListingImage.objects.create(
             listing  = listing,
-            image    = img,
+            image    = clean,
             is_cover = is_cover,
             order    = listing.images.count(),
         )
@@ -1041,6 +1075,7 @@ def chat(request, conversation_id):
     })
 
 
+@ratelimit(key='user', rate='60/h', method='DELETE', block=True)
 @login_required
 def delete_message(request, conversation_id, message_id):
     if request.method != 'DELETE':
@@ -1055,6 +1090,7 @@ def delete_message(request, conversation_id, message_id):
     return JsonResponse({'ok': True})
 
 
+@ratelimit(key='user', rate='30/h', method='DELETE', block=True)
 @login_required
 def delete_conversation(request, conversation_id):
     if request.method != 'DELETE':
@@ -1122,10 +1158,10 @@ def profile_avatar(request):
         return JsonResponse({'error': 'Slika ne sme biti veća od 5 MB.'}, status=400)
     if img.content_type not in ALLOWED_IMAGE_TYPES:
         return JsonResponse({'error': 'Podržani formati: JPG, PNG, WebP.'}, status=400)
-    err = _validate_image(img)
+    err, clean = _clean_image(img)
     if err:
         return JsonResponse({'error': err}, status=400)
-    request.user.avatar = img
+    request.user.avatar = clean
     request.user.save()
     return JsonResponse({'ok': True, 'avatar': request.user.avatar.url})
 
@@ -1153,17 +1189,26 @@ def change_password(request):
     return JsonResponse({'ok': True})
 
 
+@never_cache
 @ratelimit(key='ip', rate='20/h', method=['GET', 'POST'], block=True)
 def verify_email(request, token):
     # GET shows a confirm-button page; POST performs the verification.
     # This keeps link-preview / antivirus prefetchers (which only GET)
     # from auto-verifying the account, and keeps the state change behind
-    # CSRF + a real user gesture.
+    # CSRF + a real user gesture. @never_cache ensures Cloudflare can't
+    # share the CSRF cookie/token across users via aggressive cache
+    # rules.
     user = User.objects.filter(email_verification_token=token, is_verified=False).first()
     if not user:
         return redirect('/?verified=invalid')
     if not user.email_verification_sent_at or timezone.now() - user.email_verification_sent_at > EMAIL_VERIFICATION_TTL:
         return redirect('/?verified=expired')
+
+    # If a different user is already logged in, refuse — otherwise a POST
+    # to a victim's verification URL would silently switch their session
+    # over to the attacker's pending account.
+    if request.user.is_authenticated and request.user.pk != user.pk:
+        return redirect('/?verified=other_session')
 
     if request.method == 'POST':
         user.is_verified = True
