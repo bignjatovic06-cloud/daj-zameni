@@ -395,6 +395,7 @@ function RegisterModal({ onClose, onSuccess, onSwitchToLogin }) {
   const [password, setPassword] = useS('');
   const [error, setError]       = useS('');
   const [loading, setLoading]   = useS(false);
+  const [pending, setPending]   = useS(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -403,9 +404,41 @@ function RegisterModal({ onClose, onSuccess, onSwitchToLogin }) {
     setLoading(true);
     const res = await apiRegister(username, email, password);
     setLoading(false);
-    if (res.ok) { onSuccess(res.user); onClose(); }
-    else setError(res.error || 'Greška pri registraciji.');
+    if (res.ok && res.pending_verification) {
+      setPending(true);
+      return;
+    }
+    if (res.ok) { onSuccess(res.user); onClose(); return; }
+    // Surface the first specific field error if backend returned one
+    const firstFieldErr = (res.username && res.username[0]) || (res.password && res.password[0]) || (res.email && res.email[0]);
+    setError(firstFieldErr || res.error || 'Greška pri registraciji.');
   };
+
+  if (pending) {
+    return (
+      <div className="scrim" onClick={onClose}>
+        <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+          <div className="mh">
+            <h3>Proveri inbox</h3>
+            <button className="x-btn" onClick={onClose}><Icon name="x" size={16}/></button>
+          </div>
+          <div className="mb" style={{ textAlign: 'center', padding: '24px 8px' }}>
+            <div style={{ fontSize: 44, marginBottom: 12 }}>📬</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 10, color: 'var(--ink)' }}>
+              Poslat ti je verifikacioni email.
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--ink-3)', lineHeight: 1.55, marginBottom: 22 }}>
+              Klikni na link u poruci da aktiviraš nalog i da te ulogujemo.
+              Ako ne vidiš email u inbox-u, proveri spam.
+            </div>
+            <button className="nav-btn primary" onClick={onClose} style={{ width: '100%', justifyContent: 'center', height: 42, fontSize: 15 }}>
+              U redu
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="scrim" onClick={onClose}>

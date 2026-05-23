@@ -121,6 +121,29 @@ def send_verification_email(user):
         to_email=user.email,
     )
 
+def send_duplicate_registration_attempt(user):
+    """Existing user is notified that someone tried to register with their email."""
+    if not user.email:
+        return
+
+    content = (
+        _h('Pokušaj registracije sa tvojom email adresom') +
+        _p(f'Zdravo <strong>{_e(user.username)}</strong>,') +
+        _p('Neko je upravo pokušao da napravi nalog na Daj Zameni koristeći tvoju email adresu.') +
+        _p('Ako si to bio/la ti — već imaš nalog, samo se uloguj kao i obično. Ako nisi ti — ne treba ništa da preduzimaš; nalog nije napravljen.') +
+        _btn('Uloguj se →', SITE_URL) +
+        '<p style="margin:16px 0 0;font-size:13px;color:#9ca3af;">Ako misliš da neko pokušava da pristupi tvom nalogu, promeni lozinku.</p>'
+    )
+    text = f'Neko je pokušao da napravi nalog sa tvojom email adresom na Daj Zameni. Ako nisi ti, ignoriši — nalog nije napravljen. Login: {SITE_URL}'
+
+    _send_async(
+        subject='Pokušaj registracije sa tvojom email adresom — Daj Zameni',
+        text_body=text,
+        html_body=_wrap(content, 'Pokušaj registracije'),
+        to_email=user.email,
+    )
+
+
 def send_new_offer(to_user, from_username, listing_title, offered_title, cash_offer, message):
     """Listing owner receives: someone wants to swap."""
     if not to_user.email:

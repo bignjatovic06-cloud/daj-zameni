@@ -127,6 +127,8 @@ def register(request):
     password = data.get('password', '')
 
     errors = {}
+    # Username collisions are inherently public — anyone can probe
+    # /profile/<username>/ — so revealing them here adds no enumeration.
     if not username:
         errors['username'] = ['Korisničko ime je obavezno.']
     elif User.objects.filter(username=username).exists():
@@ -135,10 +137,9 @@ def register(request):
         errors['email'] = ['Email je obavezan.']
     elif not _email_domain_valid(email):
         errors['email'] = ['Email adresa nije validna ili domen ne postoji.']
-    elif User.objects.filter(email=email).exists():
-        errors['email'] = ['Email je već registrovan.']
+    # NOTE: email uniqueness is NOT checked here. Doing so would let an
+    # attacker enumerate which addresses are registered.
     if not errors.get('password'):
-        # Build a temporary user so UserAttributeSimilarityValidator can compare
         tmp_user = User(username=username, email=email)
         try:
             validate_password(password, tmp_user)
@@ -148,13 +149,21 @@ def register(request):
     if errors:
         return JsonResponse(errors, status=400)
 
-    user = User.objects.create_user(username=username, email=email, password=password)
-    user.email_verification_token = uuid.uuid4()
-    user.email_verification_sent_at = timezone.now()
-    user.save()
-    email_service.send_verification_email(user)
-    login(request, user)
-    return JsonResponse({'user': _self_data(user)}, status=201)
+    # Post-validation: handle email collision invisibly. The response
+    # shape and status must be identical to the success branch — the
+    # attacker is purely API-driven and can not differentiate.
+    existing = User.objects.filter(email=email).first()
+    if existing:
+        email_service.send_duplicate_registration_attempt(existing)
+    else:
+        user = User.objects.create_user(username=username, email=email, password=password)
+        user.email_verification_token = uuid.uuid4()
+        user.email_verification_sent_at = timezone.now()
+        user.save()
+        email_service.send_verification_email(user)
+    # Do NOT call login() here — auto-login would reveal new vs duplicate
+    # via the session cookie. User logs in by clicking the link in mail.
+    return JsonResponse({'pending_verification': True}, status=201)
 
 
 @ratelimit(key='ip', rate='10/m', method='POST', block=True)
@@ -1116,6 +1125,7 @@ def verify_email(request, token):
     user.email_verification_token = None
     user.email_verification_sent_at = None
     user.save()
+    login(request, user)
     return redirect('/?verified=1')
 
 
