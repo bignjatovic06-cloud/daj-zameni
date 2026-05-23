@@ -249,6 +249,7 @@ def listing_detail(request, pk):
     return JsonResponse(_listing_data(listing, full=True, show_saves=is_owner))
 
 
+@ratelimit(key='user', rate='10/h', method='POST', block=True)
 @login_required
 @require_http_methods(['POST'])
 def listing_create(request):
@@ -873,6 +874,7 @@ def inbox(request):
     return JsonResponse({'results': data})
 
 
+@ratelimit(key='user', rate='60/m', method='GET', block=True)
 @ratelimit(key='user', rate='30/m', method='POST', block=True)
 @login_required
 def chat(request, conversation_id):
@@ -991,6 +993,7 @@ def profile(request):
     })
 
 
+@ratelimit(key='user', rate='10/h', method='POST', block=True)
 @login_required
 @require_POST
 def profile_avatar(request):
@@ -1004,6 +1007,7 @@ def profile_avatar(request):
     return JsonResponse({'ok': True, 'avatar': request.user.avatar.url})
 
 
+@ratelimit(key='user', rate='5/h', method='POST', block=True)
 @login_required
 @require_POST
 def change_password(request):
@@ -1039,6 +1043,7 @@ def verify_email(request, token):
     return redirect('/?verified=1')
 
 
+@ratelimit(key='user', rate='3/h', method='POST', block=True)
 @login_required
 @require_POST
 def resend_verification(request):
@@ -1232,6 +1237,7 @@ def listing_reserve(request, pk):
 #  PUSH SUBSCRIPTIONS
 # ─────────────────────────────────────────
 
+@ratelimit(key='user', rate='10/h', method='POST', block=True)
 @login_required
 @require_POST
 def push_subscribe(request):
