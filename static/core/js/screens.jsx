@@ -1890,14 +1890,6 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
                   <div style={{ marginTop: 10, fontSize: 13, color: 'var(--ink-2)', borderTop: '1px solid var(--line)', paddingTop: 10 }}>{desc}</div>
                 ) : null}
               </div>
-              <div style={{ padding: 16, background: 'linear-gradient(135deg,#1e3a5f 0%,#2d5a8e 100%)', borderRadius: 12, color: '#fff', marginBottom: 16 }}>
-                <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '.08em', opacity: .7, marginBottom: 4 }}>★ PREMIUM OGLAS</div>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Istakni oglas i dobij 3x više pregleda</div>
-                <div style={{ fontSize: 12, opacity: .8, marginBottom: 12 }}>Premium oglasi se prikazuju prvi u pretrazi i imaju oznaku prioriteta.</div>
-                <button style={{ background: '#fff', color: '#1e3a5f', border: 0, borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                  Saznaj više →
-                </button>
-              </div>
               <label style={{ display: 'flex', gap: 10, fontSize: 13.5, color: 'var(--ink-2)', cursor: 'pointer' }}>
                 <input type="checkbox" defaultChecked/>
                 Slažem se sa <a style={{ color: 'var(--accent)', fontWeight: 600 }}>pravilima zajednice</a>
