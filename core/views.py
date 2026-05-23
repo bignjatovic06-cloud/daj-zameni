@@ -96,6 +96,10 @@ def privatnost_view(request):
     return render(request, 'core/privatnost.html')
 
 
+def pomoc_view(request):
+    return render(request, 'core/pomoc.html')
+
+
 # ─────────────────────────────────────────
 #  AUTH VIEWS
 # ─────────────────────────────────────────

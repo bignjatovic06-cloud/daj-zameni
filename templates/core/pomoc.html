@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pomoć — Daj Zameni</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #0F6E56;
+    --amber: #EF9F27;
+    --amber-light: #FAEEDA;
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --ink: #1a1a18;
+    --muted: #6b6b66;
+    --border: #e8e6df;
+    --bg: #fafaf7;
+    --white: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 5rem 2rem 6rem;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 1.25rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 3rem;
+  }
+
+  .search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    padding: 0.85rem 1.25rem;
+  }
+
+  .search-bar input::placeholder { color: var(--muted); }
+
+  .search-btn {
+    background: var(--green);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.85rem 1.5rem;
+    transition: background 0.2s;
+  }
+
+  .search-btn:hover { background: var(--green-dark); }
+
+  .quick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 3.5rem;
+  }
+
+  .quick-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-decoration: none;
+    transition: border-color 0.15s;
+    display: block;
+  }
+
+  .quick-card:hover { border-color: var(--green); }
+
+  .quick-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+
+  .quick-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .faq-group { margin-bottom: 3rem; }
+
+  details {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+
+  details[open] { border-color: var(--green); }
+
+  summary {
+    font-size: 0.97rem;
+    font-weight: 500;
+    color: var(--ink);
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+
+  summary::after {
+    content: '+';
+    font-size: 1.2rem;
+    font-weight: 300;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+
+  details[open] summary::after { content: '–'; }
+
+  .faq-body {
+    padding: 1rem 1.25rem 1.25rem;
+    font-size: 0.93rem;
+    color: #3a3a36;
+    line-height: 1.75;
+    border-top: 1px solid var(--border);
+  }
+
+  .faq-body p { margin-bottom: 0.6rem; }
+  .faq-body p:last-child { margin-bottom: 0; }
+
+  .faq-body ul {
+    padding-left: 1.25rem;
+    margin: 0.5rem 0;
+  }
+
+  .faq-body ul li { margin-bottom: 0.35rem; }
+
+  .faq-body a { color: var(--green-dark); text-decoration: none; }
+  .faq-body a:hover { text-decoration: underline; }
+
+  .notice {
+    border-radius: 8px;
+    padding: 0.85rem 1.1rem;
+    margin: 0.75rem 0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .notice.warn {
+    background: var(--amber-light);
+    color: #633806;
+    border-left: 3px solid var(--amber);
+  }
+
+  .notice.good {
+    background: var(--green-light);
+    color: var(--green-dark);
+    border-left: 3px solid var(--green);
+  }
+
+  .notice.danger {
+    background: var(--red-light);
+    color: #791F1F;
+    border-left: 3px solid var(--red);
+  }
+
+  .notice strong { font-weight: 500; }
+
+  .contact-section {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 1rem;
+  }
+
+  .contact-section > p {
+    font-size: 0.93rem;
+    color: #3a3a36;
+    line-height: 1.7;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 1.25rem;
+  }
+
+  .contact-item { background: var(--bg); padding: 1.25rem; }
+
+  .contact-icon { font-size: 1.1rem; margin-bottom: 0.4rem; }
+
+  .contact-type {
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .contact-value {
+    font-size: 0.9rem;
+    color: var(--green-dark);
+    font-weight: 500;
+  }
+
+  .contact-value a { color: var(--green-dark); text-decoration: none; }
+  .contact-value a:hover { text-decoration: underline; }
+
+  .contact-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+  }
+
+  .meta {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .meta a { color: var(--green-dark); text-decoration: none; }
+  .meta a:hover { text-decoration: underline; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .page > * { animation: fadeUp 0.45s ease both; }
+  .page > *:nth-child(2) { animation-delay: 0.06s; }
+  .page > *:nth-child(3) { animation-delay: 0.12s; }
+  .page > *:nth-child(4) { animation-delay: 0.18s; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <p class="eyebrow">Pomoć</p>
+  <h1>Kako ti možemo pomoći?</h1>
+  <p class="lead">Pronađi odgovore na najčešća pitanja ili nas kontaktiraj direktno — tu smo.</p>
+
+  <div class="search-bar">
+    <input type="text" placeholder="Pretraži pitanja, npr. 'kako da objavim oglas'..." />
+    <button class="search-btn">Pretraži</button>
+  </div>
+
+  <div class="quick-grid">
+    <a class="quick-card" href="#nalog">
+      <div class="quick-icon">👤</div>
+      <div class="quick-title">Nalog i prijava</div>
+    </a>
+    <a class="quick-card" href="#oglasi">
+      <div class="quick-icon">📋</div>
+      <div class="quick-title">Oglasi</div>
+    </a>
+    <a class="quick-card" href="#razmena">
+      <div class="quick-icon">🔄</div>
+      <div class="quick-title">Razmena i prodaja</div>
+    </a>
+    <a class="quick-card" href="#slanje">
+      <div class="quick-icon">📦</div>
+      <div class="quick-title">Slanje kurirski</div>
+    </a>
+    <a class="quick-card" href="#bezbednost">
+      <div class="quick-icon">🛡️</div>
+      <div class="quick-title">Bezbednost</div>
+    </a>
+    <a class="quick-card" href="#kontakt">
+      <div class="quick-icon">✉️</div>
+      <div class="quick-title">Kontaktiraj nas</div>
+    </a>
+  </div>
+
+  <div class="faq-group" id="nalog">
+    <p class="section-label">Nalog i prijava</p>
+
+    <details>
+      <summary>Kako da se registrujem?</summary>
+      <div class="faq-body">
+        <p>Registracija traje manje od minut. Idi na <strong>dajzameni.rs</strong> i klikni na dugme <em>Registruj se</em> u gornjem desnom uglu. Možeš se prijaviti putem email adrese ili Google naloga.</p>
+        <p>Ako se registruješ emailom, poslaćemo ti poruku za potvrdu — klikni na link u mejlu i nalog je aktivan.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Zaboravio/la sam lozinku. Šta da radim?</summary>
+      <div class="faq-body">
+        <p>Na stranici za prijavu klikni na <em>Zaboravio/la si lozinku?</em> Upiši svoju email adresu i poslaćemo ti link za resetovanje. Link važi 30 minuta.</p>
+        <div class="notice warn"><strong>Napomena:</strong> Ako si se registrovao/la Google nalogom, lozinku menjaš direktno u Google podešavanjima.</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Kako da izmenim podatke na profilu?</summary>
+      <div class="faq-body">
+        <p>Idi na <em>Moj profil → Uredi profil</em>. Tamo možeš promeniti ime, grad, profilnu fotografiju i kontakt podatke. Promena email adrese zahteva potvrdu na novu adresu.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Kako da obrišem nalog?</summary>
+      <div class="faq-body">
+        <p>Idi na <em>Podešavanja → Nalog → Obriši nalog</em>. Brisanje je trajno — svi tvoji oglasi, poruke i ocene biće uklonjeni u roku od 30 dana. Preporučujemo da pre brisanja arhiviraš podatke koji su ti važni.</p>
+        <p>Ako imaš aktivne dogovore, završi ih pre brisanja iz poštovanja prema drugoj strani.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Mogu li imati više naloga?</summary>
+      <div class="faq-body">
+        <p>Ne. Svaka osoba može imati samo jedan nalog. Višestruki nalozi su kršenje pravila zajednice i mogu dovesti do trajne blokade svih naloga. Ako imaš problem s pristupom svom nalogu, kontaktiraj nas — pomoći ćemo ti da ga vratiš.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="faq-group" id="oglasi">
+    <p class="section-label">Oglasi</p>
+
+    <details>
+      <summary>Kako da objavim oglas?</summary>
+      <div class="faq-body">
+        <p>Klikni na dugme <em>Objavi oglas</em> u navigaciji. Prolazi kroz korake:</p>
+        <ul>
+          <li>Dodaj do 10 fotografija predmeta (obavezno originalne)</li>
+          <li>Upiši naziv, opis i stanje predmeta</li>
+          <li>Odaberi kategoriju i grad</li>
+          <li>Postavi cenu ili označi da li si otvoren za razmenu</li>
+        </ul>
+        <p>Oglas postaje vidljiv odmah po objavljivanju.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Koliko oglasa mogu imati istovremeno?</summary>
+      <div class="faq-body">
+        <p>U beta fazi, svaki korisnik može imati do 20 aktivnih oglasa u isto vreme. Ako ti treba više, javi nam se — razmatramo povećanje limita.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Kako da izmenim ili obrišem oglas?</summary>
+      <div class="faq-body">
+        <p>Idi na <em>Moji oglasi</em> i klikni na oglas koji želiš da menjaš. Tamo ćeš naći opcije <em>Uredi</em> i <em>Obriši</em>. Izmene su vidljive odmah.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Zašto moj oglas nije vidljiv u pretrazi?</summary>
+      <div class="faq-body">
+        <p>Nekoliko mogućih razloga:</p>
+        <ul>
+          <li>Oglas je u statusu <em>Neaktivan</em> — proveri u <em>Moji oglasi</em> i aktiviraj ga</li>
+          <li>Nisi odabrao/la tačnu kategoriju — probaj ponovo da pretražuješ u drugoj kategoriji</li>
+          <li>Oglas je uklonjen zbog kršenja pravila — proverite email za obaveštenje</li>
+        </ul>
+        <p>Ako problem ostaje, kontaktiraj nas.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Mogu li označiti oglas kao prodat / zamenjen?</summary>
+      <div class="faq-body">
+        <p>Da. U <em>Moji oglasi</em> klikni na oglas i odaberi <em>Označi kao završeno</em>. Oglas se sklanja iz aktivne pretrage, ali ostaje u tvojoj istoriji. Nakon toga, sistem će te pozvati da oceniš drugu stranu.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="faq-group" id="razmena">
+    <p class="section-label">Razmena i prodaja</p>
+
+    <details>
+      <summary>Kako funkcioniše sistem ponuda?</summary>
+      <div class="faq-body">
+        <p>Na svakom oglasu postoji dugme <em>Pošalji ponudu</em>. Možeš ponuditi:</p>
+        <ul>
+          <li><strong>Otkup</strong> — predlažeš novčani iznos</li>
+          <li><strong>Razmenu</strong> — prilagaš jedan ili više svojih predmeta</li>
+          <li><strong>Kombinaciju</strong> — predmet plus doplate</li>
+        </ul>
+        <p>Vlasnik oglasa dobija notifikaciju i može prihvatiti, odbiti ili kontrirati. Sva komunikacija se vodi unutar chata vezanog za oglas.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Da li Daj Zameni naplaćuje proviziju?</summary>
+      <div class="faq-body">
+        <div class="notice good"><strong>Ne.</strong> Platforma je potpuno besplatna za korišćenje. Nema provizije ni na prodaju ni na razmenu. Dogovor je direktno između tebe i druge osobe.</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Šta ako se druga strana ne pojavi na dogovorenom mestu?</summary>
+      <div class="faq-body">
+        <p>Najpre pokušaj da je kontaktiraš putem chata. Ako ne reaguje u razumnom roku, možeš prijaviti korisnika putem dugmeta <em>Prijavi</em> na profilu. Ponavljano nedolaženje bez otkazivanja smatra se kršenjem pravila zajednice i može dovesti do suspenzije naloga.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Kako funkcionišu ocene korisnika?</summary>
+      <div class="faq-body">
+        <p>Nakon završene transakcije (kada se oglas označi kao završen), obe strane dobijaju poziv da ocene jedna drugu. Ocena je od 1 do 5 zvezda, uz opcioni komentar.</p>
+        <p>Ocene su javne i vidljive na profilu korisnika. Ne možeš oceniti nekog s kim nisi imao završenu transakciju.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="faq-group" id="slanje">
+    <p class="section-label">Slanje kurirskim službama</p>
+
+    <details>
+      <summary>Koje kurirske službe mogu da koristim?</summary>
+      <div class="faq-body">
+        <p>Daj Zameni nije vezan za konkretnu kurirsku službu — biraš onu koja tebi i kupcu/zamenjivaru odgovara. U Srbiji su najčešće u upotrebi:</p>
+        <ul>
+          <li>Post Express (Pošta Srbije)</li>
+          <li>D Express</li>
+          <li>City Express</li>
+          <li>BEX Express</li>
+        </ul>
+        <p>Dogovorite se u chatu ko plaća troškove dostave pre nego što pošalješ paket.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Ko plaća troškove slanja?</summary>
+      <div class="faq-body">
+        <p>To je dogovor između tebe i druge strane — platforma ne propisuje ko snosi troškove. Najčešći modeli su:</p>
+        <ul>
+          <li>Kupac plaća dostavu (najuobičajenije)</li>
+          <li>Prodavac uključuje dostavu u cenu</li>
+          <li>Svako plaća svoju stranu (kod razmene)</li>
+        </ul>
+        <p>Uvek to jasno definiši u chatu pre slanja, kako ne bi bilo nesporazuma.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Šta je pouzeće i zašto se preporučuje?</summary>
+      <div class="faq-body">
+        <p>Pouzeće (otkupnina) znači da kupac plaća kuriru tek kada preuzme paket. Kurir zatim taj novac prebacuje tebi kao pošiljaocu.</p>
+        <div class="notice good"><strong>Preporučujemo pouzeće</strong> uvek kada šalješ nekome ko nema ocena ili ko ti nije poznat — štiti obe strane od prevare.</div>
+        <p>Avansna uplata na račun ili Viber Pay je u redu samo s korisnicima koji imaju dobre ocene i istorijat — i tada je rizik manji.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Paket je stigao oštećen. Šta da radim?</summary>
+      <div class="faq-body">
+        <p>Odmah fotografiši paket i predmet pre nego što ga potpišeš ili odneseš kući. Reklamaciju upućuješ direktno kurirskoj službi — oni su odgovorni za oštećenje u transportu.</p>
+        <p>Daj Zameni nije strana u kurirskim transakcijama i ne može rešavati sporove s kuririma. Možemo ti pomoći da komuniciraš s prodavcem ako dođe do nesporazuma — piši nam na <a href="mailto:podrska@dajzameni.rs">podrska@dajzameni.rs</a>.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Predmet koji sam primio ne odgovara opisu. Šta mogu da uradim?</summary>
+      <div class="faq-body">
+        <p>Najpre kontaktiraj prodavca putem chata i pokušajte da se dogovorite. Ako ne možete da nađete rešenje, prijavi oglas i korisnika kroz platformu uz što više detalja i fotografija. Naš tim će pregledati slučaj i reagovati.</p>
+        <div class="notice danger"><strong>Važno:</strong> Za povraćaj novca ili predmeta koji je plaćen pouzećem, kurirska služba ima sopstveni postupak reklamacije — kontaktiraj ih direktno.</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="faq-group" id="bezbednost">
+    <p class="section-label">Bezbednost</p>
+
+    <details>
+      <summary>Kako da prijavim sumnjiv oglas ili korisnika?</summary>
+      <div class="faq-body">
+        <p>Na svakom oglasu i profilu postoji dugme <em>Prijavi</em>. Klikni na njega, odaberi razlog (lažan oglas, prevara, uvredljiv sadržaj...) i pošalji prijavu. Naš tim reaguje u roku od 24 sata.</p>
+        <p>Ako smatraš da si u opasnosti ili da se radi o kriminalnoj aktivnosti, odmah kontaktiraj policiju.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Kako da prepoznam prevaru?</summary>
+      <div class="faq-body">
+        <p>Pazi na ove znakove upozorenja:</p>
+        <ul>
+          <li>Traženje avansne uplate pre nego što pošalju predmet, bez ocena na profilu</li>
+          <li>Cena koja je neuobičajeno niska za predmet koji se nudi</li>
+          <li>Predlog da se komunikacija nastavi van platforme (WhatsApp, Viber, email)</li>
+          <li>Žurba i pritisak da što pre platiš ili prihvatiš dogovor</li>
+          <li>Fotografije preuzete s interneta umesto originalnih</li>
+        </ul>
+        <div class="notice warn"><strong>Zlatno pravilo:</strong> Ako nešto zvuči previše dobro da bi bilo istinito — verovatno jeste.</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Da li je moj broj telefona vidljiv drugima?</summary>
+      <div class="faq-body">
+        <p>Ne — broj telefona nikada ne objavljujemo javno. Komunikacija se odvija isključivo putem internog chata. Sami odlučuješ hoćeš li podeliti kontakt podatke s drugom stranom, i preporučujemo da to radiš tek kad stekneš poverenje kroz razgovor na platformi.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Kako da blokiram korisnika?</summary>
+      <div class="faq-body">
+        <p>Na profilu korisnika ili u chatu klikni na tri tačkice (⋯) i odaberi <em>Blokiraj korisnika</em>. Blokirani korisnik neće moći da ti šalje poruke niti da vidi tvoje oglase. Blokadu možeš poništiti u <em>Podešavanjima → Blokirani korisnici</em>.</p>
+      </div>
+    </details>
+  </div>
+
+  <div id="kontakt">
+    <p class="section-label">Nisi pronašao odgovor?</p>
+    <div class="contact-section">
+      <h2>Kontaktiraj nas</h2>
+      <p>Naš tim je dostupan svakog radnog dana. Trudimo se da odgovorimo u roku od jednog radnog dana — obično brže.</p>
+      <div class="contact-grid">
+        <div class="contact-item">
+          <div class="contact-icon">✉️</div>
+          <div class="contact-type">Email podrška</div>
+          <div class="contact-value"><a href="mailto:podrska@dajzameni.rs">podrska@dajzameni.rs</a></div>
+          <div class="contact-note">Odgovaramo do 24h radnim danom</div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">🔒</div>
+          <div class="contact-type">Privatnost i podaci</div>
+          <div class="contact-value"><a href="mailto:privatnost@dajzameni.rs">privatnost@dajzameni.rs</a></div>
+          <div class="contact-note">Zahtevi za podatke i GDPR</div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">⚠️</div>
+          <div class="contact-type">Hitne prijave</div>
+          <div class="contact-value"><a href="mailto:podrska@dajzameni.rs">podrska@dajzameni.rs</a></div>
+          <div class="contact-note">Označi naslov sa "HITNO"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="meta">Poslednja izmena: maj 2025. · <a href="/pravila/">Pravila zajednice</a> · <a href="/privatnost/">Politika privatnosti</a></p>
+
+</div>
+</body>
+</html>

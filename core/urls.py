@@ -66,6 +66,7 @@ urlpatterns = [
     path('o-nama/', views.about_view, name='about'),
     path('pravila/', views.pravila_view, name='pravila'),
     path('privatnost/', views.privatnost_view, name='privatnost'),
+    path('pomoc/', views.pomoc_view, name='pomoc'),
 
     # ─── SPA catch-all — mora biti poslednji ──────────────
     re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja|profil)(?:/.*)?$', views.app_view, name='spa_catchall'),
