@@ -32,6 +32,12 @@ VALID_LISTING_TYPES  = {'sell', 'barter', 'both'}
 VALID_CONDITIONS     = {'new', 'like_new', 'good', 'fair', 'poor', 'antique'}
 VALID_OWNER_STATUSES = {'active', 'closed'}
 
+MAX_TITLE_LEN       = 200
+MAX_DESCRIPTION_LEN = 5000
+MAX_WANTS_LEN       = 2000
+MAX_CITY_LEN        = 100
+MAX_MESSAGE_LEN     = 5000
+
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 def _email_domain_valid(email):
@@ -266,9 +272,21 @@ def listing_create(request):
     if condition not in VALID_CONDITIONS:
         return JsonResponse({'error': 'Nevažeće stanje predmeta.'}, status=400)
 
-    title = data.get('title', '').strip()
+    title       = data.get('title', '').strip()
+    description = data.get('description', '').strip()
+    city        = data.get('city', '').strip()
+    wants       = data.get('wants_in_exchange', '').strip()
+
     if not title:
         return JsonResponse({'error': 'Naslov je obavezan.'}, status=400)
+    if len(title) > MAX_TITLE_LEN:
+        return JsonResponse({'error': f'Naslov je predug (maks. {MAX_TITLE_LEN} karaktera).'}, status=400)
+    if len(description) > MAX_DESCRIPTION_LEN:
+        return JsonResponse({'error': f'Opis je predug (maks. {MAX_DESCRIPTION_LEN} karaktera).'}, status=400)
+    if len(wants) > MAX_WANTS_LEN:
+        return JsonResponse({'error': f'"Šta tražiš" je predugačko (maks. {MAX_WANTS_LEN} karaktera).'}, status=400)
+    if len(city) > MAX_CITY_LEN:
+        return JsonResponse({'error': f'Grad je predug (maks. {MAX_CITY_LEN} karaktera).'}, status=400)
 
     price = data.get('price')
     if price not in (None, ''):
@@ -287,12 +305,12 @@ def listing_create(request):
         user              = request.user,
         category          = category,
         title             = title,
-        description       = data.get('description', '').strip(),
+        description       = description,
         price             = price,
         listing_type      = ltype,
         condition         = condition,
-        city              = data.get('city', '').strip(),
-        wants_in_exchange = data.get('wants_in_exchange', '').strip(),
+        city              = city,
+        wants_in_exchange = wants,
     )
     return JsonResponse({'ok': True, 'listing': _listing_data(listing, full=True)}, status=201)
 
@@ -302,6 +320,16 @@ def listing_create(request):
 def listing_update(request, pk):
     listing = get_object_or_404(Listing, pk=pk, user=request.user)
     data    = _parse(request)
+
+    length_caps = {
+        'title':             MAX_TITLE_LEN,
+        'description':       MAX_DESCRIPTION_LEN,
+        'city':              MAX_CITY_LEN,
+        'wants_in_exchange': MAX_WANTS_LEN,
+    }
+    for f, cap in length_caps.items():
+        if f in data and isinstance(data[f], str) and len(data[f]) > cap:
+            return JsonResponse({'error': f'Polje "{f}" je predugačko (maks. {cap} karaktera).'}, status=400)
 
     field_map = {
         'title':             'title',
@@ -929,6 +957,8 @@ def chat(request, conversation_id):
         body = data.get('body', '').strip()
         if not body:
             return JsonResponse({'error': 'Poruka ne može biti prazna.'}, status=400)
+        if len(body) > MAX_MESSAGE_LEN:
+            return JsonResponse({'error': f'Poruka je preduga (maks. {MAX_MESSAGE_LEN} karaktera).'}, status=400)
 
         msg = Message.objects.create(conversation=conv, sender=request.user, body=body)
         conv.save()
