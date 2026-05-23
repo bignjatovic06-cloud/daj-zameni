@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sentry_sdk
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -173,3 +174,11 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
 )
+
+# ── Sentry error tracking ────────────────────────────────────────
+if os.environ.get('SENTRY_DSN') and not DEBUG:
+    sentry_sdk.init(
+        dsn=os.environ['SENTRY_DSN'],
+        traces_sample_rate=0.2,
+        send_default_pii=False,
+    )
