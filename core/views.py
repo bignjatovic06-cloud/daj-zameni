@@ -84,6 +84,10 @@ def listing_page(request, pk):
     })
 
 
+def about_view(request):
+    return render(request, 'core/about.html')
+
+
 # ─────────────────────────────────────────
 #  AUTH VIEWS
 # ─────────────────────────────────────────

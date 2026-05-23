@@ -62,6 +62,9 @@ urlpatterns = [
     # ─── SSR oglas detalj (SEO) ───────────────────────────
     path('oglasi/<uuid:pk>/', views.listing_page, name='listing_page'),
 
+    # ─── Statičke stranice ────────────────────────────────
+    path('o-nama/', views.about_view, name='about'),
+
     # ─── SPA catch-all — mora biti poslednji ──────────────
     re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja|profil)(?:/.*)?$', views.app_view, name='spa_catchall'),
 ]

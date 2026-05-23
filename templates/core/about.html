@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O nama — Daj Zameni</title>
+<meta name="description" content="Daj Zameni je srpska platforma za razmenu i prodaju polovnih stvari između privatnih lica — bez posrednika, bez provizije.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #0F6E56;
+    --ink: #1a1a18;
+    --muted: #6b6b66;
+    --border: #e8e6df;
+    --bg: #fafaf7;
+    --white: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 17px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 5rem 2rem 6rem;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 1.25rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 2rem;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--green);
+  }
+
+  .lead {
+    font-size: 1.2rem;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 3.5rem;
+    padding-bottom: 3.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section {
+    margin-bottom: 3rem;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: #3a3a36;
+    margin-bottom: 1rem;
+  }
+
+  p:last-child { margin-bottom: 0; }
+
+  .pull-quote {
+    border-left: 3px solid var(--green);
+    padding: 1.25rem 1.75rem;
+    margin: 2.5rem 0;
+    background: var(--green-light);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .pull-quote p {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--green-dark);
+    margin: 0;
+  }
+
+  .values {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+
+  .value-item {
+    background: var(--white);
+    padding: 1.5rem;
+  }
+
+  .value-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .value-title {
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+
+  .value-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .closing {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .closing p {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-style: italic;
+    color: var(--ink);
+    margin-bottom: 1.75rem;
+  }
+
+  .btn {
+    display: inline-block;
+    background: var(--green);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.85rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: background 0.2s;
+  }
+
+  .btn:hover { background: var(--green-dark); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .page > * {
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .page > *:nth-child(2) { animation-delay: 0.08s; }
+  .page > *:nth-child(3) { animation-delay: 0.16s; }
+  .page > *:nth-child(4) { animation-delay: 0.22s; }
+  .page > *:nth-child(5) { animation-delay: 0.28s; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <p class="eyebrow">O nama</p>
+
+  <h1>Platforma koja stavlja <em>razmenu</em> na prvo mesto</h1>
+
+  <p class="lead">
+    Daj Zameni je srpska platforma za kupovinu, prodaju i razmenu polovnih stvari između privatnih lica — bez posrednika, bez provizije, bez komplikacija. Verujemo da svaka stvar ima vrednost, i da ta vrednost ne mora uvek da se meri novcima.
+  </p>
+
+  <div class="section">
+    <h2>Kako smo nastali</h2>
+    <p>
+      Svako je jednom bio u toj situaciji: imaš nešto što ti više ne treba, a treba ti nešto čega nemaš. Odeš na Facebook grupu — nema pretrage, nema reda, nema bezbednosti. Odeš na KupujemProdajem — tamo se prodaje, ali se ne menja. Ostaneš bez rešenja.
+    </p>
+    <p>
+      Daj Zameni je nastao upravo iz te potrebe. Hteli smo da napravimo mesto gde razmena nije izuzetak, nego pravilo. Gde možeš da ponudiš svoju staru jaknu i dobiješ recimo bicikl, teniski reket ili knjigu koja te zanima — direktno, bez posrednika, na dogovor.
+    </p>
+  </div>
+
+  <div class="pull-quote">
+    <p>"Prava vrednost nije uvek novac. Nekad je to stvar koja tebi ne znači ništa, a nekome drugome znači sve."</p>
+  </div>
+
+  <div class="section">
+    <h2>Šta nas razlikuje</h2>
+    <p>
+      Nismo još jedna oglasna tabla. Daj Zameni je platforma dizajnirana oko koncepta razmene — jedine vrste transakcije gde obe strane dobijaju tačno ono što žele, bez gubitka keša. Uz to, nudimo strukturu i sigurnost kojih na društvenim mrežama nema.
+    </p>
+    <p>
+      Sistem ponuda omogućava da predložiš razmenu ili otkup direktno uz oglas. Chat je vezan za svaki oglas posebno. Ocene korisnika grade poverenje u zajednicu. A sve to funkcioniše bez ikakvog troška — ni za oglašivača ni za kupca.
+    </p>
+  </div>
+
+  <div class="values">
+    <div class="value-item">
+      <div class="value-icon">🤝</div>
+      <div class="value-title">Bez provizije</div>
+      <p class="value-desc">Svaka transakcija je između dvoje ljudi. Mi samo obezbeđujemo prostor.</p>
+    </div>
+    <div class="value-item">
+      <div class="value-icon">🔍</div>
+      <div class="value-title">Prava pretraga</div>
+      <p class="value-desc">Filtriraj po gradu, kategoriji, ceni i tipu — razmena ili prodaja.</p>
+    </div>
+    <div class="value-item">
+      <div class="value-icon">🛡️</div>
+      <div class="value-title">Sigurna zajednica</div>
+      <p class="value-desc">Ocene, verifikovani profili i prijava problema štite svakoga.</p>
+    </div>
+    <div class="value-item">
+      <div class="value-icon">📱</div>
+      <div class="value-title">Moderno iskustvo</div>
+      <p class="value-desc">Oglas za 60 sekundi. Chat u realnom vremenu. Notifikacije odmah.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Za koga smo napravljeni</h2>
+    <p>
+      Za sve koji kupuju i prodaju pametno — studente koji menjaju udžbenike, roditelje koji menjaju dečiju garderobu dok deca rastu, ljude koji se presele i rešavaju suvišan nameštaj, kolekcionare koji traže specifičan predmet, igrače koji završe igru i žele sledeću.
+    </p>
+    <p>
+      Fokusiramo se na Srbiju, na stvarna mesta i stvarne ljude — jer verujemo da se najboljim dogovorima dolazi između komšija, a ne između anonimnih naloga.
+    </p>
+  </div>
+
+  <div class="closing">
+    <p>Spreman da počneš? Tvoja stvar čeka nekoga ko joj je baš potrebna.</p>
+    <a href="https://dajzameni.rs" class="btn">Istraži oglase →</a>
+  </div>
+
+</div>
+</body>
+</html>
