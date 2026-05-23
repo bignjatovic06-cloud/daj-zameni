@@ -251,3 +251,24 @@ def send_new_message(to_user, from_username, listing_title):
         html_body=_wrap(content, 'Nova poruka'),
         to_email=to_user.email,
     )
+
+
+def send_offer_reminder(to_user, from_username, listing_title):
+    """Listing owner receives: reminder about pending offer after 48h."""
+    if not to_user.email:
+        return
+
+    content = (
+        _h('Imaš ponudu koja čeka odgovor') +
+        _p(f'<strong>{from_username}</strong> je pre 2 dana predložio/la razmenu za tvoj oglas {_listing_pill(listing_title)}.') +
+        _p('Ponuda će automatski biti otkazana za 5 dana ako ne odgovoriš.') +
+        _btn('Pogledaj ponudu →', SITE_URL)
+    )
+    text = f'{from_username} čeka tvoj odgovor na ponudu za „{listing_title}". Poseti {SITE_URL}.'
+
+    _send_async(
+        subject=f'Podsetnik: ponuda čeka tvoj odgovor — Daj Zameni',
+        text_body=text,
+        html_body=_wrap(content, 'Ponuda čeka odgovor'),
+        to_email=to_user.email,
+    )

@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -19,8 +20,9 @@ import uuid
 import re
 import dns.resolver
 
-from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review, Report
+from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review, Report, PushSubscription
 from . import emails as email_service
+from . import push as push_service
 
 User = get_user_model()
 
@@ -50,7 +52,9 @@ def _email_domain_valid(email):
 
 @ensure_csrf_cookie
 def app_view(request):
-    return render(request, 'core/app.html')
+    return render(request, 'core/app.html', {
+        'VAPID_PUBLIC_KEY': settings.VAPID_PUBLIC_KEY,
+    })
 
 
 # ─────────────────────────────────────────
@@ -544,6 +548,12 @@ def offer_create(request, pk):
         type = 'offer',
         text = f'{request.user.username} je predložio/la razmenu za tvoj oglas „{listing.title}"',
     )
+    push_service.send_push_to_user(
+        listing.user,
+        title=f'Nova ponuda od {request.user.username}',
+        body=f'Za oglas „{listing.title}"',
+        url='/',
+    )
     email_service.send_new_offer(
         to_user       = listing.user,
         from_username = request.user.username,
@@ -578,6 +588,12 @@ def offer_respond(request, offer_id):
             user = offer.from_user,
             type = 'offer_accepted',
             text = f'{request.user.username} je prihvatio/la tvoju ponudu za „{offer.listing.title}"',
+        )
+        push_service.send_push_to_user(
+            offer.from_user,
+            title='Ponuda prihvaćena!',
+            body=f'{request.user.username} je prihvatio/la ponudu za „{offer.listing.title}"',
+            url='/',
         )
         email_service.send_offer_accepted(
             to_user       = offer.from_user,
@@ -828,6 +844,12 @@ def chat(request, conversation_id):
                 user = other,
                 type = 'message',
                 text = f'{request.user.username} ti je poslao/la poruku',
+            )
+            push_service.send_push_to_user(
+                other,
+                title=f'Nova poruka od {request.user.username}',
+                body=body[:80],
+                url='/',
             )
             # send email only if other has unread messages (i.e. they're not actively chatting)
             unread_count = conv.messages.filter(is_read=False).exclude(sender=request.user).count()
@@ -1127,3 +1149,60 @@ def _review_data(review):
         'comment':    review.comment,
         'created_at': review.created_at.isoformat(),
     }
+
+
+# ─────────────────────────────────────────
+#  RESERVE TOGGLE
+# ─────────────────────────────────────────
+
+@login_required
+@require_POST
+def listing_reserve(request, pk):
+    listing = get_object_or_404(Listing, pk=pk, user=request.user)
+    if listing.status == 'closed':
+        return JsonResponse({'error': 'Oglas je zatvoren.'}, status=400)
+    listing.status = 'active' if listing.status == 'reserved' else 'reserved'
+    listing.save(update_fields=['status'])
+    return JsonResponse({'ok': True, 'status': listing.status})
+
+
+# ─────────────────────────────────────────
+#  PUSH SUBSCRIPTIONS
+# ─────────────────────────────────────────
+
+@login_required
+@require_POST
+def push_subscribe(request):
+    data     = _parse(request)
+    endpoint = data.get('endpoint', '')
+    if not endpoint:
+        return JsonResponse({'error': 'Nema endpoint-a.'}, status=400)
+    PushSubscription.objects.update_or_create(
+        endpoint=endpoint,
+        defaults={
+            'user':              request.user,
+            'subscription_json': json.dumps(data),
+        },
+    )
+    return JsonResponse({'ok': True})
+
+
+@login_required
+@require_POST
+def push_unsubscribe(request):
+    data = _parse(request)
+    endpoint = data.get('endpoint', '')
+    PushSubscription.objects.filter(user=request.user, endpoint=endpoint).delete()
+    return JsonResponse({'ok': True})
+
+
+# ─────────────────────────────────────────
+#  SERVICE WORKER
+# ─────────────────────────────────────────
+
+def service_worker(request):
+    import os
+    from django.http import HttpResponse
+    sw_path = os.path.join(settings.BASE_DIR, 'static', 'core', 'js', 'sw.js')
+    with open(sw_path) as f:
+        return HttpResponse(f.read(), content_type='application/javascript')

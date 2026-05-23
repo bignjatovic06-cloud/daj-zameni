@@ -260,6 +260,40 @@ function App() {
     return () => clearInterval(id);
   }, [currentUser]);
 
+  // Service worker + push notifications
+  uE(() => {
+    if (!currentUser || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      reg.pushManager.getSubscription().then(existing => {
+        if (existing) return; // already subscribed
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().then(perm => {
+            if (perm !== 'granted') return;
+            _subscribePush(reg);
+          });
+        } else if (Notification.permission === 'granted') {
+          _subscribePush(reg);
+        }
+      });
+    }).catch(() => {});
+  }, [currentUser]);
+
+  function _subscribePush(reg) {
+    const vapidKey = document.querySelector('meta[name="vapid-public-key"]');
+    if (!vapidKey || !vapidKey.content) return;
+    const appServerKey = _urlBase64ToUint8Array(vapidKey.content);
+    reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appServerKey })
+      .then(sub => apiPushSubscribe(sub.toJSON()))
+      .catch(() => {});
+  }
+
+  function _urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  }
+
   // handle browser back/forward
   uE(() => {
     const onPop = (e) => {

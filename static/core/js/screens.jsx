@@ -1167,6 +1167,16 @@ function ListingDetail({ item, onBack, onMessage, onEdit, onDelete, categories =
                         <button className="nav-btn primary" onClick={() => onEdit(fullItem)}>
                           <Icon name="edit" size={15}/> Uredi oglas
                         </button>
+                        <button
+                          className="nav-btn"
+                          style={{ color: fullItem.status === 'reserved' ? 'var(--accent)' : 'var(--ink-2)', borderColor: fullItem.status === 'reserved' ? 'var(--accent)' : 'var(--line)' }}
+                          onClick={async () => {
+                            const res = await apiReserveListing(fullItem.id);
+                            if (res.ok) setFullItem(fi => ({ ...fi, status: res.status }));
+                          }}
+                        >
+                          {fullItem.status === 'reserved' ? '● Rezervisano' : '○ Označi kao rezervisano'}
+                        </button>
                         <button className="nav-btn" style={{ color: 'var(--warn)', borderColor: 'var(--warn)' }} onClick={onDelete}>
                           <Icon name="trash" size={15}/> Obriši oglas
                         </button>

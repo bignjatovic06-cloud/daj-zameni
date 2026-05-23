@@ -124,6 +124,7 @@ class SwapOffer(models.Model):
     status              = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
     completed_by_from   = models.BooleanField(default=False)
     completed_by_to     = models.BooleanField(default=False)
+    reminder_sent       = models.BooleanField(default=False)
     created_at          = models.DateTimeField(auto_now_add=True)
     updated_at          = models.DateTimeField(auto_now=True)
 
@@ -223,3 +224,13 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.from_user} → {self.to_user}: {self.rating}★"
+
+
+class PushSubscription(models.Model):
+    user              = models.ForeignKey(User, on_delete=models.CASCADE, related_name='push_subscriptions')
+    endpoint          = models.URLField(max_length=500, unique=True)
+    subscription_json = models.TextField()
+    created_at        = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} — {self.endpoint[:60]}"

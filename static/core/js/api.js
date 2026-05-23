@@ -221,3 +221,21 @@ async function apiDeleteMessage(conversationId, messageId) {
 async function apiDeleteConversation(conversationId) {
   return apiFetch('/inbox/' + conversationId + '/delete/', { method: 'DELETE' });
 }
+
+async function apiReserveListing(id) {
+  return apiFetch('/listings/' + id + '/reserve/', { method: 'POST' });
+}
+
+async function apiPushSubscribe(subscriptionJson) {
+  return apiFetch('/push/subscribe/', {
+    method: 'POST',
+    body: JSON.stringify(subscriptionJson),
+  });
+}
+
+async function apiPushUnsubscribe(endpoint) {
+  return apiFetch('/push/unsubscribe/', {
+    method: 'POST',
+    body: JSON.stringify({ endpoint }),
+  });
+}
