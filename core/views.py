@@ -1080,8 +1080,8 @@ def profile_user(request, username):
         .order_by('-created_at')[:20]
     )
     data = _user_data(user)
-    if not request.user.is_authenticated:
-        data['phone'] = None
+    if request.user.is_authenticated:
+        data['phone'] = user.phone
     return JsonResponse({
         'user':     data,
         'listings': [_listing_data(l) for l in listings],
@@ -1101,6 +1101,8 @@ def _parse(request):
 
 
 def _user_data(user):
+    # Public-safe. No phone or email — those leak via listing_detail / SSR
+    # listing_page which call _listing_data(full=True) -> _user_data.
     return {
         'id':           user.pk,
         'username':     user.username,
@@ -1108,7 +1110,6 @@ def _user_data(user):
         'last_name':    user.last_name,
         'bio':          user.bio,
         'city':         user.city,
-        'phone':        user.phone,
         'avatar':       user.avatar.url if user.avatar else None,
         'is_verified':  user.is_verified,
         'rating':       float(user.rating),
@@ -1121,6 +1122,7 @@ def _user_data(user):
 def _self_data(user):
     data = _user_data(user)
     data['email'] = user.email
+    data['phone'] = user.phone
     return data
 
 
