@@ -343,6 +343,29 @@ def listing_delete(request, pk):
 MAX_IMAGES_PER_LISTING = 10
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
 ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
+ALLOWED_PIL_FORMATS = {'JPEG', 'PNG', 'WEBP'}
+
+
+def _validate_image(uploaded):
+    """Return None if the uploaded file is a real JPEG/PNG/WebP, else an
+    error string. content_type is client-supplied and spoofable, so we
+    decode the actual bytes with Pillow."""
+    from PIL import Image, UnidentifiedImageError
+    try:
+        uploaded.seek(0)
+        with Image.open(uploaded) as im:
+            im.verify()
+            fmt = im.format
+    except (UnidentifiedImageError, OSError, ValueError, SyntaxError):
+        return 'Fajl nije validna slika.'
+    finally:
+        try:
+            uploaded.seek(0)
+        except Exception:
+            pass
+    if fmt not in ALLOWED_PIL_FORMATS:
+        return 'Podržani formati: JPG, PNG, WebP.'
+    return None
 
 
 @login_required
@@ -369,6 +392,9 @@ def listing_image_upload(request, pk):
             return JsonResponse({
                 'error': f'"{img.name}" nije podržan format (JPG, PNG ili WebP).'
             }, status=400)
+        err = _validate_image(img)
+        if err:
+            return JsonResponse({'error': f'"{img.name}": {err}'}, status=400)
 
     created = []
     for i, img in enumerate(images):
@@ -1015,8 +1041,13 @@ def profile_avatar(request):
     img = request.FILES.get('avatar')
     if not img:
         return JsonResponse({'error': 'Nema slike.'}, status=400)
-    if img.size > 5 * 1024 * 1024:
+    if img.size > MAX_IMAGE_SIZE:
         return JsonResponse({'error': 'Slika ne sme biti veća od 5 MB.'}, status=400)
+    if img.content_type not in ALLOWED_IMAGE_TYPES:
+        return JsonResponse({'error': 'Podržani formati: JPG, PNG, WebP.'}, status=400)
+    err = _validate_image(img)
+    if err:
+        return JsonResponse({'error': err}, status=400)
     request.user.avatar = img
     request.user.save()
     return JsonResponse({'ok': True, 'avatar': request.user.avatar.url})
