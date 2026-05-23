@@ -18,9 +18,12 @@ from django_ratelimit.decorators import ratelimit
 
 EMAIL_VERIFICATION_TTL = timedelta(hours=48)
 import json
+import logging
 import uuid
 import re
 import dns.resolver
+
+logger = logging.getLogger(__name__)
 
 from .models import Listing, ListingImage, Category, SwapOffer, Conversation, Message, Notification, Review, Report, PushSubscription
 from . import emails as email_service
@@ -37,6 +40,8 @@ MAX_DESCRIPTION_LEN = 5000
 MAX_WANTS_LEN       = 2000
 MAX_CITY_LEN        = 100
 MAX_MESSAGE_LEN     = 5000
+MAX_BIO_LEN         = 1000
+MAX_PHONE_LEN       = 20
 
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -121,6 +126,9 @@ def auth_status(request):
 @ratelimit(key='ip', rate='5/h', method='POST', block=True)
 @require_http_methods(['POST'])
 def register(request):
+    if request.user.is_authenticated:
+        return JsonResponse({'error': 'Već si ulogovan/a.'}, status=400)
+
     data     = _parse(request)
     username = data.get('username', '').strip()
     email    = data.get('email', '').strip()
@@ -154,6 +162,10 @@ def register(request):
     # attacker is purely API-driven and can not differentiate.
     existing = User.objects.filter(email=email).first()
     if existing:
+        # Equalize timing with the create branch — User.objects.create_user
+        # runs a bcrypt hash (~50–300 ms) that would otherwise leak the
+        # collision through response latency.
+        User().set_password(password)
         email_service.send_duplicate_registration_attempt(existing)
     else:
         user = User.objects.create_user(username=username, email=email, password=password)
@@ -387,19 +399,29 @@ def _validate_image(uploaded):
     """Return None if the uploaded file is a real JPEG/PNG/WebP, else an
     error string. content_type is client-supplied and spoofable, so we
     decode the actual bytes with Pillow."""
+    import warnings
     from PIL import Image, UnidentifiedImageError
+    # Cap pixel count and treat the DecompressionBomb warning as an error
+    # so we reject crafted files declaring huge dimensions before Pillow
+    # tries to decode them. Pillow raises DecompressionBombWarning above
+    # MAX_IMAGE_PIXELS and DecompressionBombError above 2× that.
+    Image.MAX_IMAGE_PIXELS = 50_000_000  # ~50 megapixels
     try:
         uploaded.seek(0)
-        with Image.open(uploaded) as im:
-            im.verify()
-            fmt = im.format
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', Image.DecompressionBombWarning)
+            with Image.open(uploaded) as im:
+                im.verify()
+                fmt = im.format
+    except (Image.DecompressionBombWarning, Image.DecompressionBombError):
+        return 'Slika je prevelika.'
     except (UnidentifiedImageError, OSError, ValueError, SyntaxError):
         return 'Fajl nije validna slika.'
     finally:
         try:
             uploaded.seek(0)
-        except Exception:
-            pass
+        except (IOError, ValueError) as e:
+            logger.warning('Could not rewind uploaded file: %s', e)
     if fmt not in ALLOWED_PIL_FORMATS:
         return 'Podržani formati: JPG, PNG, WebP.'
     return None
@@ -692,14 +714,28 @@ def offer_respond(request, offer_id):
     data   = _parse(request)
     action = data.get('action')
 
+    # Validate the action before taking any row locks.
+    if action not in ('accept', 'decline'):
+        return JsonResponse({'error': 'Nevažeća akcija.'}, status=400)
+
     with transaction.atomic():
+        # Lock the offer first, then the listing. Without locking the
+        # listing, two concurrent ACCEPTs on different offers for the
+        # same listing both pass their per-offer pending check and race
+        # to mark the listing 'reserved' (and decline each other).
         offer = get_object_or_404(
-            SwapOffer.objects.select_for_update(),
+            SwapOffer.objects.select_for_update().select_related('listing'),
             pk=offer_id, to_user=request.user,
         )
+        # Re-fetch the listing under its own row lock so any concurrent
+        # accept on a sibling offer blocks here until we commit.
+        listing = Listing.objects.select_for_update().get(pk=offer.listing_id)
+        offer.listing = listing
 
         if offer.status != 'pending':
             return JsonResponse({'error': 'Ponuda je već obrađena.'}, status=400)
+        if listing.status != 'active':
+            return JsonResponse({'error': 'Oglas više nije aktivan.'}, status=400)
 
         # Snapshot values needed for side effects — referenced inside
         # on_commit closures after the lock is released.
@@ -743,8 +779,6 @@ def offer_respond(request, offer_id):
                 by_username   = by_username,
                 listing_title = listing_title,
             ))
-        else:
-            return JsonResponse({'error': 'Nevažeća akcija.'}, status=400)
 
         offer.save()
     return JsonResponse({'ok': True, 'status': offer.status})
@@ -1060,6 +1094,10 @@ def notifications_mark_read(request):
 def profile(request):
     if request.method == 'PUT':
         data = _parse(request)
+        caps = {'bio': MAX_BIO_LEN, 'city': MAX_CITY_LEN, 'phone': MAX_PHONE_LEN}
+        for field, cap in caps.items():
+            if field in data and isinstance(data[field], str) and len(data[field]) > cap:
+                return JsonResponse({'error': f'Polje "{field}" je predugačko (maks. {cap} karaktera).'}, status=400)
         for field in ('bio', 'city', 'phone'):
             if field in data:
                 setattr(request.user, field, data[field])
