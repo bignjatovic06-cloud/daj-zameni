@@ -60,7 +60,6 @@ def app_view(request):
 
 @ensure_csrf_cookie
 def listing_page(request, pk):
-    import json as _json
     listing = get_object_or_404(
         Listing.objects.select_related('user', 'category').prefetch_related('images'),
         pk=pk, status__in=('active', 'reserved'),
@@ -80,7 +79,7 @@ def listing_page(request, pk):
         'VAPID_PUBLIC_KEY':  settings.VAPID_PUBLIC_KEY,
         'site_url':          settings.SITE_URL,
         'seo_listing':       seo,
-        'preloaded_listing': _json.dumps(preloaded),
+        'preloaded_listing': preloaded,
     })
 
 

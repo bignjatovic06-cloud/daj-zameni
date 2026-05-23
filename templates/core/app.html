@@ -682,7 +682,8 @@
 <div id="root"></div>
 
 {% if preloaded_listing %}
-<script>window.__PRELOADED_LISTING__ = {{ preloaded_listing }};</script>
+{{ preloaded_listing|json_script:"preloaded-listing" }}
+<script>window.__PRELOADED_LISTING__ = JSON.parse(document.getElementById('preloaded-listing').textContent);</script>
 {% endif %}
 
 <!-- ① React + Babel -->
