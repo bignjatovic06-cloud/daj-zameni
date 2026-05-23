@@ -59,6 +59,9 @@ urlpatterns = [
     path('push/unsubscribe/',                  views.push_unsubscribe,       name='push_unsubscribe'),
     path('sw.js',                              views.service_worker,         name='service_worker'),
 
+    # ─── SSR oglas detalj (SEO) ───────────────────────────
+    path('oglasi/<uuid:pk>/', views.listing_page, name='listing_page'),
+
     # ─── SPA catch-all — mora biti poslednji ──────────────
     re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja|profil)(?:/.*)?$', views.app_view, name='spa_catchall'),
 ]

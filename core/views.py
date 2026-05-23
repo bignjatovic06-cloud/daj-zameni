@@ -54,6 +54,33 @@ def _email_domain_valid(email):
 def app_view(request):
     return render(request, 'core/app.html', {
         'VAPID_PUBLIC_KEY': settings.VAPID_PUBLIC_KEY,
+        'site_url':         settings.SITE_URL,
+    })
+
+
+@ensure_csrf_cookie
+def listing_page(request, pk):
+    import json as _json
+    listing = get_object_or_404(
+        Listing.objects.select_related('user', 'category').prefetch_related('images'),
+        pk=pk, status__in=('active', 'reserved'),
+    )
+    cover = listing.images.filter(is_cover=True).first() or listing.images.first()
+    seo = {
+        'id':          str(listing.pk),
+        'title':       listing.title,
+        'description': listing.description,
+        'price':       str(listing.price) if listing.price else '',
+        'image':       cover.image.url if cover else '',
+    }
+    preloaded = _listing_data(listing, full=True)
+    if not request.user.is_authenticated or request.user.pk != listing.user_id:
+        Listing.objects.filter(pk=pk).update(views=F('views') + 1)
+    return render(request, 'core/app.html', {
+        'VAPID_PUBLIC_KEY':  settings.VAPID_PUBLIC_KEY,
+        'site_url':          settings.SITE_URL,
+        'seo_listing':       seo,
+        'preloaded_listing': _json.dumps(preloaded),
     })
 
 

@@ -4,7 +4,26 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+{% if seo_listing %}
+<title>{{ seo_listing.title }} — Daj Zameni</title>
+<meta name="description" content="{{ seo_listing.description|truncatechars:160 }}">
+<meta property="og:type"        content="product">
+<meta property="og:title"       content="{{ seo_listing.title }}">
+<meta property="og:description" content="{{ seo_listing.description|truncatechars:160 }}">
+<meta property="og:url"         content="{{ site_url }}/oglasi/{{ seo_listing.id }}/">
+{% if seo_listing.image %}<meta property="og:image" content="{{ seo_listing.image }}">{% endif %}
+<link rel="canonical" href="{{ site_url }}/oglasi/{{ seo_listing.id }}/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Product","name":"{{ seo_listing.title|escapejs }}","description":"{{ seo_listing.description|truncatechars:200|escapejs }}","url":"{{ site_url }}/oglasi/{{ seo_listing.id }}/","image":"{{ seo_listing.image }}","offers":{"@type":"Offer","priceCurrency":"RSD","price":"{{ seo_listing.price|default:0 }}","availability":"https://schema.org/InStock"}}
+</script>
+{% else %}
 <title>Daj Zameni — razmena bez posrednika</title>
+<meta name="description" content="Platforma za razmenu i prodaju polovnih stvari bez posrednika. Nađi šta ti treba, ponudi šta imaš.">
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="Daj Zameni — razmena bez posrednika">
+<meta property="og:description" content="Platforma za razmenu i prodaju polovnih stvari bez posrednika.">
+<meta property="og:url"         content="{{ site_url }}/">
+{% endif %}
 <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
 <meta name="vapid-public-key" content="{{ VAPID_PUBLIC_KEY }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -661,6 +680,10 @@
 </head>
 <body>
 <div id="root"></div>
+
+{% if preloaded_listing %}
+<script>window.__PRELOADED_LISTING__ = {{ preloaded_listing }};</script>
+{% endif %}
 
 <!-- ① React + Babel -->
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>

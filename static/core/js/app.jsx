@@ -75,8 +75,12 @@ const FILTER_CHIPS = [
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
-  const [view, setView]                   = uS('home');
-  const [selectedItem, setSelectedItem]   = uS(null);
+  const [view, setView]                   = uS(() => window.__PRELOADED_LISTING__ ? 'detail' : 'home');
+  const [selectedItem, setSelectedItem]   = uS(() => {
+    if (!window.__PRELOADED_LISTING__) return null;
+    const [norm] = normalizeListings([window.__PRELOADED_LISTING__]);
+    return norm;
+  });
   const [profileUser, setProfileUser]     = uS(null);
   const [phoneGate, setPhoneGate]         = uS(null); // callback to run after phone saved
   const [filterCat, setFilterCat]         = uS('sve');
