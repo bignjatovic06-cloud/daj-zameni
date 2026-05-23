@@ -2340,14 +2340,14 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
   }, [active?.id]);
 
   useE(() => {
+    if (!active) return;
     const iv = setInterval(() => {
-      if (!activeRef.current) return;
-      apiChatMessages(activeRef.current.id).then(res => {
+      apiChatMessages(active.id).then(res => {
         if (Array.isArray(res.results)) setMessages(res.results);
       });
     }, 3000);
     return () => clearInterval(iv);
-  }, []);
+  }, [active?.id]);
 
   useE(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
