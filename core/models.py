@@ -127,6 +127,14 @@ class SwapOffer(models.Model):
     created_at          = models.DateTimeField(auto_now_add=True)
     updated_at          = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['listing', 'from_user'],
+                name='unique_offer_per_listing_per_user',
+            )
+        ]
+
     def __str__(self):
         return f"{self.from_user} → {self.listing}"
 

@@ -6,6 +6,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
 from django.db.models import Q, F, Avg, Count
 from django.db import transaction
+from django.db import IntegrityError
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -507,15 +508,18 @@ def offer_create(request, pk):
     if not offered_listing and not cash_offer:
         return JsonResponse({'error': 'Moraš ponuditi oglas ili novčani iznos.'}, status=400)
 
-    offer = SwapOffer.objects.create(
-        listing         = listing,
-        from_user       = request.user,
-        to_user         = listing.user,
-        status          = 'pending',
-        message         = message,
-        offered_listing = offered_listing,
-        cash_offer      = cash_offer,
-    )
+    try:
+        offer = SwapOffer.objects.create(
+            listing         = listing,
+            from_user       = request.user,
+            to_user         = listing.user,
+            status          = 'pending',
+            message         = message,
+            offered_listing = offered_listing,
+            cash_offer      = cash_offer,
+        )
+    except IntegrityError:
+        return JsonResponse({'error': 'already_offered'}, status=400)
 
     conv = (
         Conversation.objects
