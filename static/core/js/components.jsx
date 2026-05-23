@@ -823,7 +823,7 @@ function Footer() {
       <div className="foot-inner">
         <div>© 2026 Daj Zameni · Made in Serbia</div>
         <div className="links">
-          <a>O nama</a><a>Pravila zajednice</a><a>Privatnost</a><a>Pomoć</a><a>Kontakt</a>
+          <a href="/o-nama/">O nama</a><a>Pravila zajednice</a><a>Privatnost</a><a>Pomoć</a><a>Kontakt</a>
         </div>
       </div>
     </footer>
