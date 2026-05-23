@@ -1491,7 +1491,11 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
       condition:         condition,
     });
     if (!res.ok) {
-      setError(res.error || ('Greška pri objavljivanju. Status: ' + res.status));
+      if (res.error === 'email_not_verified') {
+        setError('Moraš verifikovati email adresu pre postavljanja oglasa. Proveri inbox ili pošalji novi verifikacioni email iz Podešavanja.');
+      } else {
+        setError(res.error || ('Greška pri objavljivanju. Status: ' + res.status));
+      }
       setLoading(false);
       return;
     }

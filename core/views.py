@@ -230,6 +230,9 @@ def listing_detail(request, pk):
 @login_required
 @require_http_methods(['POST'])
 def listing_create(request):
+    if not request.user.is_verified:
+        return JsonResponse({'error': 'email_not_verified'}, status=403)
+
     data      = _parse(request)
     ltype     = data.get('listing_type', 'both')
     condition = data.get('condition', 'good')
