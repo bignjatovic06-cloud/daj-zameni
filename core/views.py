@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
 from django.db.models import Q, F, Avg, Count
+from django.db import transaction
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -642,32 +643,33 @@ def my_offers(request):
 @login_required
 @require_POST
 def offer_complete(request, offer_id):
-    offer = get_object_or_404(SwapOffer, pk=offer_id)
-    if request.user.pk not in (offer.from_user_id, offer.to_user_id):
-        return JsonResponse({'error': 'Zabranjen pristup.'}, status=403)
-    if offer.status != 'accepted':
-        return JsonResponse({'error': 'Ponuda mora biti prihvaćena da bi se završila.'}, status=400)
+    with transaction.atomic():
+        offer = get_object_or_404(SwapOffer.objects.select_for_update(), pk=offer_id)
+        if request.user.pk not in (offer.from_user_id, offer.to_user_id):
+            return JsonResponse({'error': 'Zabranjen pristup.'}, status=403)
+        if offer.status != 'accepted':
+            return JsonResponse({'error': 'Ponuda mora biti prihvaćena da bi se završila.'}, status=400)
 
-    is_from = request.user.pk == offer.from_user_id
-    if is_from:
-        if offer.completed_by_from:
-            return JsonResponse({'error': 'Već si potvrdio/la.'}, status=400)
-        offer.completed_by_from = True
-    else:
-        if offer.completed_by_to:
-            return JsonResponse({'error': 'Već si potvrdio/la.'}, status=400)
-        offer.completed_by_to = True
+        is_from = request.user.pk == offer.from_user_id
+        if is_from:
+            if offer.completed_by_from:
+                return JsonResponse({'error': 'Već si potvrdio/la.'}, status=400)
+            offer.completed_by_from = True
+        else:
+            if offer.completed_by_to:
+                return JsonResponse({'error': 'Već si potvrdio/la.'}, status=400)
+            offer.completed_by_to = True
 
-    both_confirmed = offer.completed_by_from and offer.completed_by_to
-    if both_confirmed:
-        offer.status = 'completed'
-        offer.listing.status = 'closed'
-        offer.listing.save()
-        if offer.offered_listing:
-            offer.offered_listing.status = 'closed'
-            offer.offered_listing.save()
+        both_confirmed = offer.completed_by_from and offer.completed_by_to
+        if both_confirmed:
+            offer.status = 'completed'
+            offer.listing.status = 'closed'
+            offer.listing.save()
+            if offer.offered_listing:
+                offer.offered_listing.status = 'closed'
+                offer.offered_listing.save()
 
-    offer.save()
+        offer.save()
 
     other = offer.to_user if is_from else offer.from_user
     if both_confirmed:
