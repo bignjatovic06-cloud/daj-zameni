@@ -28,8 +28,9 @@ from . import push as push_service
 
 User = get_user_model()
 
-VALID_LISTING_TYPES = {'sell', 'barter', 'both'}
-VALID_CONDITIONS    = {'new', 'like_new', 'good', 'fair', 'poor', 'antique'}
+VALID_LISTING_TYPES  = {'sell', 'barter', 'both'}
+VALID_CONDITIONS     = {'new', 'like_new', 'good', 'fair', 'poor', 'antique'}
+VALID_OWNER_STATUSES = {'active', 'closed'}
 
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -322,6 +323,9 @@ def listing_update(request, pk):
 
     if 'condition' in data and data['condition'] not in VALID_CONDITIONS:
         return JsonResponse({'error': 'Nevažeće stanje predmeta.'}, status=400)
+
+    if 'status' in data and data['status'] not in VALID_OWNER_STATUSES:
+        return JsonResponse({'error': 'Nevažeći status oglasa.'}, status=400)
 
     listing.save()
     return JsonResponse({'ok': True, 'listing': _listing_data(listing)})
