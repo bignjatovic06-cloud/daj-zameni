@@ -715,8 +715,8 @@ function relTime(iso) {
   var diff = Math.floor((Date.now() - new Date(iso)) / 1000);
   if (diff < 3600)       return Math.floor(diff / 60) + ' min';
   if (diff < 86400)      return Math.floor(diff / 3600) + ' h';
-  if (diff < 86400 * 30) return 'prije ' + Math.floor(diff / 86400) + ' d';
-  return 'prije ' + Math.floor(diff / (86400 * 30)) + ' mj';
+  if (diff < 86400 * 30) return 'pre ' + Math.floor(diff / 86400) + ' d';
+  return 'pre ' + Math.floor(diff / (86400 * 30)) + ' mj';
 }
 
 function ListingCard({ item, fav, onFav, onClick, onOpenProfile }) {
