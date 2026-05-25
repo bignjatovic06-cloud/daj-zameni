@@ -119,7 +119,7 @@ function Nav({
 
               <button className="nav-btn" onClick={onOpenRazmene}>
                 <Icon name="swap" size={16} />
-                <span>Razmene</span>
+                <span>Poruke</span>
                 {unreadThreads > 0 && (
                   <span style={{
                     background: 'var(--accent)', color: '#fff', fontSize: 10,
@@ -244,7 +244,7 @@ function Nav({
                   <div className="drawer-item" onClick={() => { closeBurger(); onOpenRazmene && onOpenRazmene(); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                       <Icon name="swap" size={20} />
-                      <span>Razmene</span>
+                      <span>Poruke</span>
                     </div>
                     {unreadThreads > 0 && (
                       <span style={{ background: 'var(--accent)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10, fontFamily: 'var(--font-mono)' }}>

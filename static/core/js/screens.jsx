@@ -2548,7 +2548,7 @@ function RazmeneDrawer({ onClose, currentUser, targetListing }) {
           <>
         <div style={{ borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column' }}>
           <div className="dh">
-            <h3>Razmene</h3>
+            <h3>Poruke</h3>
             <button className="x-btn" onClick={onClose}><Icon name="x" size={16}/></button>
           </div>
           <div className="db">
