@@ -609,6 +609,7 @@ def listing_create(request):
         condition         = condition,
         city              = city,
         wants_in_exchange = wants,
+        expires_at        = timezone.now() + timedelta(days=Listing.TTL_DAYS),
     )
     return JsonResponse({'ok': True, 'listing': _listing_data(listing, full=True)}, status=201)
 
@@ -664,6 +665,17 @@ def listing_delete(request, pk):
     listing.status = 'closed'
     listing.save()
     return JsonResponse({'ok': True})
+
+
+@ratelimit(key='user', rate='30/h', method='POST', block=True)
+@login_required
+@require_http_methods(['POST'])
+def listing_renew(request, pk):
+    listing = get_object_or_404(Listing, pk=pk, user=request.user)
+    if listing.status not in ('expired', 'active'):
+        return JsonResponse({'error': 'Oglas se ne može obnoviti.'}, status=400)
+    listing.renew()
+    return JsonResponse({'ok': True, 'listing': _listing_data(listing, full=True)})
 
 
 MAX_IMAGES_PER_LISTING = 10
@@ -818,9 +830,10 @@ def wishlist_ids(request):
 
 @login_required
 def my_listings(request):
+    statuses = ['active', 'expired'] if request.GET.get('include_expired') else ['active']
     listings = (
         Listing.objects
-        .filter(user=request.user, status='active')
+        .filter(user=request.user, status__in=statuses)
         .annotate(saves=Count('wishlisted_by'))
         .prefetch_related('images')
         .order_by('-created_at')
@@ -830,13 +843,15 @@ def my_listings(request):
         imgs  = list(l.images.all())
         cover = next((img for img in imgs if img.is_cover), None) or (imgs[0] if imgs else None)
         data.append({
-            'id':        str(l.pk),
-            'title':     l.title,
-            'condition': l.condition,
-            'city':      l.city,
-            'views':     l.views,
-            'saves':     l.saves,
-            'image':     cover.image.url if cover else None,
+            'id':         str(l.pk),
+            'title':      l.title,
+            'condition':  l.condition,
+            'city':       l.city,
+            'views':      l.views,
+            'saves':      l.saves,
+            'image':      cover.image.url if cover else None,
+            'status':     l.status,
+            'expires_at': l.expires_at.isoformat() if l.expires_at else None,
         })
     return JsonResponse({'results': data})
 

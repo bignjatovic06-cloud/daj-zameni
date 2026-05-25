@@ -56,7 +56,10 @@ class Listing(models.Model):
         ('active',   'Aktivan'),
         ('reserved', 'Rezervisan'),
         ('closed',   'Zatvoren'),
+        ('expired',  'Istekao'),
     ]
+
+    TTL_DAYS = 15
 
     id            = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user          = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listings')
@@ -79,6 +82,7 @@ class Listing(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -86,7 +90,15 @@ class Listing(models.Model):
             models.Index(fields=['status', '-created_at'], name='listing_status_created_idx'),
             models.Index(fields=['user', 'status'],        name='listing_user_status_idx'),
             models.Index(fields=['category', 'status'],    name='listing_category_status_idx'),
+            models.Index(fields=['status', 'expires_at'],  name='listing_status_expires_idx'),
         ]
+
+    def renew(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        self.status = 'active'
+        self.expires_at = timezone.now() + timedelta(days=self.TTL_DAYS)
+        self.save(update_fields=['status', 'expires_at', 'updated_at'])
 
     def save(self, *args, **kwargs):
         if not self.id:

@@ -294,6 +294,30 @@ def send_new_message(to_user, from_username, listing_title):
     )
 
 
+def send_listing_expired(to_user, listing_title, listing_id):
+    """Listing owner receives: their listing expired after 15 days."""
+    if not to_user.email:
+        return
+
+    listing_title = _e(listing_title)
+    renew_url = f'{SITE_URL}/moji-oglasi'
+
+    content = (
+        _h('Tvoj oglas je istekao') +
+        _p(f'Oglas {_listing_pill(listing_title)} je bio aktivan 15 dana i sada je istekao, pa se više ne prikazuje u pretrazi.') +
+        _p('Ako je predmet i dalje dostupan, obnovi oglas jednim klikom — biće ponovo aktivan narednih 15 dana.') +
+        _btn('Obnovi oglas →', renew_url)
+    )
+    text = f'Tvoj oglas „{listing_title}" je istekao. Obnovi ga na {renew_url}.'
+
+    _send_async(
+        subject=f'Oglas „{listing_title}" je istekao — Daj Zameni',
+        text_body=text,
+        html_body=_wrap(content, 'Oglas je istekao'),
+        to_email=to_user.email,
+    )
+
+
 def send_offer_reminder(to_user, from_username, listing_title):
     """Listing owner receives: reminder about pending offer after 48h."""
     if not to_user.email:

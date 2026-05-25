@@ -498,8 +498,15 @@ function App() {
 
   uE(() => {
     if (view !== 'my-listings') return;
-    apiMyListings().then(res => { if (res.ok) setOwnerListings(res.results || []); });
+    apiMyListings(true).then(res => { if (res.ok) setOwnerListings(res.results || []); });
   }, [view]);
+
+  const handleRenew = async (id) => {
+    const res = await apiRenewListing(id);
+    if (res.ok) {
+      apiMyListings(true).then(r => { if (r.ok) setOwnerListings(r.results || []); });
+    }
+  };
 
   const filtered = listings;
 
@@ -1064,12 +1071,25 @@ function App() {
               <div className="list-grid">
                 {ownerListings.map(l => {
                   const full = listings.find(x => x.id === l.id) || l;
+                  const isExpired = l.status === 'expired';
                   return (
-                    <div key={l.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div key={l.id} style={{ display: 'flex', flexDirection: 'column', opacity: isExpired ? 0.6 : 1 }}>
                       <ListingCard item={full} fav={!!wishlistIds[l.id]} onFav={() => toggleFav(l.id)} onClick={() => onOpenItem(full)} onOpenProfile={onOpenProfile}/>
-                      <div style={{ display: 'flex', gap: 12, paddingTop: 4, paddingLeft: 2, fontSize: 11.5, color: 'var(--ink-3)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 4, paddingLeft: 2, fontSize: 11.5, color: 'var(--ink-3)' }}>
                         <span>👁 {l.views ?? 0}</span>
                         <span>♡ {l.saves ?? 0}</span>
+                        {isExpired && (
+                          <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Istekao</span>
+                            <button
+                              className="nav-btn"
+                              style={{ padding: '4px 10px', fontSize: 11.5 }}
+                              onClick={(e) => { e.stopPropagation(); handleRenew(l.id); }}
+                            >
+                              <Icon name="swap" size={12}/> Obnovi
+                            </button>
+                          </span>
+                        )}
                       </div>
                     </div>
                   );

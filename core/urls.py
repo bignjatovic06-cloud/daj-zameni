@@ -13,6 +13,7 @@ urlpatterns = [
     path('listings/<uuid:pk>/',                views.listing_detail,         name='listing_detail'),
     path('listings/<uuid:pk>/update/',         views.listing_update,         name='listing_update'),
     path('listings/<uuid:pk>/delete/',         views.listing_delete,         name='listing_delete'),
+    path('listings/<uuid:pk>/renew/',          views.listing_renew,          name='listing_renew'),
     path('listings/<uuid:pk>/images/',         views.listing_image_upload,   name='listing_image_upload'),
     path('listings/<uuid:pk>/offer/',          views.offer_create,           name='offer_create'),
     path('listings/<uuid:pk>/wishlist/',       views.toggle_wishlist,        name='toggle_wishlist'),

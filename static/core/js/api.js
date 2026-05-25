@@ -143,8 +143,12 @@ async function apiStartThread(listingId) {
   return apiFetch('/listings/' + listingId + '/thread/', { method: 'POST' });
 }
 
-async function apiMyListings() {
-  return apiFetch('/listings/mine/');
+async function apiMyListings(includeExpired = false) {
+  return apiFetch('/listings/mine/' + (includeExpired ? '?include_expired=1' : ''));
+}
+
+async function apiRenewListing(id) {
+  return apiFetch('/listings/' + id + '/renew/', { method: 'POST' });
 }
 
 async function apiRespondToOffer(offerId, action) {
