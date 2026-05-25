@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, Http404
 from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
@@ -23,6 +23,7 @@ import logging
 import uuid
 import re
 import dns.resolver
+from django.utils.text import slugify
 
 logger = logging.getLogger(__name__)
 
@@ -168,6 +169,27 @@ def sitemap_xml(request):
             f'    <priority>0.7</priority>\n'
             f'  </url>'
         )
+    cat_slugs = set(
+        Listing.objects.filter(status='active', category__isnull=False)
+        .values_list('category__slug', 'category__parent__slug')
+    )
+    flat_cats = {s for pair in cat_slugs for s in pair if s}
+    for cslug in sorted(_cat_url_slug(s) for s in flat_cats):
+        urls.append(
+            f'  <url>\n'
+            f'    <loc>{site}/kategorija/{cslug}/</loc>\n'
+            f'    <changefreq>daily</changefreq>\n'
+            f'    <priority>0.6</priority>\n'
+            f'  </url>'
+        )
+    for cslug in _top_city_slugs():
+        urls.append(
+            f'  <url>\n'
+            f'    <loc>{site}/grad/{cslug}/</loc>\n'
+            f'    <changefreq>daily</changefreq>\n'
+            f'    <priority>0.5</priority>\n'
+            f'  </url>'
+        )
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -175,6 +197,197 @@ def sitemap_xml(request):
         '\n</urlset>'
     )
     return HttpResponse(xml, content_type='application/xml')
+
+
+# ─────────────────────────────────────────
+#  SSR LANDING PAGES (SEO)
+# ─────────────────────────────────────────
+
+LANDING_PAGE_SIZE = 30
+
+
+def _city_slug_map():
+    # Maps slug -> canonical city name, built from active listings.
+    cities = (
+        Listing.objects.filter(status='active')
+        .exclude(city='')
+        .values_list('city', flat=True)
+        .distinct()
+    )
+    return {slugify(c): c for c in cities}
+
+
+def _top_city_slugs(limit=40):
+    rows = (
+        Listing.objects.filter(status='active')
+        .exclude(city='')
+        .values('city')
+        .annotate(n=Count('id'))
+        .order_by('-n')[:limit]
+    )
+    return [slugify(r['city']) for r in rows]
+
+
+def _cat_url_slug(cat_slug):
+    # Child category slugs are hierarchical ("vozila/automobili"); the public
+    # SEO URL uses only the last segment for a clean, flat path.
+    return cat_slug.rsplit('/', 1)[-1]
+
+
+def _resolve_category(url_slug):
+    cat = Category.objects.filter(slug=url_slug).first()
+    if cat:
+        return cat
+    return Category.objects.filter(slug__endswith='/' + url_slug).first()
+
+
+def _landing_card(listing):
+    all_images = list(listing.images.all())
+    cover = next((img for img in all_images if img.is_cover), None) or (all_images[0] if all_images else None)
+    return {
+        'id':        str(listing.pk),
+        'title':     listing.title,
+        'price':     int(listing.price) if listing.price else None,
+        'city':      listing.city,
+        'type':      listing.listing_type,
+        'image':     cover.image.url if cover else '',
+        'created':   listing.created_at,
+    }
+
+
+def _render_landing(request, *, qs, h1, title, description, canonical_path, intro,
+                    related_links, page_num):
+    qs = qs.select_related('category').prefetch_related('images').order_by('-is_premium', '-created_at')
+    paginator = Paginator(qs, LANDING_PAGE_SIZE)
+    page = paginator.get_page(page_num)
+
+    cards = [_landing_card(l) for l in page]
+    site = settings.SITE_URL
+
+    # ItemList structured data
+    items = []
+    for i, c in enumerate(cards, start=1):
+        items.append({
+            '@type': 'ListItem',
+            'position': i,
+            'url': f'{site}/oglasi/{c["id"]}/',
+            'name': c['title'],
+        })
+    jsonld = json.dumps({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        'itemListElement': items,
+    }, ensure_ascii=False)
+
+    # Pagination — clamp prev/next to real pages
+    prev_url = f'{canonical_path}?page={page.previous_page_number()}' if page.has_previous() else None
+    next_url = f'{canonical_path}?page={page.next_page_number()}' if page.has_next() else None
+    canonical = canonical_path if page.number == 1 else f'{canonical_path}?page={page.number}'
+
+    return render(request, 'core/landing.html', {
+        'site_url':     site,
+        'h1':           h1,
+        'page_title':   title,
+        'meta_desc':    description,
+        'intro':        intro,
+        'cards':        cards,
+        'total':        paginator.count,
+        'related':      related_links,
+        'jsonld':       jsonld,
+        'canonical':    f'{site}{canonical}',
+        'prev_url':     prev_url,
+        'next_url':     next_url,
+        'page_num':     page.number,
+        'num_pages':    paginator.num_pages,
+    })
+
+
+@ensure_csrf_cookie
+def category_landing(request, slug, city_slug=None):
+    category = _resolve_category(slug)
+    if not category:
+        raise Http404
+    url_slug = _cat_url_slug(category.slug)
+    cat_q = Q(category__slug=category.slug) | Q(category__parent__slug=category.slug)
+    qs = Listing.objects.filter(cat_q, status='active')
+
+    city_name = None
+    if city_slug:
+        city_name = _city_slug_map().get(city_slug)
+        if not city_name:
+            raise Http404
+        qs = qs.filter(city__iexact=city_name)
+
+    if city_name:
+        h1 = f'{category.name} u gradu {city_name}'
+        title = f'{category.name} — {city_name} | razmena i prodaja | Daj Zameni'
+        desc = (f'Pogledaj oglase iz kategorije {category.name} u gradu {city_name}. '
+                f'Razmena i prodaja polovnih stvari bez posrednika i provizije na Daj Zameni.')
+        canonical = f'/kategorija/{url_slug}/{city_slug}/'
+        intro = (f'Aktivni oglasi iz kategorije <strong>{category.name}</strong> u gradu '
+                 f'<strong>{city_name}</strong>. Ponudi razmenu ili kupi direktno od vlasnika.')
+    else:
+        h1 = category.name
+        title = f'{category.name} — razmena i prodaja polovnih stvari | Daj Zameni'
+        desc = (f'Oglasi iz kategorije {category.name} — razmena i prodaja polovnih stvari '
+                f'između privatnih lica, bez posrednika i provizije na Daj Zameni.')
+        canonical = f'/kategorija/{url_slug}/'
+        intro = (f'Svi aktivni oglasi iz kategorije <strong>{category.name}</strong>. '
+                 f'Predloži razmenu ili kupi direktno — bez provizije.')
+
+    # Related links: top cities for this category
+    related = []
+    if not city_name:
+        city_rows = (
+            qs.exclude(city='').values('city')
+            .annotate(n=Count('id')).order_by('-n')[:12]
+        )
+        for r in city_rows:
+            related.append({
+                'label': f'{category.name} u gradu {r["city"]}',
+                'url': f'/kategorija/{url_slug}/{slugify(r["city"])}/',
+            })
+    else:
+        related.append({'label': f'Svi oglasi: {category.name}', 'url': f'/kategorija/{url_slug}/'})
+        related.append({'label': f'Svi oglasi u gradu {city_name}', 'url': f'/grad/{city_slug}/'})
+
+    return _render_landing(
+        request, qs=qs, h1=h1, title=title, description=desc,
+        canonical_path=canonical, intro=intro, related_links=related,
+        page_num=request.GET.get('page', 1),
+    )
+
+
+@ensure_csrf_cookie
+def city_landing(request, city_slug):
+    city_name = _city_slug_map().get(city_slug)
+    if not city_name:
+        raise Http404
+    qs = Listing.objects.filter(status='active', city__iexact=city_name)
+
+    h1 = f'Oglasi u gradu {city_name}'
+    title = f'Oglasi u gradu {city_name} — razmena i prodaja | Daj Zameni'
+    desc = (f'Svi aktivni oglasi u gradu {city_name} — razmena i prodaja polovnih stvari '
+            f'bez posrednika i provizije na Daj Zameni.')
+    canonical = f'/grad/{city_slug}/'
+    intro = (f'Aktivni oglasi u gradu <strong>{city_name}</strong>. '
+             f'Pronađi šta ti treba u svom kraju ili ponudi razmenu komšijama.')
+
+    cat_rows = (
+        qs.filter(category__isnull=False).values('category__slug', 'category__name')
+        .annotate(n=Count('id')).order_by('-n')[:12]
+    )
+    related = [
+        {'label': f'{r["category__name"]} u gradu {city_name}',
+         'url': f'/kategorija/{_cat_url_slug(r["category__slug"])}/{city_slug}/'}
+        for r in cat_rows
+    ]
+
+    return _render_landing(
+        request, qs=qs, h1=h1, title=title, description=desc,
+        canonical_path=canonical, intro=intro, related_links=related,
+        page_num=request.GET.get('page', 1),
+    )
 
 
 # ─────────────────────────────────────────

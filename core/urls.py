@@ -72,6 +72,11 @@ urlpatterns = [
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
 
+    # ─── SSR landing stranice (SEO) ───────────────────────
+    path('kategorija/<slug:slug>/', views.category_landing, name='category_landing'),
+    path('kategorija/<slug:slug>/<slug:city_slug>/', views.category_landing, name='category_city_landing'),
+    path('grad/<slug:city_slug>/', views.city_landing, name='city_landing'),
+
     # ─── SPA catch-all — mora biti poslednji ──────────────
     re_path(r'^(?:oglasi|pretraga|moji-oglasi|sacuvano|ocene|podesavanja|profil)(?:/.*)?$', views.app_view, name='spa_catchall'),
 ]

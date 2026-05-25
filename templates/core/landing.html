@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EEEKKSLKVK"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-EEEKKSLKVK");
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ page_title }}</title>
+<meta name="description" content="{{ meta_desc }}">
+<link rel="canonical" href="{{ canonical }}">
+{% if prev_url %}<link rel="prev" href="{{ site_url }}{{ prev_url }}">{% endif %}
+{% if next_url %}<link rel="next" href="{{ site_url }}{{ next_url }}">{% endif %}
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ page_title }}">
+<meta property="og:description" content="{{ meta_desc }}">
+<meta property="og:url" content="{{ canonical }}">
+<meta property="og:site_name" content="Daj Zameni">
+<meta property="og:image" content="{{ site_url }}/static/core/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/static/core/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">{{ jsonld|safe }}</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #0d6e6f;
+    --green-dark: #0a5556;
+    --ink: #0e1413;
+    --muted: #6b7672;
+    --border: #e6e3dc;
+    --bg: #fafaf7;
+    --white: #ffffff;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  a { color: inherit; text-decoration: none; }
+  .site-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(250,250,247,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem; height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .site-header .brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.05rem; }
+  .logo-mark {
+    width: 28px; height: 28px; background: var(--green);
+    border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.8rem; font-weight: 700;
+  }
+  .header-cta {
+    background: var(--green); color: #fff; padding: 0.5rem 1rem;
+    border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+  }
+  .header-cta:hover { background: var(--green-dark); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .crumbs { font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem; }
+  .crumbs a:hover { color: var(--green); }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700; line-height: 1.15; }
+  .intro { color: var(--muted); margin: 0.75rem 0 0.4rem; max-width: 720px; font-size: 1.02rem; }
+  .count { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.75rem; }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.1rem;
+  }
+  .card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; transition: box-shadow .15s, transform .15s;
+    display: flex; flex-direction: column;
+  }
+  .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); transform: translateY(-2px); }
+  .card .thumb { aspect-ratio: 4/3; background: #eee; overflow: hidden; position: relative; }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#bbb; font-size:.8rem; }
+  .badge {
+    position: absolute; top: 8px; left: 8px;
+    font-size: 0.66rem; font-weight: 700; letter-spacing: .03em;
+    padding: 3px 7px; border-radius: 6px; color: #fff; text-transform: uppercase;
+  }
+  .badge.barter { background: var(--green); }
+  .badge.sell { background: #1a3a5c; }
+  .badge.both { background: #8a5a2a; }
+  .card .body { padding: 0.7rem 0.8rem 0.85rem; display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+  .card .title { font-weight: 600; font-size: 0.92rem; line-height: 1.3; color: var(--ink); }
+  .card .city { font-size: 0.78rem; color: var(--muted); }
+  .card .price { margin-top: auto; font-weight: 700; font-size: 0.92rem; color: var(--ink); padding-top: 0.3rem; }
+  .empty { padding: 3rem 1rem; text-align: center; color: var(--muted); }
+  .pager { display: flex; gap: 0.5rem; justify-content: center; align-items: center; margin-top: 2.5rem; font-size: 0.9rem; }
+  .pager a, .pager span {
+    padding: 0.5rem 0.9rem; border: 1px solid var(--border); border-radius: 8px; background: #fff;
+  }
+  .pager a:hover { border-color: var(--green); color: var(--green); }
+  .pager .cur { background: var(--green); color: #fff; border-color: var(--green); }
+  .related { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+  .related h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 1rem; }
+  .related-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .related-links a {
+    font-size: 0.85rem; padding: 0.45rem 0.85rem; background: #fff;
+    border: 1px solid var(--border); border-radius: 20px; color: var(--muted);
+  }
+  .related-links a:hover { border-color: var(--green); color: var(--green); }
+  footer { border-top: 1px solid var(--border); padding: 2rem 1.5rem; text-align: center; color: var(--muted); font-size: 0.82rem; }
+  footer a:hover { color: var(--green); }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a href="/" class="brand"><span class="logo-mark">DZ</span> Daj Zameni</a>
+  <a href="/" class="header-cta">Otvori aplikaciju →</a>
+</header>
+
+<div class="wrap">
+  <nav class="crumbs"><a href="/">Početna</a> · {{ h1 }}</nav>
+  <h1>{{ h1 }}</h1>
+  <p class="intro">{{ intro|safe }}</p>
+  <p class="count">{{ total }} aktivnih oglasa</p>
+
+  {% if cards %}
+  <div class="grid">
+    {% for c in cards %}
+    <a class="card" href="/oglasi/{{ c.id }}/">
+      <div class="thumb">
+        {% if c.image %}<img src="{{ c.image }}" alt="{{ c.title }}" loading="lazy">{% else %}<div class="ph">bez slike</div>{% endif %}
+        {% if c.type == 'barter' %}<span class="badge barter">Zamena</span>
+        {% elif c.type == 'sell' %}<span class="badge sell">Prodaja</span>
+        {% else %}<span class="badge both">Zamena/Prodaja</span>{% endif %}
+      </div>
+      <div class="body">
+        <div class="title">{{ c.title }}</div>
+        {% if c.city %}<div class="city">{{ c.city }}</div>{% endif %}
+        {% if c.price %}<div class="price">{{ c.price }} RSD</div>{% else %}<div class="price">Razmena</div>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <nav class="pager">
+    {% if prev_url %}<a href="{{ prev_url }}" rel="prev">← Prethodna</a>{% endif %}
+    <span class="cur">{{ page_num }} / {{ num_pages }}</span>
+    {% if next_url %}<a href="{{ next_url }}" rel="next">Sledeća →</a>{% endif %}
+  </nav>
+  {% else %}
+  <div class="empty">Trenutno nema aktivnih oglasa ovde. <a href="/" style="color:var(--green)">Pogledaj sve oglase →</a></div>
+  {% endif %}
+
+  {% if related %}
+  <section class="related">
+    <h2>Povezane pretrage</h2>
+    <div class="related-links">
+      {% for r in related %}<a href="{{ r.url }}">{{ r.label }}</a>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<footer>
+  <a href="/o-nama/">O nama</a> · <a href="/pomoc/">Pomoć</a> · <a href="/pravila/">Pravila</a> · <a href="/privatnost/">Privatnost</a>
+  <div style="margin-top:0.5rem">© Daj Zameni — razmena bez posrednika</div>
+</footer>
+</body>
+</html>
