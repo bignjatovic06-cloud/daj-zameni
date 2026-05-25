@@ -294,6 +294,31 @@ def send_new_message(to_user, from_username, listing_title):
     )
 
 
+def send_listing_expiring_soon(to_user, listing_title, days_left):
+    """Listing owner receives: their listing expires soon — extend free."""
+    if not to_user.email:
+        return
+
+    listing_title = _e(listing_title)
+    renew_url = f'{SITE_URL}/moji-oglasi'
+    when = 'sutra' if days_left <= 1 else f'za {days_left} dana'
+
+    content = (
+        _h('Tvoj oglas uskoro ističe') +
+        _p(f'Oglas {_listing_pill(listing_title)} ističe {when}. Kada istekne, više se neće prikazivati u pretrazi.') +
+        _p('Ako je predmet i dalje dostupan, produži oglas besplatno jednim klikom — biće aktivan još 15 dana.') +
+        _btn('Produži oglas →', renew_url)
+    )
+    text = f'Tvoj oglas „{listing_title}" ističe {when}. Produži ga besplatno na {renew_url}.'
+
+    _send_async(
+        subject=f'Oglas „{listing_title}" uskoro ističe — Daj Zameni',
+        text_body=text,
+        html_body=_wrap(content, 'Oglas uskoro ističe'),
+        to_email=to_user.email,
+    )
+
+
 def send_listing_expired(to_user, listing_title, listing_id):
     """Listing owner receives: their listing expired after 15 days."""
     if not to_user.email:

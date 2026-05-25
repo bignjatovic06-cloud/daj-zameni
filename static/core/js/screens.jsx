@@ -1551,8 +1551,11 @@ function PostAdModal({ onClose, categories = [], onCreated, onView }) {
               <Icon name="check" size={30} stroke={2.4}/>
             </div>
             <h3 style={{ fontFamily: 'var(--font-display)', margin: '0 0 8px', fontSize: 24 }}>Oglas je objavljen!</h3>
-            <p style={{ color: 'var(--ink-3)', margin: '0 0 22px', fontSize: 14.5 }}>
+            <p style={{ color: 'var(--ink-3)', margin: '0 0 14px', fontSize: 14.5 }}>
               Tvoj oglas <b style={{ color: 'var(--ink)' }}>"{title}"</b> je sada vidljiv.
+            </p>
+            <p style={{ color: 'var(--ink-3)', margin: '0 0 22px', fontSize: 13, lineHeight: 1.5, background: 'var(--accent-soft)', borderRadius: 10, padding: '12px 14px' }}>
+              Oglas je aktivan <b style={{ color: 'var(--ink-2)' }}>15 dana</b>. Pre isteka ćeš dobiti podsetnik i moći ćeš da ga <b style={{ color: 'var(--ink-2)' }}>besplatno produžiš</b>.
             </p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <button className="nav-btn" onClick={onClose}>Zatvori</button>

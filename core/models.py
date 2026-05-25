@@ -83,6 +83,7 @@ class Listing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    expiry_reminder_sent = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_at']
@@ -98,7 +99,8 @@ class Listing(models.Model):
         from datetime import timedelta
         self.status = 'active'
         self.expires_at = timezone.now() + timedelta(days=self.TTL_DAYS)
-        self.save(update_fields=['status', 'expires_at', 'updated_at'])
+        self.expiry_reminder_sent = False
+        self.save(update_fields=['status', 'expires_at', 'expiry_reminder_sent', 'updated_at'])
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -197,6 +199,7 @@ class Notification(models.Model):
         ('offer_accepted',  'Ponuda prihvaćena'),
         ('offer_declined',  'Ponuda odbijena'),
         ('review',          'Nova recenzija'),
+        ('listing_expiring', 'Oglas uskoro ističe'),
     ]
 
     user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
