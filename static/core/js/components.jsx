@@ -817,9 +817,38 @@ function HowItWorks() {
 }
 
 /* ─── FOOTER ───────────────────────────────────── */
+const FOOT_CATEGORIES = [
+  ['Elektronika', 'elektronika'], ['Vozila', 'vozila'], ['Moda', 'moda'],
+  ['Dom', 'dom'], ['Sport', 'sport'], ['Deca', 'deca'],
+  ['Nekretnine', 'nekretnine'], ['Bela tehnika', 'bela-tehnika'],
+  ['Hobi', 'hobi'], ['Ljubimci', 'ljubimci'],
+];
+const FOOT_CITIES = [
+  ['Beograd', 'beograd'], ['Novi Sad', 'novi-sad'], ['Niš', 'nis'],
+  ['Kragujevac', 'kragujevac'], ['Subotica', 'subotica'], ['Čačak', 'cacak'],
+];
+
 function Footer() {
   return (
     <footer className="foot">
+      <nav className="foot-seo" aria-label="Kategorije i gradovi">
+        <div className="foot-col">
+          <h4>Popularne kategorije</h4>
+          <div className="foot-tags">
+            {FOOT_CATEGORIES.map(([name, slug]) => (
+              <a key={slug} href={'/kategorija/' + slug + '/'}>{name}</a>
+            ))}
+          </div>
+        </div>
+        <div className="foot-col">
+          <h4>Pretraga po gradu</h4>
+          <div className="foot-tags">
+            {FOOT_CITIES.map(([name, slug]) => (
+              <a key={slug} href={'/grad/' + slug + '/'}>{name}</a>
+            ))}
+          </div>
+        </div>
+      </nav>
       <div className="foot-inner">
         <div>© 2026 Daj Zameni · Made in Serbia</div>
         <div className="links">
