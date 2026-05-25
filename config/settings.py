@@ -138,12 +138,25 @@ if os.environ.get('CLOUDINARY_CLOUD_NAME'):
 AUTH_USER_MODEL = 'core.User'
 
 # ── Cache (koristi ga django-ratelimit) ─────────────────────────
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+# U produkciji mora deljeni keš (Redis) da bi rate limiting radio
+# ispravno preko svih gunicorn workera. Lokalno pada na LocMemCache.
+REDIS_URL = os.environ.get('REDIS_URL') or os.environ.get('REDIS_PRIVATE_URL')
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+        }
     }
-}
-SILENCED_SYSTEM_CHECKS = ['django_ratelimit.E003', 'django_ratelimit.W001']
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
+    # Bez deljenog keša su brojači po-procesu — ućutkujemo upozorenja
+    # samo u tom (lokalnom) slučaju.
+    SILENCED_SYSTEM_CHECKS = ['django_ratelimit.E003', 'django_ratelimit.W001']
 
 # ── Email (Resend HTTP API via Anymail) ─────────────────────────
 EMAIL_BACKEND      = 'anymail.backends.resend.EmailBackend'
