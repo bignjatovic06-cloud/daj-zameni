@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
-from django.views.decorators.cache import never_cache
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST, require_http_methods
 from django.db.models import Q, F, Avg, Count
@@ -112,6 +112,69 @@ def privatnost_view(request):
 
 def pomoc_view(request):
     return render(request, 'core/pomoc.html')
+
+
+@cache_control(max_age=3600)
+def robots_txt(request):
+    site = settings.SITE_URL
+    lines = [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /listings/',
+        'Disallow: /inbox/',
+        'Disallow: /notifications/',
+        'Disallow: /profile/avatar/',
+        'Disallow: /auth/',
+        'Disallow: /push/',
+        'Disallow: /admin/',
+        '',
+        f'Sitemap: {site}/sitemap.xml',
+    ]
+    return HttpResponse('\n'.join(lines), content_type='text/plain')
+
+
+@cache_control(max_age=3600)
+def sitemap_xml(request):
+    site = settings.SITE_URL
+    listings = (
+        Listing.objects
+        .filter(status='active')
+        .values('pk', 'updated_at', 'created_at')
+        .order_by('-updated_at')[:50000]
+    )
+    static_pages = [
+        ('/', 'weekly', '0.8'),
+        ('/o-nama/', 'monthly', '0.3'),
+        ('/pravila/', 'monthly', '0.3'),
+        ('/privatnost/', 'monthly', '0.3'),
+        ('/pomoc/', 'monthly', '0.5'),
+    ]
+    urls = []
+    for path, freq, prio in static_pages:
+        urls.append(
+            f'  <url>\n'
+            f'    <loc>{site}{path}</loc>\n'
+            f'    <changefreq>{freq}</changefreq>\n'
+            f'    <priority>{prio}</priority>\n'
+            f'  </url>'
+        )
+    for l in listings:
+        lastmod = (l['updated_at'] or l['created_at']).strftime('%Y-%m-%d')
+        urls.append(
+            f'  <url>\n'
+            f'    <loc>{site}/oglasi/{l["pk"]}/</loc>\n'
+            f'    <lastmod>{lastmod}</lastmod>\n'
+            f'    <changefreq>weekly</changefreq>\n'
+            f'    <priority>0.7</priority>\n'
+            f'  </url>'
+        )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + '\n'.join(urls) +
+        '\n</urlset>'
+    )
+    return HttpResponse(xml, content_type='application/xml')
 
 
 # ─────────────────────────────────────────

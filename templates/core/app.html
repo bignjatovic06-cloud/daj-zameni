@@ -19,7 +19,12 @@
 <meta property="og:title"       content="{{ seo_listing.title }}">
 <meta property="og:description" content="{{ seo_listing.description|truncatechars:160 }}">
 <meta property="og:url"         content="{{ site_url }}/oglasi/{{ seo_listing.id }}/">
+<meta property="og:site_name"   content="Daj Zameni">
 {% if seo_listing.image %}<meta property="og:image" content="{{ seo_listing.image }}">{% endif %}
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="{{ seo_listing.title }} — Daj Zameni">
+<meta name="twitter:description" content="{{ seo_listing.description|truncatechars:160 }}">
+{% if seo_listing.image %}<meta name="twitter:image" content="{{ seo_listing.image }}">{% endif %}
 <link rel="canonical" href="{{ site_url }}/oglasi/{{ seo_listing.id }}/">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Product","name":"{{ seo_listing.title|escapejs }}","description":"{{ seo_listing.description|truncatechars:200|escapejs }}","url":"{{ site_url }}/oglasi/{{ seo_listing.id }}/","image":"{{ seo_listing.image }}","offers":{"@type":"Offer","priceCurrency":"RSD","price":"{{ seo_listing.price|default:0 }}","availability":"https://schema.org/InStock"}}
@@ -31,6 +36,13 @@
 <meta property="og:title"       content="Daj Zameni — razmena bez posrednika">
 <meta property="og:description" content="Platforma za razmenu i prodaju polovnih stvari bez posrednika.">
 <meta property="og:url"         content="{{ site_url }}/">
+<meta property="og:site_name"   content="Daj Zameni">
+<meta property="og:image"       content="{{ site_url }}/static/core/og-image.png">
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="Daj Zameni — razmena bez posrednika">
+<meta name="twitter:description" content="Platforma za razmenu i prodaju polovnih stvari bez posrednika. Nađi šta ti treba, ponudi šta imaš.">
+<meta name="twitter:image"       content="{{ site_url }}/static/core/og-image.png">
+<link rel="canonical" href="{{ site_url }}/">
 {% endif %}
 <link rel="icon" type="image/svg+xml" href="{% static 'core/favicon.svg' %}">
 <meta name="vapid-public-key" content="{{ VAPID_PUBLIC_KEY }}">
