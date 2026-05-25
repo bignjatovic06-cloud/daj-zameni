@@ -1215,7 +1215,7 @@ def verify_email(request, token):
         user.email_verification_token = None
         user.email_verification_sent_at = None
         user.save()
-        login(request, user)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         return redirect('/?verified=1')
 
     return render(request, 'core/verify_email.html', {'username': user.username})
