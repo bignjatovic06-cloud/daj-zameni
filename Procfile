@@ -1,1 +1,1 @@
-web: python manage.py migrate && python manage.py createcachetable && python manage.py seed && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+web: python manage.py migrate && python manage.py createcachetable && python manage.py seed && python manage.py seed_test && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
