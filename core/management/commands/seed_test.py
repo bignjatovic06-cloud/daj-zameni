@@ -199,11 +199,18 @@ class Command(BaseCommand):
                 cat_increments[cat_slug] = cat_increments.get(cat_slug, 0) + 1
 
                 for idx in range(3):
-                    color = IMG_COLORS[(listings_created + idx) % len(IMG_COLORS)]
-                    data = _make_image(title, idx, color)
-                    img = ListingImage(listing=listing, is_cover=(idx == 0), order=idx)
-                    img.image.save(f'{listing.id}_{idx}.jpg', ContentFile(data), save=True)
-                    images_created += 1
+                    try:
+                        color = IMG_COLORS[(listings_created + idx) % len(IMG_COLORS)]
+                        data = _make_image(title, idx, color)
+                        img = ListingImage(listing=listing, is_cover=(idx == 0), order=idx)
+                        img.image.save(f'{listing.id}_{idx}.jpg', ContentFile(data), save=True)
+                        images_created += 1
+                    except Exception as e:
+                        # Upload (npr. Cloudinary) ne sme da obori ceo seed —
+                        # korisnik i oglas ostaju, slika se preskače.
+                        self.stderr.write(self.style.WARNING(
+                            f'  ! Slika preskočena za "{unique_title}" #{idx}: {e}'
+                        ))
 
         # ── Ažuriraj listing_count po kategoriji ───────────
         for slug, inc in cat_increments.items():
