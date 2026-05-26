@@ -116,7 +116,16 @@ function App() {
   const [heroPendingOffers, setHeroPendingOffers] = uS([]);
 
   const [listings, setListings]           = uS([]);
-  const [categories, setCategories]       = uS([]);
+  const [categories, setCategories]       = uS(() => {
+    try {
+      const el = document.getElementById('inline-categories');
+      const raw = el ? JSON.parse(el.textContent) : [];
+      return [
+        { id: 'sve', slug: 'sve', name: 'Sve kategorije', icon: 'grid', count: 0, children: [] },
+        ...normalizeCategories(raw),
+      ];
+    } catch(e) { return []; }
+  });
   const [currentUser, setCurrentUser]     = uS(null);
   const [notifications, setNotifications] = uS([]);
   const [wishlistIds, setWishlistIds]     = uS({});
@@ -186,9 +195,13 @@ function App() {
   };
 
   uE(() => {
-    const lcp = document.getElementById('lcp-placeholder');
-    if (lcp) lcp.remove();
+    if (!loading) {
+      const lcp = document.getElementById('lcp-placeholder');
+      if (lcp) lcp.remove();
+    }
+  }, [loading]);
 
+  uE(() => {
     // read initial URL so direct links and refreshes work
     const initView = pathToView(window.location.pathname);
     const initItemId = window.location.pathname.startsWith('/oglasi/')
@@ -198,10 +211,7 @@ function App() {
     // seed the current history entry with state so popstate works on first back
     history.replaceState({ view: initView, itemId: initItemId }, '', window.location.pathname);
 
-    Promise.all([
-      apiAuthStatus(),
-      apiCategories(),
-    ]).then(([auth, catData]) => {
+    apiAuthStatus().then(auth => {
       if (auth.authenticated) {
         setCurrentUser(auth.user);
         apiNotifications().then(res => {
@@ -217,10 +227,6 @@ function App() {
           }
         });
       }
-      setCategories([
-        { id: 'sve', slug: 'sve', name: 'Sve kategorije', icon: 'grid', count: 0, children: [] },
-        ...normalizeCategories(catData.results || []),
-      ]);
 
       // if landing on /oglasi/<id> directly, load the listing
       if (initView === 'detail' && initItemId) {

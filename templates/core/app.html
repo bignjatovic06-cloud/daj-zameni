@@ -732,20 +732,20 @@
 
 {% if preloaded_listing %}
 {{ preloaded_listing|json_script:"preloaded-listing" }}
-<script>window.__PRELOADED_LISTING__ = JSON.parse(document.getElementById('preloaded-listing').textContent);</script>
 {% endif %}
+{{ inline_categories|json_script:"inline-categories" }}
 
 <!-- ① React (production, self-hosted) -->
-<script src="{% static 'core/js/vendor/react.production.min.js' %}"></script>
-<script src="{% static 'core/js/vendor/react-dom.production.min.js' %}"></script>
+<script defer src="{% static 'core/js/vendor/react.production.min.js' %}"></script>
+<script defer src="{% static 'core/js/vendor/react-dom.production.min.js' %}"></script>
 
 <!-- ② API -->
-<script src="{% static 'core/js/api.js' %}"></script>
+<script defer src="{% static 'core/js/api.js' %}"></script>
 
 <!-- ③ Screen components (loads first so globals exist when app mounts) -->
-<script src="{% static 'core/js/dist/bundle-lazy.js' %}"></script>
+<script defer src="{% static 'core/js/dist/bundle-lazy.js' %}"></script>
 <!-- ④ Core + app (mounts React last) -->
-<script src="{% static 'core/js/dist/bundle.js' %}"></script>
+<script defer src="{% static 'core/js/dist/bundle.js' %}"></script>
 
 </body>
 </html>

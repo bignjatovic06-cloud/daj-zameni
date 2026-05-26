@@ -67,10 +67,36 @@ def _email_domain_valid(email):
 # ─────────────────────────────────────────
 
 @ensure_csrf_cookie
+def _inline_categories():
+    from django.db.models import Count, Q
+    sub_counts = dict(
+        Category.objects.filter(parent__isnull=False)
+        .annotate(n=Count('listings', filter=Q(listings__status='active')))
+        .values_list('id', 'n')
+    )
+    cats = Category.objects.filter(parent=None).prefetch_related('children').order_by('order', 'name')
+    return [
+        {
+            'id':       c.id,
+            'name':     c.name,
+            'slug':     c.slug,
+            'icon':     c.icon,
+            'tint':     c.tint,
+            'count':    sum(sub_counts.get(s.id, 0) for s in c.children.all()),
+            'children': [
+                {'id': s.id, 'name': s.name, 'slug': s.slug, 'icon': s.icon, 'count': sub_counts.get(s.id, 0)}
+                for s in c.children.order_by('order', 'name')
+            ],
+        }
+        for c in cats
+    ]
+
+
 def app_view(request):
     return render(request, 'core/app.html', {
-        'VAPID_PUBLIC_KEY': settings.VAPID_PUBLIC_KEY,
-        'site_url':         settings.SITE_URL,
+        'VAPID_PUBLIC_KEY':   settings.VAPID_PUBLIC_KEY,
+        'site_url':           settings.SITE_URL,
+        'inline_categories':  _inline_categories(),
     })
 
 
