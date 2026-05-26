@@ -1,4 +1,6 @@
 .env
+node_modules/
+static/core/js/dist/
 __pycache__/
 *.pyc
 *.pyo

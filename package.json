@@ -1,0 +1,13 @@
+{
+  "name": "daj-zameni-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:js": "babel static/core/js --out-dir static/core/js/dist --extensions '.jsx,.js' --ignore 'static/core/js/dist,static/core/js/api.js,static/core/js/sw.js'"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.0",
+    "@babel/core": "^7.24.0",
+    "@babel/preset-react": "^7.24.0"
+  }
+}
