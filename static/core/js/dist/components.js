@@ -1357,7 +1357,6 @@ function Footer() {
 Object.assign(window, {
   Nav,
   Hero,
-  TrustStrip,
   Categories,
   ListingCard,
   HowItWorks,

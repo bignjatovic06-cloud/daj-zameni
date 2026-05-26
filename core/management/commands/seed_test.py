@@ -171,7 +171,7 @@ class Command(BaseCommand):
                     'first_name':   u['first'],
                     'last_name':    u['last'],
                     'city':         u['city'],
-                    'phone':        f'06{rng.randint(0, 9)}{rng.randint(1000000, 9999999)}',
+                    'phone':        '',
                     'is_verified':  True,
                     'rating':       round(rng.uniform(3.6, 5.0), 2),
                     'rating_count': rng.randint(3, 45),

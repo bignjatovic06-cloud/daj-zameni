@@ -671,7 +671,6 @@ function App() {
             pendingOffers={heroPendingOffers}
             onOfferRespond={handleHeroOfferRespond}
           />
-          <TrustStrip/>
           <Categories categories={categories} onSelect={onSelectCat}/>
           <section className="section" data-screen-label="01b Featured listings">
             <div className="section-inner">

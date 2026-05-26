@@ -860,7 +860,7 @@ function Footer() {
 }
 
 Object.assign(window, {
-  Nav, Hero, TrustStrip, Categories,
+  Nav, Hero, Categories,
   ListingCard, HowItWorks, Footer,
   NotificationsPopover, NotificationsDrawer,
 });

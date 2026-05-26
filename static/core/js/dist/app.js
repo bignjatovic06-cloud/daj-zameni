@@ -805,7 +805,7 @@ function App() {
     },
     pendingOffers: heroPendingOffers,
     onOfferRespond: handleHeroOfferRespond
-  }), /*#__PURE__*/React.createElement(TrustStrip, null), /*#__PURE__*/React.createElement(Categories, {
+  }), /*#__PURE__*/React.createElement(Categories, {
     categories: categories,
     onSelect: onSelectCat
   }), /*#__PURE__*/React.createElement("section", {
