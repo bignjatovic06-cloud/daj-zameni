@@ -206,15 +206,29 @@ def sitemap_xml(request):
 LANDING_PAGE_SIZE = 30
 
 
+_FALLBACK_CITY_MAP = {
+    'beograd': 'Beograd', 'novi-sad': 'Novi Sad', 'nis': 'Niš',
+    'kragujevac': 'Kragujevac', 'subotica': 'Subotica', 'cacak': 'Čačak',
+    'uzice': 'Užice', 'pancevo': 'Pančevo', 'zrenjanin': 'Zrenjanin',
+    'leskovac': 'Leskovac', 'smederevo': 'Smederevo', 'valjevo': 'Valjevo',
+    'krusevac': 'Kruševac', 'vranje': 'Vranje', 'sabac': 'Šabac',
+    'novi-pazar': 'Novi Pazar', 'pozarevac': 'Požarevac', 'jagodina': 'Jagodina',
+    'krusevac': 'Kruševac', 'kikinda': 'Kikinda', 'sombor': 'Sombor',
+    'sremska-mitrovica': 'Sremska Mitrovica', 'pirot': 'Pirot',
+    'zajecar': 'Zaječar', 'bor': 'Bor', 'prokuplje': 'Prokuplje',
+}
+
+
 def _city_slug_map():
-    # Maps slug -> canonical city name, built from active listings.
     cities = (
         Listing.objects.filter(status='active')
         .exclude(city='')
         .values_list('city', flat=True)
         .distinct()
     )
-    return {slugify(c): c for c in cities}
+    result = dict(_FALLBACK_CITY_MAP)
+    result.update({slugify(c): c for c in cities})
+    return result
 
 
 def _top_city_slugs(limit=40):
