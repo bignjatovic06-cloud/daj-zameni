@@ -219,6 +219,9 @@ function App() {
     });
   };
   uE(() => {
+    const lcp = document.getElementById('lcp-placeholder');
+    if (lcp) lcp.remove();
+
     // read initial URL so direct links and refreshes work
     const initView = pathToView(window.location.pathname);
     const initItemId = window.location.pathname.startsWith('/oglasi/') ? window.location.pathname.split('/oglasi/')[1] : null;
