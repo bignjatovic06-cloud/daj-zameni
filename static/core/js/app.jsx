@@ -75,7 +75,18 @@ const FILTER_CHIPS = [
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
-  const [view, setView]                   = uS(() => window.__PRELOADED_LISTING__ ? 'detail' : 'home');
+  const [view, setView]                   = uS(() => {
+    if (window.__PRELOADED_LISTING__) return 'detail';
+    const p = window.location.pathname;
+    if (p.startsWith('/oglasi/'))  return 'detail';
+    if (p.startsWith('/profil/'))  return 'profile';
+    if (p === '/pretraga')         return 'search';
+    if (p === '/moji-oglasi')      return 'my-listings';
+    if (p === '/sacuvano')         return 'saved';
+    if (p === '/ocene')            return 'ratings';
+    if (p === '/podesavanja')      return 'settings';
+    return 'home';
+  });
   const [selectedItem, setSelectedItem]   = uS(() => {
     if (!window.__PRELOADED_LISTING__) return null;
     const [norm] = normalizeListings([window.__PRELOADED_LISTING__]);
@@ -129,7 +140,7 @@ function App() {
   const [currentUser, setCurrentUser]     = uS(null);
   const [notifications, setNotifications] = uS([]);
   const [wishlistIds, setWishlistIds]     = uS({});
-  const [loading, setLoading]             = uS(true);
+  const [loading, setLoading]             = uS(false);
   const [apiError, setApiError]           = uS(null);
   const [ownerListings, setOwnerListings] = uS(null);
   const [verifiedToast, setVerifiedToast] = uS(() => {
@@ -193,13 +204,6 @@ function App() {
       }
     });
   };
-
-  uE(() => {
-    if (!loading) {
-      const lcp = document.getElementById('lcp-placeholder');
-      if (lcp) lcp.remove();
-    }
-  }, [loading]);
 
   uE(() => {
     // read initial URL so direct links and refreshes work
