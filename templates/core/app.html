@@ -9,16 +9,15 @@
   gtag('js', new Date());
   gtag('config', 'G-EEEKKSLKVK');
   (function(){
+    var EVTS = ['touchstart','pointerdown','keydown','click'];
     function _loadGtag() {
-      ['mousemove','scroll','touchstart','keydown'].forEach(function(e){
-        document.removeEventListener(e, _loadGtag, {passive:true});
-      });
+      EVTS.forEach(function(e){ document.removeEventListener(e, _loadGtag); });
       var s = document.createElement('script');
       s.async = true;
       s.src = 'https://www.googletagmanager.com/gtag/js?id=G-EEEKKSLKVK';
       document.head.appendChild(s);
     }
-    ['mousemove','scroll','touchstart','keydown'].forEach(function(e){
+    EVTS.forEach(function(e){
       document.addEventListener(e, _loadGtag, {once:true, passive:true});
     });
   })();
