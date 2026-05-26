@@ -2,13 +2,20 @@
 <!DOCTYPE html>
 <html lang="sr">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-EEEKKSLKVK"></script>
+<!-- Google tag (deferred until idle to avoid LCP bandwidth contention) -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', 'G-EEEKKSLKVK');
+  function _loadGtag() {
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-EEEKKSLKVK';
+    document.head.appendChild(s);
+  }
+  if ('requestIdleCallback' in window) { requestIdleCallback(_loadGtag); }
+  else { window.addEventListener('load', function(){ setTimeout(_loadGtag, 1000); }); }
 </script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
