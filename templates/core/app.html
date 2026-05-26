@@ -732,6 +732,7 @@
 
 {% if preloaded_listing %}
 {{ preloaded_listing|json_script:"preloaded-listing" }}
+<script>window.__PRELOADED_LISTING__ = JSON.parse(document.getElementById('preloaded-listing').textContent);</script>
 {% endif %}
 {{ inline_categories|json_script:"inline-categories" }}
 

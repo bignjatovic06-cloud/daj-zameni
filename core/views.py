@@ -66,9 +66,7 @@ def _email_domain_valid(email):
 #  MAIN APP VIEW
 # ─────────────────────────────────────────
 
-@ensure_csrf_cookie
 def _inline_categories():
-    from django.db.models import Count, Q
     sub_counts = dict(
         Category.objects.filter(parent__isnull=False)
         .annotate(n=Count('listings', filter=Q(listings__status='active')))
@@ -92,6 +90,7 @@ def _inline_categories():
     ]
 
 
+@ensure_csrf_cookie
 def app_view(request):
     return render(request, 'core/app.html', {
         'VAPID_PUBLIC_KEY':   settings.VAPID_PUBLIC_KEY,
