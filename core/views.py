@@ -384,8 +384,7 @@ def city_landing(request, city_slug):
     desc = (f'Svi aktivni oglasi u gradu {city_name} — razmena i prodaja polovnih stvari '
             f'bez posrednika i provizije na Daj Zameni.')
     canonical = f'/grad/{city_slug}/'
-    intro = (f'Aktivni oglasi u gradu <strong>{city_name}</strong>. '
-             f'Pronađi šta ti treba u svom kraju ili ponudi razmenu komšijama.')
+    intro = f'Aktivni oglasi u gradu <strong>{city_name}</strong>.'
 
     cat_rows = (
         qs.filter(category__isnull=False).values('category__slug', 'category__name')
