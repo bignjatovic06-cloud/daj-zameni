@@ -663,6 +663,7 @@ function App() {
             onCityChange={(city, radius) => {
               setFilterCity(city);
               setFilterRadius(radius);
+              if (city) { navigate('search', null); window.scrollTo({ top: 0, behavior: 'smooth' }); }
             }}
             pendingOffers={heroPendingOffers}
             onOfferRespond={handleHeroOfferRespond}
