@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build:js": "babel static/core/js --out-dir static/core/js/dist --extensions '.jsx,.js' --ignore 'static/core/js/dist,static/core/js/vendor,static/core/js/api.js,static/core/js/sw.js' && cat static/core/js/dist/tweaks-panel.js static/core/js/dist/data.js static/core/js/dist/icons.js static/core/js/dist/components.js static/core/js/dist/hero-art.js static/core/js/dist/screens.js static/core/js/dist/app.js | npx terser --compress --mangle --output static/core/js/dist/bundle.js"
+    "build:js": "babel static/core/js --out-dir static/core/js/dist --extensions '.jsx,.js' --ignore 'static/core/js/dist,static/core/js/vendor,static/core/js/api.js,static/core/js/sw.js' && cat static/core/js/dist/data.js static/core/js/dist/icons.js static/core/js/dist/components.js static/core/js/dist/hero-art.js static/core/js/dist/app.js | npx terser --compress --mangle --output static/core/js/dist/bundle.js && cat static/core/js/dist/tweaks-panel.js static/core/js/dist/screens.js | npx terser --compress --mangle --output static/core/js/dist/bundle-lazy.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.0",
