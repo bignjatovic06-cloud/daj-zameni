@@ -8549,10 +8549,7 @@ function App() {
       view: initView,
       itemId: initItemId
     }, '', window.location.pathname);
-    Promise.all([apiAuthStatus(), apiListings({
-      page: 1,
-      sort: '-created_at'
-    }), apiCategories()]).then(([auth, listData, catData]) => {
+    Promise.all([apiAuthStatus(), apiCategories()]).then(([auth, catData]) => {
       if (auth.authenticated) {
         setCurrentUser(auth.user);
         apiNotifications().then(res => {
@@ -8569,36 +8566,26 @@ function App() {
           }
         });
       }
-      const allListings = normalizeListings(listData.results || []);
-      setListings(allListings);
-      setTotalPages(listData.pages || 1);
-      setTotalCount(listData.count || 0);
       setCategories([{
         id: 'sve',
         slug: 'sve',
         name: 'Sve kategorije',
         icon: 'grid',
-        count: listData.count || 0,
+        count: 0,
         children: []
       }, ...normalizeCategories(catData.results || [])]);
 
       // if landing on /oglasi/<id> directly, load the listing
       if (initView === 'detail' && initItemId) {
-        const found = allListings.find(l => String(l.id) === String(initItemId));
-        if (found) {
-          setSelectedItem(found);
-          setView('detail');
-        } else {
-          apiListingDetail(initItemId).then(res => {
-            if (res.id) {
-              const [norm] = normalizeListings([res]);
-              setSelectedItem(norm);
-              setView('detail');
-            } else {
-              setView('home');
-            }
-          });
-        }
+        apiListingDetail(initItemId).then(res => {
+          if (res.id) {
+            const [norm] = normalizeListings([res]);
+            setSelectedItem(norm);
+            setView('detail');
+          } else {
+            setView('home');
+          }
+        });
       } else {
         setView(initView);
       }
@@ -8855,6 +8842,7 @@ function App() {
   }, [filterCat, searchQuery, filterCity, filterBarter, filterChip, filterPremium, filterConditions, filterMaxPrice, filterSort, searchMode]);
   uE(() => {
     if (view !== 'search' && view !== 'home') return;
+    if (page === 1) return; // filter effect handles page 1
     fetchListings(page);
   }, [page]);
   uE(() => {
