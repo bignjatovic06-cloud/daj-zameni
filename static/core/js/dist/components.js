@@ -825,9 +825,9 @@ function Hero({
     className: 'hero layout-' + layout
   }, /*#__PURE__*/React.createElement("div", {
     className: "hero-inner"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", null, "Daj \u0161to ne ", /*#__PURE__*/React.createElement("em", null, "koristi\u0161"), ".", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", null, "Daj \u0161ta ne ", /*#__PURE__*/React.createElement("em", null, "koristi\u0161"), ".", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
     className: "amp"
-  }, "\u2014"), " Uzmi \u0161to ti ", /*#__PURE__*/React.createElement("em", null, "treba"), "."), /*#__PURE__*/React.createElement("p", {
+  }, "\u2014"), " Uzmi \u0161ta ti ", /*#__PURE__*/React.createElement("em", null, "treba"), "."), /*#__PURE__*/React.createElement("p", {
     className: "lede"
   }, "Pove\u017Ei se sa ljudima na druga\u010Diji na\u010Din. Razmeni, kupi ili prodaj predmete \u2014 bez agencija, bez naknada, bez komplikacija."), /*#__PURE__*/React.createElement("div", {
     className: "search-tabs"
@@ -1002,7 +1002,7 @@ function Hero({
       color: 'var(--ink-3)',
       lineHeight: 1.5
     }
-  }, "Prona\u0111i to \u0161to tra\u017Ei\u0161, ili osobu koja tra\u017Ei \u0161to ti nudi\u0161."), pendingOffers.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, "Prona\u0111i to \u0161ta tra\u017Ei\u0161, ili osobu koja tra\u017Ei \u0161ta ti nudi\u0161."), pendingOffers.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "hero-pending-strip"
   }, pendingOffers.slice(0, 3).map(o => /*#__PURE__*/React.createElement("div", {
     key: o.id,

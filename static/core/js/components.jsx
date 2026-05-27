@@ -451,8 +451,8 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers 
       <div className="hero-inner">
         <div>
           <h1>
-            Daj što ne <em>koristiš</em>.<br />
-            <span className="amp">—</span> Uzmi što ti <em>treba</em>.
+            Daj šta ne <em>koristiš</em>.<br />
+            <span className="amp">—</span> Uzmi šta ti <em>treba</em>.
           </h1>
           <p className="lede">
             Poveži se sa ljudima na drugačiji način. Razmeni, kupi ili prodaj predmete — bez agencija, bez naknada, bez komplikacija.
@@ -604,7 +604,7 @@ function Hero({ layout, accent, onSearch, onPostAd, onCityChange, pendingOffers 
           </form>
 
           <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.5 }}>
-            Pronađi to što tražiš, ili osobu koja traži što ti nudiš.
+            Pronađi to šta tražiš, ili osobu koja traži šta ti nudiš.
           </p>
 
           {pendingOffers.length > 0 && (
