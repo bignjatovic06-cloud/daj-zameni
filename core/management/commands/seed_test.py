@@ -1,4 +1,6 @@
 import io
+import json
+import os
 import random
 import urllib.parse
 import urllib.request
@@ -110,7 +112,7 @@ def _placeholder(title, idx):
     return buf.getvalue()
 
 
-def _download(url, timeout=12):
+def _download(url, timeout=15):
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         data = r.read()
@@ -121,19 +123,27 @@ def _download(url, timeout=12):
     return data
 
 
-def _fetch_real(keyword, seed):
-    """Try real-photo sources by keyword; return JPEG bytes or None."""
-    kw = urllib.parse.quote(keyword)
-    candidates = [
-        f'https://loremflickr.com/800/600/{kw}?lock={seed}',
-        f'https://picsum.photos/seed/dz{seed}/800/600',
-    ]
-    for url in candidates:
-        try:
-            return _download(url)
-        except Exception:
-            continue
-    return None
+def _pexels_search(keyword, api_key, want=3, timeout=15):
+    """Search Pexels by keyword; return a list of image URLs (most relevant
+    first). Empty list on any failure."""
+    # Pexels matches single terms best; drop the comma-separated synonyms.
+    term = keyword.split(',')[0].replace('-', ' ').strip()
+    q = urllib.parse.quote(term)
+    url = (f'https://api.pexels.com/v1/search?query={q}'
+           f'&per_page={max(want, 6)}&orientation=landscape')
+    req = urllib.request.Request(url, headers={
+        'Authorization': api_key,
+        'User-Agent': 'Mozilla/5.0',
+    })
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        payload = json.loads(r.read().decode('utf-8'))
+    urls = []
+    for photo in payload.get('photos', []):
+        src = photo.get('src', {})
+        u = src.get('large') or src.get('medium') or src.get('original')
+        if u:
+            urls.append(u)
+    return urls
 
 
 class Command(BaseCommand):
@@ -220,46 +230,62 @@ class Command(BaseCommand):
                 created_listings.append((listing, keyword))
                 cat_increments[cat_slug] = cat_increments.get(cat_slug, 0) + 1
 
-        # ── Preuzmi prave fotografije paralelno ────────────
-        # task = (listing, idx, keyword, seed); seed daje deterministične,
-        # ali međusobno različite slike za 3 fotografije istog oglasa.
-        tasks = []
-        for li_idx, (listing, keyword) in enumerate(created_listings):
-            for idx in range(3):
-                tasks.append((listing, idx, keyword, li_idx * 3 + idx + 1))
+        # ── Preuzmi prave fotografije sa Pexels-a ──────────
+        # Jedan search po oglasu (≈45 ukupno, ispod limita 200/h), svaki
+        # vrati do 3 relevantne fotografije baš za taj predmet.
+        api_key = os.environ.get('PEXELS_API_KEY', '').strip()
+        if not api_key:
+            self.stderr.write(self.style.WARNING(
+                'PEXELS_API_KEY nije postavljen — slike će biti placeholder. '
+                'Dodaj ključ u Railway Variables pa ponovi seed.'
+            ))
 
-        def _grab(task):
-            _, idx, keyword, seed = task
-            data = _fetch_real(keyword, seed)
-            return task, data
+        def _grab_listing(args):
+            """Vrati (listing, [bytes,…]) — do 3 prave slike za oglas."""
+            listing, keyword = args
+            if not api_key:
+                return listing, []
+            try:
+                urls = _pexels_search(keyword, api_key, want=3)
+            except Exception:
+                urls = []
+            datas = []
+            for u in urls:
+                if len(datas) >= 3:
+                    break
+                try:
+                    datas.append(_download(u))
+                except Exception:
+                    continue
+            return listing, datas
 
-        fetched = {}
+        by_listing = {}
         try:
-            with ThreadPoolExecutor(max_workers=16) as pool:
-                for task, data in pool.map(_grab, tasks):
-                    fetched[id(task)] = (task, data)
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                for listing, datas in pool.map(_grab_listing, created_listings):
+                    by_listing[listing.id] = datas
         except Exception as e:
             self.stderr.write(self.style.WARNING(f'Paralelno preuzimanje palo: {e}'))
 
         # ── Sačuvaj slike (sekvencijalno; upload na Cloudinary) ─
         images_created = 0
         real_images = 0
-        for task in tasks:
-            listing, idx, keyword, seed = task
-            entry = fetched.get(id(task))
-            data = entry[1] if entry else None
-            if data:
-                real_images += 1
-            else:
-                data = _placeholder(listing.title, idx)
-            try:
-                img = ListingImage(listing=listing, is_cover=(idx == 0), order=idx)
-                img.image.save(f'{listing.id}_{idx}.jpg', ContentFile(data), save=True)
-                images_created += 1
-            except Exception as e:
-                self.stderr.write(self.style.WARNING(
-                    f'  ! Slika preskočena za "{listing.title}" #{idx}: {e}'
-                ))
+        for listing, _keyword in created_listings:
+            datas = by_listing.get(listing.id, [])
+            for idx in range(3):
+                if idx < len(datas):
+                    data = datas[idx]
+                    real_images += 1
+                else:
+                    data = _placeholder(listing.title, idx)
+                try:
+                    img = ListingImage(listing=listing, is_cover=(idx == 0), order=idx)
+                    img.image.save(f'{listing.id}_{idx}.jpg', ContentFile(data), save=True)
+                    images_created += 1
+                except Exception as e:
+                    self.stderr.write(self.style.WARNING(
+                        f'  ! Slika preskočena za "{listing.title}" #{idx}: {e}'
+                    ))
 
         # ── Ažuriraj listing_count po kategoriji ───────────
         for slug in cat_increments:
